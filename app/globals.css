@@ -141,52 +141,24 @@ img {
 .hero-header {
   position: relative;
   z-index: 2;
-  height: 132px;
-  overflow: hidden;
-  background:
-    radial-gradient(
-      120% 140% at 100% 0%,
-      rgba(120, 20, 26, 0.15),
-      rgba(0, 0, 0, 0.55) 70%
-    ),
-    linear-gradient(120deg, #3a0d11 0%, #5e161c 45%, #7a1e24 70%, #4a1116 100%);
+  line-height: 0;
+  background: #2a0a0d;
 }
-
-/* rose petals texture */
-.hero-header::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(
-      36px 26px at 18% 30%,
-      rgba(150, 30, 36, 0.9),
-      rgba(90, 16, 20, 0) 70%
-    ),
-    radial-gradient(
-      44px 30px at 82% 22%,
-      rgba(170, 36, 42, 0.85),
-      rgba(90, 16, 20, 0) 70%
-    ),
-    radial-gradient(
-      30px 22px at 60% 80%,
-      rgba(130, 24, 30, 0.8),
-      rgba(90, 16, 20, 0) 70%
-    ),
-    radial-gradient(
-      26px 20px at 38% 70%,
-      rgba(190, 44, 50, 0.7),
-      rgba(90, 16, 20, 0) 70%
-    );
-  filter: blur(1px);
-  opacity: 0.9;
+.hero-img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
-/* sparkle dots */
-.hero-header .spark {
-  position: absolute;
-  z-index: 3;
-  color: #ffe9b0;
-  font-size: 10px;
-  text-shadow: 0 0 6px rgba(255, 220, 150, 0.9);
+/* transparent clickable hotspot over the banner's drawn hamburger */
+.hamburger.hamburger-overlay {
+  background: transparent;
+  backdrop-filter: none;
+  top: 6%;
+  right: 3%;
+  width: 12%;
+  height: 26%;
+  min-height: 34px;
+  border-radius: 6px;
 }
 
 .hero-emblem {

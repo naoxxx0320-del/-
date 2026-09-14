@@ -190,38 +190,14 @@ export default function Home() {
       <div className="device">
         {/* ---------- HEADER ---------- */}
         <header className="hero-header">
-          <span className="spark" style={{ left: "44%", top: "20%" }}>
-            ✦
-          </span>
-          <span className="spark" style={{ left: "66%", top: "44%" }}>
-            ✧
-          </span>
-          <span className="spark" style={{ left: "52%", top: "66%" }}>
-            ✦
-          </span>
-
-          <div className="hero-emblem">
-            <div className="emblem-badge">
-              <div className="emblem-diamond">◆</div>
-              <div className="emblem-sub">men&apos;s esthetic</div>
-              <div className="emblem-title">
-                <span className="big">Aroma Jewels</span>
-              </div>
-              <div className="emblem-jp">アロマジュエルズ</div>
-            </div>
-          </div>
-
-          <div className="hero-locations">新宿 秋葉原 五反田 新橋</div>
-
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="hero-img" src="hero-banner.jpg" alt="men's esthetic DIAMOND Jewels ダイヤモンドジュエルズ KAMEIDO / 亀戸" />
+          {/* transparent clickable area over the drawn hamburger icon */}
           <button
-            className="hamburger"
+            className="hamburger hamburger-overlay"
             aria-label="メニューを開く"
             onClick={() => setMenuOpen(true)}
-          >
-            <span />
-            <span />
-            <span />
-          </button>
+          />
         </header>
 
         {/* ---------- OPERATING HOURS BAR ---------- */}
