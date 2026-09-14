@@ -1,9 +1,9 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Aroma Jewels｜アロマジュエルズ｜新宿 秋葉原 五反田 新橋 メンズエステ",
+  title: "DIAMOND Jewels｜ダイヤモンドジュエルズ｜亀戸 メンズエステ",
   description:
-    "宝石のように美しいセラピスト達。極上の癒しと刺激の空間 men's esthetic Aroma Jewels（アロマジュエルズ）。",
+    "宝石のように美しいセラピスト達。極上の癒しと刺激の空間 men's esthetic DIAMOND Jewels（ダイヤモンドジュエルズ）亀戸。",
 };
 
 export const viewport = {
