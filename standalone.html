@@ -69,10 +69,10 @@ img { max-width: 100%; display: block; }
 .hoursbar .hb-val { color: #fbeede; font-family: var(--font-serif-en), serif; font-size: 14px; }
 .hoursbar .hb-sep { color: rgba(217,189,134,.6); }
 /* NAV */
-.navgrid { position: relative; z-index: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 22px 14px 8px; }
-.nav-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 12px 6px 14px; background: linear-gradient(180deg, #f3ecdd 0%, #e3d6bd 100%); border: 1px solid var(--gold-line); border-radius: 3px; box-shadow: 0 2px 5px rgba(120,96,60,.12), inset 0 0 0 3px rgba(255,255,255,.55); }
-.nav-btn .jp { font-family: var(--font-serif-jp), serif; font-size: 18px; color: var(--brown); letter-spacing: .04em; }
-.nav-btn .en { font-family: var(--font-serif-en), serif; font-size: 15px; letter-spacing: .08em; color: var(--gold-deep); }
+.navgrid { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px 6px; padding: 18px 8px 8px; }
+.nav-btn { display: flex; flex-direction: column; align-items: stretch; overflow: hidden; background: #fbf7ef; border: 1px solid var(--gold-line); border-radius: 2px; box-shadow: 0 2px 5px rgba(120,96,60,.12); }
+.nav-btn .jp { font-family: var(--font-serif-jp), serif; font-size: 11.5px; color: var(--brown); letter-spacing: 0; text-align: center; padding: 9px 1px 8px; background: linear-gradient(180deg, #fbf7ef 0%, #f3ecdd 100%); white-space: nowrap; }
+.nav-btn .en { font-family: var(--font-serif-en), serif; font-size: 10px; letter-spacing: .02em; color: var(--brown); text-align: center; padding: 5px 2px 6px; background: linear-gradient(180deg, #d8c8a4 0%, #cbb890 100%); border-top: 1px solid rgba(180,154,99,.5); white-space: nowrap; }
 /* COLLAGE */
 .collage { position: relative; z-index: 2; margin: 14px 14px 0; border-radius: 4px; overflow: hidden; aspect-ratio: 340 / 245; background: linear-gradient(135deg, #f3426d 0%, #cf305d 55%, #a8285a 100%); box-shadow: var(--shadow-1); }
 .collage-facets { position: absolute; inset: 0; }
