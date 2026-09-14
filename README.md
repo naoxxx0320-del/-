@@ -1,6 +1,6 @@
-# DIAMOND Jewels — メンズエステ サイト（TOPページ）
+# AROMA DAIAMOND — メンズエステ サイト（TOPページ）
 
-men's esthetic「DIAMOND Jewels（ダイヤモンドジュエルズ）／亀戸」の TOP ページを、
+men's esthetic「AROMA DAIAMOND（アロマ ダイアモンド）／亀戸」の TOP ページを、
 参考デザインに合わせて構築したものです。
 **まずはレイアウト・デザインの再現を最優先**に構築しています。
 
