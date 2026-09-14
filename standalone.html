@@ -74,6 +74,11 @@ img { max-width: 100%; display: block; }
 .hero-locations { position: absolute; z-index: 4; right: 10px; bottom: 12px; font-family: var(--font-serif-jp), serif; color: #fbeede; font-size: 17px; letter-spacing: .06em; text-shadow: 0 1px 4px rgba(0,0,0,.7); }
 .hamburger { position: absolute; z-index: 6; top: 12px; right: 12px; width: 54px; height: 54px; border: none; border-radius: 8px; background: rgba(40,24,22,.55); backdrop-filter: blur(2px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
 .hamburger span { width: 26px; height: 2px; background: #f2e7d7; border-radius: 2px; }
+/* HOURS BAR */
+.hoursbar { position: relative; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 8px; padding: 9px 12px; background: linear-gradient(180deg, #4a1116, #380d11); color: #f3e3cf; font-family: var(--font-serif-jp), serif; font-size: 12.5px; letter-spacing: .04em; border-bottom: 1px solid rgba(199,173,120,.5); }
+.hoursbar .hb-label { color: #d9bd86; font-size: 11px; letter-spacing: .1em; }
+.hoursbar .hb-val { color: #fbeede; font-family: var(--font-serif-en), serif; font-size: 14px; }
+.hoursbar .hb-sep { color: rgba(217,189,134,.6); }
 /* NAV */
 .navgrid { position: relative; z-index: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 22px 14px 8px; }
 .nav-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 12px 6px 14px; background: linear-gradient(180deg, #fbf7ef 0%, #f1e9d8 100%); border: 1px solid var(--gold-line); border-radius: 3px; box-shadow: 0 2px 5px rgba(120,96,60,.12), inset 0 0 0 3px rgba(255,255,255,.55); }
@@ -112,6 +117,22 @@ img { max-width: 100%; display: block; }
 .frame-list { list-style: none; margin: 0; padding: 0; font-size: 12.5px; color: var(--brown-2); line-height: 1.9; }
 .frame-list li { display: flex; gap: 8px; border-bottom: 1px dotted rgba(150,120,80,.3); padding: 2px 0; }
 .frame-list .date { color: var(--gold-deep); flex: 0 0 auto; font-family: var(--font-serif-en), serif; }
+.info-head { position: relative; z-index: 2; text-align: center; margin-top: 26px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.info-head .ih-en { font-family: var(--font-serif-en), serif; font-style: italic; font-size: 26px; letter-spacing: .06em; color: var(--gold-deep); }
+.info-head .ih-en::after { content: ""; display: block; width: 46px; height: 1px; margin: 4px auto 0; background: var(--gold); }
+.info-head .ih-jp { font-family: var(--font-serif-jp), serif; font-size: 12px; letter-spacing: .2em; color: var(--brown-2); }
+.guide-date { text-align: right; font-family: var(--font-serif-en), serif; font-size: 12px; color: var(--gold-deep); letter-spacing: .04em; margin-bottom: 2px; }
+.guide-title { text-align: center; font-family: var(--font-serif-jp), serif; font-size: 16px; color: var(--brown); letter-spacing: .1em; margin: 2px 0 14px; font-weight: 600; }
+.guide-title small { font-size: 11px; color: var(--brown-2); letter-spacing: .02em; font-weight: 400; }
+.guide-block { margin-bottom: 12px; }
+.guide-area { font-family: var(--font-serif-jp), serif; font-size: 14px; color: var(--gold-deep); letter-spacing: .14em; text-align: center; padding: 3px 0; margin-bottom: 8px; border-top: 1px solid rgba(180,154,99,.4); border-bottom: 1px solid rgba(180,154,99,.4); background: linear-gradient(180deg, rgba(199,173,120,.12), rgba(199,173,120,.03)); }
+.guide-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+.guide-list li { display: flex; align-items: center; gap: 7px; padding: 3px 0; border-bottom: 1px dotted rgba(150,120,80,.3); }
+.gst { flex: 0 0 auto; width: 26px; height: 22px; display: flex; align-items: center; justify-content: center; font-family: var(--font-serif-jp), serif; font-size: 12px; color: #fff; border-radius: 2px; }
+.gst.full { background: linear-gradient(180deg, #c72b45, #a8203a); }
+.gst.open { background: linear-gradient(180deg, #4f9d68, #3c854f); }
+.gst.wait { background: linear-gradient(180deg, #b79148, #9c7a37); font-size: 10px; }
+.gname { font-family: var(--font-serif-jp), serif; font-size: 13.5px; color: var(--ink); letter-spacing: .04em; }
 /* BAND */
 .band { position: relative; z-index: 2; margin-top: 22px; height: 60px; display: flex; align-items: center; justify-content: center; gap: 12px; background: linear-gradient(180deg, #b79c66 0%, #a2864f 100%); color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }
 .band .dia { font-size: 22px; color: #fff; filter: drop-shadow(0 1px 1px rgba(0,0,0,.2)); }
@@ -223,6 +244,13 @@ body.menu-open { overflow: hidden; }
       <button class="hamburger" aria-label="メニューを開く" onclick="openMenu()"><span></span><span></span><span></span></button>
     </header>
 
+    <!-- OPERATING HOURS BAR -->
+    <div class="hoursbar">
+      <span class="hb-label">営業時間</span><span class="hb-val">10:00〜翌5:00</span>
+      <span class="hb-sep">／</span>
+      <span class="hb-label">電話受付</span><span class="hb-val">9:30〜翌4:00</span>
+    </div>
+
     <!-- NAV -->
     <nav class="navgrid">
       <a class="nav-btn" href="#"><span class="jp">トップ</span><span class="en">Top</span></a>
@@ -274,16 +302,35 @@ body.menu-open { overflow: hidden; }
       <div class="camp" style="background:linear-gradient(135deg,#8a6f3a,#c2a35e)"><div>32分</div><div>無料</div></div>
     </div>
 
-    <!-- NEWS FRAME -->
+    <!-- INFORMATION / 案内状況 -->
+    <div class="info-head">
+      <span class="ih-en">Information</span>
+      <span class="ih-jp">最新ご案内情報</span>
+    </div>
     <section class="frame">
       <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
-      <h2 class="frame-title">&#9670; NEWS &amp; INFORMATION &#9670;</h2>
-      <ul class="frame-list">
-        <li><span class="date">09.14</span><span>本日のご出勤情報を更新いたしました。</span></li>
-        <li><span class="date">09.13</span><span>ご新規様限定 2,000円OFFキャンペーン実施中。</span></li>
-        <li><span class="date">09.10</span><span>新人セラピストが多数入店いたしました。</span></li>
-        <li><span class="date">09.05</span><span>各種クレジット・PayPay決済に対応しております。</span></li>
-      </ul>
+      <div class="guide-date">2026/9/14</div>
+      <h2 class="guide-title">只今の案内状況<small>（更新 22:26）</small></h2>
+      <div class="guide-block">
+        <div class="guide-area">新宿</div>
+        <ul class="guide-list">
+          <li><span class="gst full">満</span><span class="gname">七星</span></li>
+          <li><span class="gst full">満</span><span class="gname">うさ</span></li>
+          <li><span class="gst open">空</span><span class="gname">ひなの</span></li>
+          <li><span class="gst full">満</span><span class="gname">りの</span></li>
+          <li><span class="gst open">空</span><span class="gname">まりん</span></li>
+          <li><span class="gst full">満</span><span class="gname">あんな</span></li>
+        </ul>
+      </div>
+      <div class="guide-block">
+        <div class="guide-area">秋葉原</div>
+        <ul class="guide-list">
+          <li><span class="gst full">満</span><span class="gname">みるく</span></li>
+          <li><span class="gst open">空</span><span class="gname">ここあ</span></li>
+          <li><span class="gst full">満</span><span class="gname">ゆい</span></li>
+          <li><span class="gst wait">受付</span><span class="gname">せな</span></li>
+        </ul>
+      </div>
     </section>
 
     <!-- BAND -->

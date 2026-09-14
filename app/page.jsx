@@ -27,11 +27,30 @@ const CAMPAIGNS = [
   { t: "32分\n無料", bg: "linear-gradient(135deg,#8a6f3a,#c2a35e)" },
 ];
 
-const NEWS = [
-  { d: "09.14", t: "本日のご出勤情報を更新いたしました。" },
-  { d: "09.13", t: "ご新規様限定 2,000円OFFキャンペーン実施中。" },
-  { d: "09.10", t: "新人セラピストが多数入店いたしました。" },
-  { d: "09.05", t: "各種クレジット・PayPay決済に対応しております。" },
+// 只今の案内状況（エリア別 在籍・受付状況ボード）
+const GUIDE_UPDATED = "22:26";
+const GUIDE_DATE = "2026/9/14";
+const GUIDE = [
+  {
+    area: "新宿",
+    list: [
+      { name: "七星", st: "満" },
+      { name: "うさ", st: "満" },
+      { name: "ひなの", st: "空" },
+      { name: "りの", st: "満" },
+      { name: "まりん", st: "空" },
+      { name: "あんな", st: "満" },
+    ],
+  },
+  {
+    area: "秋葉原",
+    list: [
+      { name: "みるく", st: "満" },
+      { name: "ここあ", st: "空" },
+      { name: "ゆい", st: "満" },
+      { name: "せな", st: "受付" },
+    ],
+  },
 ];
 
 const THERAPISTS = [
@@ -205,6 +224,15 @@ export default function Home() {
           </button>
         </header>
 
+        {/* ---------- OPERATING HOURS BAR ---------- */}
+        <div className="hoursbar">
+          <span className="hb-label">営業時間</span>
+          <span className="hb-val">10:00〜翌5:00</span>
+          <span className="hb-sep">／</span>
+          <span className="hb-label">電話受付</span>
+          <span className="hb-val">9:30〜翌4:00</span>
+        </div>
+
         {/* ---------- NAV GRID ---------- */}
         <nav className="navgrid">
           {NAV.map((n) => (
@@ -260,21 +288,36 @@ export default function Home() {
           ))}
         </div>
 
-        {/* ---------- ANNOUNCEMENT FRAME ---------- */}
+        {/* ---------- INFORMATION / 案内状況 ---------- */}
+        <div className="info-head">
+          <span className="ih-en">Information</span>
+          <span className="ih-jp">最新ご案内情報</span>
+        </div>
         <section className="frame">
           <div className="corner tl" />
           <div className="corner tr" />
           <div className="corner bl" />
           <div className="corner br" />
-          <h2 className="frame-title">◆ NEWS & INFORMATION ◆</h2>
-          <ul className="frame-list">
-            {NEWS.map((n, i) => (
-              <li key={i}>
-                <span className="date">{n.d}</span>
-                <span>{n.t}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="guide-date">{GUIDE_DATE}</div>
+          <h2 className="guide-title">
+            只今の案内状況
+            <small>（更新 {GUIDE_UPDATED}）</small>
+          </h2>
+          {GUIDE.map((g, i) => (
+            <div className="guide-block" key={i}>
+              <div className="guide-area">{g.area}</div>
+              <ul className="guide-list">
+                {g.list.map((t, j) => (
+                  <li key={j}>
+                    <span className={`gst ${t.st === "満" ? "full" : t.st === "空" ? "open" : "wait"}`}>
+                      {t.st}
+                    </span>
+                    <span className="gname">{t.name}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </section>
 
         {/* ---------- SECTION BAND ---------- */}

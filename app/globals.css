@@ -285,6 +285,39 @@ img {
 }
 
 /* =========================================================
+   OPERATING HOURS BAR
+   ========================================================= */
+.hoursbar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 8px;
+  padding: 9px 12px;
+  background: linear-gradient(180deg, #4a1116, #380d11);
+  color: #f3e3cf;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid rgba(199, 173, 120, 0.5);
+}
+.hoursbar .hb-label {
+  color: #d9bd86;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+.hoursbar .hb-val {
+  color: #fbeede;
+  font-family: var(--font-serif-en), serif;
+  font-size: 14px;
+}
+.hoursbar .hb-sep {
+  color: rgba(217, 189, 134, 0.6);
+}
+
+/* =========================================================
    NAV GRID (8 buttons)
    ========================================================= */
 .navgrid {
@@ -572,6 +605,122 @@ img {
   color: var(--gold-deep);
   flex: 0 0 auto;
   font-family: var(--font-serif-en), serif;
+}
+
+/* Information header */
+.info-head {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  margin-top: 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.info-head .ih-en {
+  font-family: var(--font-serif-en), serif;
+  font-style: italic;
+  font-size: 26px;
+  letter-spacing: 0.06em;
+  color: var(--gold-deep);
+}
+.info-head .ih-en::after {
+  content: "";
+  display: block;
+  width: 46px;
+  height: 1px;
+  margin: 4px auto 0;
+  background: var(--gold);
+}
+.info-head .ih-jp {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  color: var(--brown-2);
+}
+
+/* 案内状況 board */
+.guide-date {
+  text-align: right;
+  font-family: var(--font-serif-en), serif;
+  font-size: 12px;
+  color: var(--gold-deep);
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+.guide-title {
+  text-align: center;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 16px;
+  color: var(--brown);
+  letter-spacing: 0.1em;
+  margin: 2px 0 14px;
+  font-weight: 600;
+}
+.guide-title small {
+  font-size: 11px;
+  color: var(--brown-2);
+  letter-spacing: 0.02em;
+  font-weight: 400;
+}
+.guide-block {
+  margin-bottom: 12px;
+}
+.guide-area {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 14px;
+  color: var(--gold-deep);
+  letter-spacing: 0.14em;
+  text-align: center;
+  padding: 3px 0;
+  margin-bottom: 8px;
+  border-top: 1px solid rgba(180, 154, 99, 0.4);
+  border-bottom: 1px solid rgba(180, 154, 99, 0.4);
+  background: linear-gradient(180deg, rgba(199, 173, 120, 0.12), rgba(199, 173, 120, 0.03));
+}
+.guide-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 10px;
+}
+.guide-list li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 0;
+  border-bottom: 1px dotted rgba(150, 120, 80, 0.3);
+}
+.gst {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 12px;
+  color: #fff;
+  border-radius: 2px;
+}
+.gst.full {
+  background: linear-gradient(180deg, #c72b45, #a8203a);
+}
+.gst.open {
+  background: linear-gradient(180deg, #4f9d68, #3c854f);
+}
+.gst.wait {
+  background: linear-gradient(180deg, #b79148, #9c7a37);
+  font-size: 10px;
+}
+.gname {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 13.5px;
+  color: var(--ink);
+  letter-spacing: 0.04em;
 }
 
 /* =========================================================
