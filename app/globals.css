@@ -1,5 +1,5 @@
 /* =========================================================
-   Aroma Jewels — Global design system
+   DIAMOND Jewels — Global design system
    Mobile-first reproduction (base width 393px design)
    ========================================================= */
 
@@ -1212,11 +1212,10 @@ img {
   font-family: var(--font-serif-en), serif;
   font-style: italic;
   font-weight: 600;
-  font-size: 36px;
-  line-height: 0.95;
+  font-size: 30px;
+  line-height: 1.05;
   color: #fdf7ee;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-  white-space: nowrap;
 }
 .menu-logo .ml-en .gold {
   color: #e7c98d;

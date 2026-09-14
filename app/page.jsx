@@ -17,7 +17,7 @@ const NAV = [
 
 const CAMPAIGNS = [
   { t: "東京No.1\n美女軍団", bg: "linear-gradient(135deg,#7d1f38,#b83a5c)" },
-  { t: "Aroma\nJewels", bg: "linear-gradient(135deg,#8a6f3a,#c2a35e)" },
+  { t: "DIAMOND\nJewels", bg: "linear-gradient(135deg,#8a6f3a,#c2a35e)" },
   { t: "ご新規様\nご案内", bg: "linear-gradient(135deg,#4b3f3a,#6f5b48)" },
   { t: "2000円\nOFF", bg: "linear-gradient(135deg,#a2864f,#c9b17b)" },
   { t: "オール\nナイト割", bg: "linear-gradient(135deg,#8f4a52,#c06a72)" },
@@ -32,7 +32,7 @@ const GUIDE_UPDATED = "22:26";
 const GUIDE_DATE = "2026/9/14";
 const GUIDE = [
   {
-    area: "新宿",
+    area: "亀戸",
     list: [
       { name: "七星", st: "満" },
       { name: "うさ", st: "満" },
@@ -40,11 +40,6 @@ const GUIDE = [
       { name: "りの", st: "満" },
       { name: "まりん", st: "空" },
       { name: "あんな", st: "満" },
-    ],
-  },
-  {
-    area: "秋葉原",
-    list: [
       { name: "みるく", st: "満" },
       { name: "ここあ", st: "空" },
       { name: "ゆい", st: "満" },
@@ -247,8 +242,8 @@ export default function Home() {
           <div className="collage-lane" />
           <div className="collage-copy">宝石のように美しいセラピスト達</div>
           <div className="collage-logo">
-            <div className="cl-en">Aroma Jewels</div>
-            <div className="cl-jp">アロマジュエルズ</div>
+            <div className="cl-en">DIAMOND Jewels</div>
+            <div className="cl-jp">ダイヤモンドジュエルズ</div>
             <div className="cl-tag">極上の癒しと刺激の空間</div>
           </div>
         </section>
@@ -364,9 +359,9 @@ export default function Home() {
             <div className="menu-logo">
               <div className="ml-sub">men&apos;s esthetic</div>
               <div className="ml-en">
-                <span className="gold">A</span>roma <span className="gold">J</span>ewels
+                <span className="gold">D</span>IAMOND <span className="gold">J</span>ewels
               </div>
-              <div className="ml-jp">アロマジュエルズ</div>
+              <div className="ml-jp">ダイヤモンドジュエルズ</div>
             </div>
 
             <div className="menu-list">
