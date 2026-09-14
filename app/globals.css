@@ -30,11 +30,11 @@
   --panel: #4b3f3a;
   --panel-2: #574a44;
 
-  /* accents */
-  --rose-bg: #a1595c;      /* menu / hero maroon */
-  --rose-deep: #8f4a52;
-  --pink: #c93a6b;         /* banner magenta */
-  --pink-deep: #a82a57;
+  /* accents (sampled from the real site) */
+  --rose-bg: #935958;      /* menu maroon (real) */
+  --rose-deep: #854c4e;
+  --pink: #f3426d;         /* banner magenta (real) */
+  --pink-deep: #a8285a;
   --crimson: #b52947;      /* 空 status */
   --line-green: #05c152;
 
@@ -285,6 +285,39 @@ img {
 }
 
 /* =========================================================
+   OPERATING HOURS BAR
+   ========================================================= */
+.hoursbar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 8px;
+  padding: 9px 12px;
+  background: linear-gradient(180deg, #4a1116, #380d11);
+  color: #f3e3cf;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid rgba(199, 173, 120, 0.5);
+}
+.hoursbar .hb-label {
+  color: #d9bd86;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+.hoursbar .hb-val {
+  color: #fbeede;
+  font-family: var(--font-serif-en), serif;
+  font-size: 14px;
+}
+.hoursbar .hb-sep {
+  color: rgba(217, 189, 134, 0.6);
+}
+
+/* =========================================================
    NAV GRID (8 buttons)
    ========================================================= */
 .navgrid {
@@ -303,7 +336,7 @@ img {
   justify-content: center;
   gap: 3px;
   padding: 12px 6px 14px;
-  background: linear-gradient(180deg, #fbf7ef 0%, #f1e9d8 100%);
+  background: linear-gradient(180deg, #f3ecdd 0%, #e3d6bd 100%);
   border: 1px solid var(--gold-line);
   border-radius: 3px;
   box-shadow: 0 2px 5px rgba(120, 96, 60, 0.12),
@@ -333,7 +366,7 @@ img {
   overflow: hidden;
   aspect-ratio: 340 / 245;
   background:
-    linear-gradient(135deg, #d63a6b 0%, #b52a5d 55%, #8f1f4d 100%);
+    linear-gradient(135deg, #f3426d 0%, #cf305d 55%, #a8285a 100%);
   box-shadow: var(--shadow-1);
 }
 .collage-facets {
@@ -574,6 +607,122 @@ img {
   font-family: var(--font-serif-en), serif;
 }
 
+/* Information header */
+.info-head {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  margin-top: 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.info-head .ih-en {
+  font-family: var(--font-serif-en), serif;
+  font-style: italic;
+  font-size: 26px;
+  letter-spacing: 0.06em;
+  color: var(--gold-deep);
+}
+.info-head .ih-en::after {
+  content: "";
+  display: block;
+  width: 46px;
+  height: 1px;
+  margin: 4px auto 0;
+  background: var(--gold);
+}
+.info-head .ih-jp {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  color: var(--brown-2);
+}
+
+/* 案内状況 board */
+.guide-date {
+  text-align: right;
+  font-family: var(--font-serif-en), serif;
+  font-size: 12px;
+  color: var(--gold-deep);
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+.guide-title {
+  text-align: center;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 16px;
+  color: var(--brown);
+  letter-spacing: 0.1em;
+  margin: 2px 0 14px;
+  font-weight: 600;
+}
+.guide-title small {
+  font-size: 11px;
+  color: var(--brown-2);
+  letter-spacing: 0.02em;
+  font-weight: 400;
+}
+.guide-block {
+  margin-bottom: 12px;
+}
+.guide-area {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 14px;
+  color: var(--gold-deep);
+  letter-spacing: 0.14em;
+  text-align: center;
+  padding: 3px 0;
+  margin-bottom: 8px;
+  border-top: 1px solid rgba(180, 154, 99, 0.4);
+  border-bottom: 1px solid rgba(180, 154, 99, 0.4);
+  background: linear-gradient(180deg, rgba(199, 173, 120, 0.12), rgba(199, 173, 120, 0.03));
+}
+.guide-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 10px;
+}
+.guide-list li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 0;
+  border-bottom: 1px dotted rgba(150, 120, 80, 0.3);
+}
+.gst {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 12px;
+  color: #fff;
+  border-radius: 2px;
+}
+.gst.full {
+  background: linear-gradient(180deg, #c72b45, #a8203a);
+}
+.gst.open {
+  background: linear-gradient(180deg, #4f9d68, #3c854f);
+}
+.gst.wait {
+  background: linear-gradient(180deg, #b79148, #9c7a37);
+  font-size: 10px;
+}
+.gname {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 13.5px;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+}
+
 /* =========================================================
    SECTION BAND
    ========================================================= */
@@ -586,7 +735,7 @@ img {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  background: linear-gradient(180deg, #b79c66 0%, #a2864f 100%);
+  background: linear-gradient(180deg, #ab9569 0%, #8f7c52 100%);
   color: #fff;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
 }
@@ -904,7 +1053,7 @@ img {
   z-index: 30;
   display: flex;
   height: 62px;
-  background: linear-gradient(180deg, #c9b17b, #b39a5f);
+  background: linear-gradient(180deg, #d9b184, #c19a63);
   box-shadow: 0 -4px 16px rgba(60, 40, 20, 0.2);
 }
 .footerbar .fb-tel {
@@ -1050,7 +1199,7 @@ img {
   height: 100%;
   overflow-y: auto;
   background:
-    radial-gradient(140% 60% at 50% 0%, #ad6669 0%, #9a5559 55%, #8a4a50 100%);
+    radial-gradient(140% 60% at 50% 0%, #a06466 0%, #935958 55%, #854c4e 100%);
   padding: 20px 22px 40px;
   transform: translateY(-12px);
   transition: transform 0.28s ease;
@@ -1067,7 +1216,7 @@ img {
   height: 60px;
   border: none;
   border-radius: 6px;
-  background: #4a3230;
+  background: #2c1a1a;
   color: #f0e4d6;
   font-size: 30px;
   display: flex;
@@ -1136,7 +1285,7 @@ img {
   gap: 8px;
   padding: 16px 10px;
   border-radius: 30px;
-  background: linear-gradient(180deg, #c3ac74, #ab9257);
+  background: linear-gradient(180deg, #bfa670, #a08a52);
   color: #fff;
   font-family: var(--font-serif-jp), serif;
   font-size: 16px;
@@ -1168,7 +1317,7 @@ img {
   text-align: center;
 }
 .menu-social .litlink {
-  background: linear-gradient(160deg, #8f7be0, #6f5bd0);
+  background: linear-gradient(160deg, #adadf7, #8888ee);
   font-family: var(--font-serif-en), serif;
   font-style: italic;
   font-size: 18px;
@@ -1188,7 +1337,7 @@ img {
   font-size: 26px;
 }
 .menu-social .sns02 {
-  background: linear-gradient(160deg, #4fc6d6, #37abbd);
+  background: linear-gradient(160deg, #63cad9, #40b1c2);
   font-family: var(--font-serif-en), serif;
 }
 .menu-social .sns02 .n {
