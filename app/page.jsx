@@ -195,15 +195,6 @@ export default function Home() {
           />
         </header>
 
-        {/* ---------- OPERATING HOURS BAR ---------- */}
-        <div className="hoursbar">
-          <span className="hb-label">営業時間</span>
-          <span className="hb-val">10:00〜翌5:00</span>
-          <span className="hb-sep">／</span>
-          <span className="hb-label">電話受付</span>
-          <span className="hb-val">9:30〜翌4:00</span>
-        </div>
-
         {/* ---------- NAV GRID ---------- */}
         <nav className="navgrid">
           {NAV.map((n) => (
