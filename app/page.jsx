@@ -17,7 +17,7 @@ const NAV = [
 
 const CAMPAIGNS = [
   { t: "東京No.1\n美女軍団", bg: "linear-gradient(135deg,#7d1f38,#b83a5c)" },
-  { t: "DIAMOND\nJewels", bg: "linear-gradient(135deg,#8a6f3a,#c2a35e)" },
+  { t: "AROMA\nDAIAMOND", bg: "linear-gradient(135deg,#8a6f3a,#c2a35e)" },
   { t: "ご新規様\nご案内", bg: "linear-gradient(135deg,#4b3f3a,#6f5b48)" },
   { t: "2000円\nOFF", bg: "linear-gradient(135deg,#a2864f,#c9b17b)" },
   { t: "オール\nナイト割", bg: "linear-gradient(135deg,#8f4a52,#c06a72)" },
@@ -186,7 +186,7 @@ export default function Home() {
         {/* ---------- HEADER ---------- */}
         <header className="hero-header">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="hero-img" src="hero-banner.jpg" alt="men's esthetic DIAMOND Jewels ダイヤモンドジュエルズ KAMEIDO / 亀戸" />
+          <img className="hero-img" src="hero-banner.jpg" alt="men's esthetic AROMA DAIAMOND アロマ ダイアモンド KAMEIDO / 亀戸" />
           {/* transparent clickable area over the drawn hamburger icon */}
           <button
             className="hamburger hamburger-overlay"
@@ -242,8 +242,8 @@ export default function Home() {
           <div className="collage-lane" />
           <div className="collage-copy">宝石のように美しいセラピスト達</div>
           <div className="collage-logo">
-            <div className="cl-en">DIAMOND Jewels</div>
-            <div className="cl-jp">ダイヤモンドジュエルズ</div>
+            <div className="cl-en">AROMA DAIAMOND</div>
+            <div className="cl-jp">アロマ ダイアモンド</div>
             <div className="cl-tag">極上の癒しと刺激の空間</div>
           </div>
         </section>
@@ -359,9 +359,9 @@ export default function Home() {
             <div className="menu-logo">
               <div className="ml-sub">men&apos;s esthetic</div>
               <div className="ml-en">
-                <span className="gold">D</span>IAMOND <span className="gold">J</span>ewels
+                <span className="gold">A</span>ROMA <span className="gold">D</span>AIAMOND
               </div>
-              <div className="ml-jp">ダイヤモンドジュエルズ</div>
+              <div className="ml-jp">アロマ ダイアモンド</div>
             </div>
 
             <div className="menu-list">

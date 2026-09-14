@@ -1,9 +1,9 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "DIAMOND Jewels｜ダイヤモンドジュエルズ｜亀戸 メンズエステ",
+  title: "AROMA DAIAMOND｜アロマ ダイアモンド｜亀戸 メンズエステ",
   description:
-    "宝石のように美しいセラピスト達。極上の癒しと刺激の空間 men's esthetic DIAMOND Jewels（ダイヤモンドジュエルズ）亀戸。",
+    "宝石のように美しいセラピスト達。極上の癒しと刺激の空間 men's esthetic AROMA DAIAMOND（アロマ ダイアモンド）亀戸。",
 };
 
 export const viewport = {
