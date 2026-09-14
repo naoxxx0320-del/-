@@ -32,6 +32,27 @@ npm run dev     # http://localhost:3000
 npm run build   # 本番ビルド
 ```
 
+## GitHub Pages 公開
+
+`main` ブランチへの push で、GitHub Actions が静的書き出し（`out/`）を
+GitHub Pages へ自動デプロイします（`.github/workflows/deploy.yml`）。
+
+- 公開URL: **https://naoxxx0320-del.github.io/-/**
+- 手動実行: リポジトリの **Actions** タブ → 「Deploy to GitHub Pages」→ Run workflow
+- 初回は Actions が Pages を自動で有効化します（Source は「GitHub Actions」）。
+  自動有効化されない場合は **Settings → Pages → Build and deployment → Source = GitHub Actions** を選択。
+
+> リポジトリ名が `-` のため、公開は URL サブパス `/-/` 配下になります。
+> `next.config.mjs` は CI（`GITHUB_PAGES=true`）でのみ `basePath` を付与するため、
+> ローカルの `npm run dev` はそのままルートで動作します。
+
+ローカルで公開版と同じ静的出力を確認する場合:
+
+```bash
+GITHUB_PAGES=true npm run build   # ./out に生成
+npx serve out                     # 例: 簡易サーバーで確認
+```
+
 ## 今後
 
 トップ以外のページ（出勤情報・セラピスト・料金システム・アクセス・外国人の方へ・各求人）、
