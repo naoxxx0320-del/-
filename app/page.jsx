@@ -33,22 +33,27 @@ const SLIDES = [
 ];
 
 // 只今の案内状況（エリア別 在籍・受付状況ボード）
-const GUIDE_UPDATED = "22:26";
-const GUIDE_DATE = "2026/9/14";
+const GUIDE_UPDATED = "12:13";
+const GUIDE_DATE = "2026/9/15";
 const GUIDE = [
   {
     area: "亀戸",
     list: [
-      { name: "七星", st: "満" },
-      { name: "うさ", st: "満" },
-      { name: "ひなの", st: "空" },
-      { name: "りの", st: "満" },
-      { name: "まりん", st: "空" },
-      { name: "あんな", st: "満" },
-      { name: "みるく", st: "満" },
-      { name: "ここあ", st: "空" },
-      { name: "ゆい", st: "満" },
-      { name: "せな", st: "受付" },
+      { name: "久遠 えま", time: "15:30" },
+      { name: "四葉 まや", time: "19:00" },
+      { name: "音羽 みみ", time: "15:00" },
+      { name: "心 かのん", time: "22:30" },
+      { name: "白雪 おと", time: "13:00" },
+      { name: "華宮 れいら", time: "20:00" },
+      { name: "愛媛 なのか", time: "16:00" },
+      { name: "音坂 みあ", time: "22:00" },
+      { name: "小湊 えみか", time: "16:00" },
+      { name: "神崎 りりな", time: "21:00" },
+      { name: "月森 りん", time: "17:30" },
+      { name: "星野 ひな", time: "18:00" },
+      { name: "藤川 あい", time: "14:00" },
+      { name: "水無月 さら", time: "23:00" },
+      { name: "桜庭 みく", time: "19:30" },
     ],
   },
 ];
@@ -282,24 +287,24 @@ export default function Home() {
           <div className="corner br" />
           <div className="guide-date">{GUIDE_DATE}</div>
           <h2 className="guide-title">
-            只今の案内状況
-            <small>（更新 {GUIDE_UPDATED}）</small>
+            只今の案内状況<small>（更新{GUIDE_UPDATED}）</small>
           </h2>
-          {GUIDE.map((g, i) => (
-            <div className="guide-block" key={i}>
-              <div className="guide-area">{g.area}</div>
-              <ul className="guide-list">
-                {g.list.map((t, j) => (
-                  <li key={j}>
-                    <span className={`gst ${t.st === "満" ? "full" : t.st === "空" ? "open" : "wait"}`}>
-                      {t.st}
-                    </span>
-                    <span className="gname">{t.name}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <div className="guide-scroll">
+            {GUIDE.map((g, i) => (
+              <div className="guide-block" key={i}>
+                <div className="guide-area">{g.area}</div>
+                <ul className="guide-list">
+                  {g.list.map((t, j) => (
+                    <li key={j}>
+                      <span className="gheart" aria-hidden="true">💖</span>
+                      <span className="gname">{t.name}</span>
+                      <span className="gtime">{t.time}〜</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </section>
 
         {/* ---------- SECTION BAND ---------- */}
