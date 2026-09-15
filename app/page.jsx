@@ -472,12 +472,7 @@ export default function Home() {
             </a>
           ))}
         </nav>
-        <div
-          className="site-copy"
-          style={{
-            background: "#efe7d6 url(bg-marble.jpg) center / cover no-repeat",
-          }}
-        >
+        <div className="site-copy">
           <p className="sc-line">
             亀戸メンズエステ{" "}
             <span className="sc-brand">
