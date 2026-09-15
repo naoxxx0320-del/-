@@ -339,6 +339,25 @@ export default function Home() {
           ＞ 出勤セラピストを全て見る ＜
         </a>
 
+        {/* ---------- CONCEPT ---------- */}
+        <div className="section-head">
+          <div className="sh-en">Concept</div>
+          <div className="sh-jp">コンセプト</div>
+        </div>
+        <section className="concept">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="concept-img" src="concept.jpg" alt="コンセプト" />
+          <h3 className="concept-h">
+            極上の癒やしと
+            <br />
+            刺激の空間
+          </h3>
+          <p className="concept-p">
+            当店は亀戸エリアに展開する、日々のストレスや疲れを感じている大人のために創られた、高級メンズエステサロンです。
+            「とにかく綺麗な日本人セラピストに癒やされたい」「たまには女性に甘えてみたい」——
+            そんな願いに寄り添い、上質な空間と確かな技術で、日常を忘れる極上のひとときをお届けいたします。
+          </p>
+        </section>
 
         {/* ---------- FIXED FOOTER ---------- */}
         <button
