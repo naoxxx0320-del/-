@@ -111,7 +111,7 @@ img {
     linear-gradient(180deg, #f6f1e9 0%, #efe8dc 40%, #f3ecdf 100%);
   box-shadow: 0 0 60px rgba(50, 34, 24, 0.25);
   overflow-x: hidden;
-  padding-bottom: 150px; /* room for fixed footer bar + breathing gap */
+  padding-bottom: 84px; /* room for fixed footer bar only */
 }
 
 /* real marble background is applied to .device (inline style / data URI) */
@@ -1489,7 +1489,7 @@ img {
 }
 
 .site-copy {
-  padding: 40px 24px 46px;
+  padding: 38px 24px 26px;
   text-align: center;
 }
 .site-copy .sc-line {
