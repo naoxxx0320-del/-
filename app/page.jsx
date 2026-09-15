@@ -15,13 +15,18 @@ const NAV = [
   { jp: "セラピスト求人", en: "Recruit" },
 ];
 
-const CAMPAIGNS = [
+// Hero slides — the small thumbnails below switch the big image.
+// `img` uses a real banner; slides without `img` render a styled placeholder.
+const SLIDES = [
+  {
+    t: "新規・新人\n特別割引",
+    img: "promo-2000off.jpg",
+    alt: "新規・新人特別割引 2000円OFF｜Aroma DIAMOND アロマダイヤモンド",
+  },
   { t: "東京No.1\n美女軍団", bg: "linear-gradient(135deg,#7d1f38,#b83a5c)" },
   { t: "AROMA\nDAIAMOND", bg: "linear-gradient(135deg,#8a6f3a,#c2a35e)" },
   { t: "ご新規様\nご案内", bg: "linear-gradient(135deg,#4b3f3a,#6f5b48)" },
-  { t: "2000円\nOFF", bg: "linear-gradient(135deg,#a2864f,#c9b17b)" },
   { t: "オール\nナイト割", bg: "linear-gradient(135deg,#8f4a52,#c06a72)" },
-  { t: "新規割\n2000円OFF", bg: "linear-gradient(135deg,#5e161c,#a2323a)" },
   { t: "早割\n2000円OFF", bg: "linear-gradient(135deg,#6f5b48,#a2864f)" },
   { t: "Confident\n自信", bg: "linear-gradient(135deg,#7d2b34,#b5555f)" },
   { t: "32分\n無料", bg: "linear-gradient(135deg,#8a6f3a,#c2a35e)" },
@@ -174,6 +179,7 @@ function TherapistCard({ t }) {
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeSlide, setActiveSlide] = useState(0);
 
   useEffect(() => {
     document.body.classList.toggle("menu-open", menuOpen);
@@ -211,48 +217,56 @@ export default function Home() {
           ))}
         </nav>
 
-        {/* ---------- HERO COLLAGE ---------- */}
-        <section className="collage">
-          <div className="collage-facets">
-            <i style={{ inset: "0 55% 60% 0", clipPath: "polygon(0 0,100% 0,0 100%)" }} />
-            <i style={{ inset: "50% 0 0 60%", clipPath: "polygon(100% 0,100% 100%,0 100%)" }} />
-          </div>
-          {/* decorative photo tiles — left & right columns, center lane kept clear */}
-          <div className="tile" style={{ left: "3%", top: "6%", width: "26%", height: "42%", background: "linear-gradient(160deg,#d8c6a8,#b79b6f)" }} />
-          <div className="tile" style={{ left: "3%", top: "52%", width: "26%", height: "42%", background: "linear-gradient(160deg,#e4d6bd,#c2ab84)" }} />
-          <div className="tile" style={{ left: "31%", top: "3%", width: "17%", height: "30%", background: "linear-gradient(160deg,#cbb894,#a98d63)" }} />
-          <div className="tile" style={{ left: "31%", top: "67%", width: "17%", height: "30%", background: "linear-gradient(160deg,#d8c6a8,#b79b6f)" }} />
-          <div className="tile" style={{ right: "3%", top: "6%", width: "24%", height: "42%", background: "linear-gradient(160deg,#e4d6bd,#c2ab84)" }} />
-          <div className="tile" style={{ right: "3%", top: "52%", width: "24%", height: "42%", background: "linear-gradient(160deg,#cbb894,#a98d63)" }} />
-          <div className="tile" style={{ right: "29%", top: "62%", width: "16%", height: "32%", background: "linear-gradient(160deg,#cbb894,#a98d63)" }} />
-
-          <div className="heart-emo" style={{ left: "6%", top: "22%", background: "#ef8ea1" }}>
-            <span style={{ transform: "rotate(45deg)" }}>AJ</span>
-          </div>
-          <div className="heart-emo" style={{ right: "8%", top: "20%", background: "#7d2b2f" }}>
-            <span style={{ transform: "rotate(45deg)" }}>◆</span>
-          </div>
-          <div className="diamond-emo" style={{ right: "24%", top: "10%" }}>◆</div>
-          <div className="diamond-emo" style={{ left: "22%", bottom: "12%" }}>♦</div>
-
-          {/* legibility lane for vertical copy */}
-          <div className="collage-lane" />
-          <div className="collage-copy">宝石のように美しいセラピスト達</div>
-          <div className="collage-logo">
-            <div className="cl-en">AROMA DAIAMOND</div>
-            <div className="cl-jp">アロマ ダイアモンド</div>
-            <div className="cl-tag">極上の癒しと刺激の空間</div>
-          </div>
+        {/* ---------- HERO MAIN (switchable) ---------- */}
+        <section className="hero-main">
+          {SLIDES.map((s, i) =>
+            s.img ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={i}
+                className={`hm-slide ${i === activeSlide ? "on" : ""}`}
+                src={s.img}
+                alt={s.alt || s.t.replace("\n", " ")}
+              />
+            ) : (
+              <div
+                key={i}
+                className={`hm-slide hm-ph ${i === activeSlide ? "on" : ""}`}
+                style={{ background: s.bg }}
+              >
+                <div className="hm-ph-txt">
+                  {s.t.split("\n").map((line, j) => (
+                    <div key={j}>{line}</div>
+                  ))}
+                </div>
+              </div>
+            )
+          )}
         </section>
 
-        {/* ---------- CAMPAIGN STRIP ---------- */}
+        {/* ---------- THUMBNAILS (click to switch main image) ---------- */}
         <div className="campaign">
-          {CAMPAIGNS.map((c, i) => (
-            <div className="camp" key={i} style={{ background: c.bg }}>
-              {c.t.split("\n").map((line, j) => (
-                <div key={j}>{line}</div>
-              ))}
-            </div>
+          {SLIDES.map((s, i) => (
+            <button
+              type="button"
+              key={i}
+              className={`camp ${i === activeSlide ? "active" : ""}`}
+              onClick={() => setActiveSlide(i)}
+              aria-label={s.t.replace("\n", " ")}
+              aria-pressed={i === activeSlide}
+              style={
+                s.img
+                  ? {
+                      backgroundImage: `url(${s.img})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }
+                  : { background: s.bg }
+              }
+            >
+              {!s.img &&
+                s.t.split("\n").map((line, j) => <div key={j}>{line}</div>)}
+            </button>
           ))}
         </div>
 
