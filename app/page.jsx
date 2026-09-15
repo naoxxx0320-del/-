@@ -486,8 +486,14 @@ export default function Home() {
             </span>
           </p>
           <p className="sc-copy">All rights reserved.</p>
-          <Link className="secret-entry" href="/secret/">
-            <span className="se-lock" aria-hidden="true">🔒</span>秘密の空間
+          <Link className="secret-entry" href="/secret/" aria-label="SECRET SPACE 秘密の空間">
+            <span className="se-dia" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="30" height="30">
+                <path d="M4.5 9 L12 2.5 L19.5 9 L12 21.5 Z" fill="none" stroke="#c8a659" strokeWidth="1.1" strokeLinejoin="round" />
+                <path d="M4.5 9 H19.5 M9 9 L12 21.5 M15 9 L12 21.5 M9 9 L12 2.5 M15 9 L12 2.5" fill="none" stroke="#c8a659" strokeWidth="0.8" />
+              </svg>
+            </span>
+            <span className="se-txt">SECRET SPACE</span>
           </Link>
         </div>
 

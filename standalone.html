@@ -231,8 +231,10 @@ img { max-width: 100%; display: block; }
 .menu-tel { text-align: center; color: #fbeede; }
 .menu-tel .mt-num { font-family: var(--font-serif-en), serif; font-size: 40px; letter-spacing: .01em; text-shadow: 0 2px 5px rgba(0,0,0,.2); }
 .menu-tel .mt-hours { font-family: var(--font-serif-jp), serif; font-size: 12.5px; letter-spacing: .02em; margin-top: 6px; color: #f3e3d2; }
-.secret-entry { display: inline-flex; align-items: center; gap: 8px; margin-top: 22px; padding: 11px 30px; border-radius: 999px; background: linear-gradient(180deg,#34201f,#1c1010); border: 1px solid #caa763; color: #edd39b; font-family: var(--font-serif-jp), serif; font-size: 14px; letter-spacing: .16em; text-decoration: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
-.secret-entry .se-lock { font-size: 13px; }
+.secret-entry { position: relative; display: flex; align-items: center; justify-content: center; gap: 14px; width: min(360px,100%); margin: 26px auto 4px; padding: 17px 18px; border-radius: 10px; background: linear-gradient(180deg,#fdfaf3,#f3ebdb); border: 2px solid #c8a659; box-shadow: 0 4px 14px rgba(120,90,40,.18), inset 0 0 0 1px rgba(200,166,89,.35); text-decoration: none; cursor: pointer; }
+.secret-entry .se-dia svg { display: block; }
+.secret-entry .se-txt { font-family: var(--font-serif-en), serif; font-weight: 600; font-size: 24px; letter-spacing: .14em; white-space: nowrap; color: #2e2620; }
+.secret-entry::after { content: ""; position: absolute; top: 0; left: 0; width: 2px; height: 2px; border-radius: 50%; background: transparent; box-shadow: 40px 20px 0 -0.5px #e3c793, 54px 30px 0 -1px #eadcae, 30px 50px 0 -0.5px #dcbd7e, 250px 24px 0 -0.5px #dcbd7e, 268px 34px 0 -1px #eadcae, 284px 18px 0 -0.5px #e3c793, 258px 52px 0 -0.5px #e3c793; pointer-events: none; }
 .secret-overlay { position: fixed; inset: 0; z-index: 60; overflow-y: auto; display: none; background: rgba(20,10,10,.55); }
 .secret-overlay.open { display: block; }
 .secret-close { position: absolute; top: 14px; right: 14px; z-index: 3; width: 46px; height: 46px; border: none; border-radius: 8px; background: #2c1a1a; color: #f0e4d6; font-size: 22px; cursor: pointer; }
@@ -471,7 +473,7 @@ body.menu-open { overflow: hidden; }
     <div class="site-copy">
       <p class="sc-line">亀戸メンズエステ <span class="sc-brand">AROMA DAIAMOND（アロマ ダイアモンド）</span></p>
       <p class="sc-copy">All rights reserved.</p>
-      <button class="secret-entry" onclick="openSecret()"><span class="se-lock">🔒</span>秘密の空間</button>
+      <button class="secret-entry" onclick="openSecret()" aria-label="SECRET SPACE 秘密の空間"><span class="se-dia"><svg viewBox="0 0 24 24" width="30" height="30"><path d="M4.5 9 L12 2.5 L19.5 9 L12 21.5 Z" fill="none" stroke="#c8a659" stroke-width="1.1" stroke-linejoin="round"></path><path d="M4.5 9 H19.5 M9 9 L12 21.5 M15 9 L12 21.5 M9 9 L12 2.5 M15 9 L12 2.5" fill="none" stroke="#c8a659" stroke-width="0.8"></path></svg></span><span class="se-txt">SECRET SPACE</span></button>
     </div>
     <button class="scrolltop" aria-label="ページ上部へ" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8963;</button>
     <div class="footerbar">
