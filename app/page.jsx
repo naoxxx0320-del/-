@@ -15,6 +15,27 @@ const NAV = [
   { jp: "セラピスト求人", en: "Recruit" },
 ];
 
+// Full drawer menu (En + 日本語 rows), mirroring the reference site.
+const MENU = [
+  { en: "Top", jp: "トップ" },
+  { en: "Schedule", jp: "出勤情報" },
+  { en: "Therapist", jp: "セラピスト" },
+  { en: "System", jp: "料金システム" },
+  { en: "Access", jp: "アクセス" },
+  { en: "Foreigner", jp: "外国人の方へ" },
+  { en: "Recruit", jp: "スタッフ求人" },
+  { en: "Recruit", jp: "セラピスト求人" },
+  { en: "Flow", jp: "ご利用の流れ" },
+  { en: "Q & A", jp: "よくある質問" },
+  { en: "Column", jp: "メンズエステコラム" },
+  { en: "Terms", jp: "ご利用規約" },
+  { en: "Privacy", jp: "プライバシーポリシー" },
+  { en: "Estate", jp: "賃貸物件情報募集" },
+  { en: "Link", jp: "リンク集" },
+  { en: "Review", jp: "ご意見フォーム" },
+  { en: "Contact", jp: "お問い合わせ" },
+];
+
 // Hero slides — the small thumbnails below switch the big image.
 // `img` uses a real banner; slides without `img` render a styled placeholder.
 const SLIDES = [
@@ -505,14 +526,12 @@ export default function Home() {
             </div>
 
             <div className="menu-list">
-              <a href="#">トップ</a>
-              <a href="#">アクセス</a>
-              <a href="#">出勤情報</a>
-              <a href="#">外国人の方へ</a>
-              <a href="#">セラピスト</a>
-              <a href="#">スタッフ求人</a>
-              <a href="#">料金システム</a>
-              <a href="#">セラピスト求人</a>
+              {MENU.map((m, i) => (
+                <a className="menu-row" href="#" key={i}>
+                  <span className="mr-en">{m.en}</span>
+                  <span className="mr-jp">{m.jp}</span>
+                </a>
+              ))}
             </div>
 
             <div className="menu-pay">
@@ -543,6 +562,22 @@ export default function Home() {
               <div className="mt-hours">
                 [営業時間]10:00〜翌5:00 [電話受付]9:30〜翌4:00
               </div>
+            </div>
+
+            <div
+              className="menu-foot"
+              style={{
+                background:
+                  "#efe7d6 url(bg-marble.jpg) center / cover no-repeat",
+              }}
+            >
+              <p className="mf-line">
+                亀戸メンズエステ{" "}
+                <span className="mf-brand">
+                  AROMA DAIAMOND（アロマ ダイアモンド）
+                </span>
+              </p>
+              <p className="mf-copy">All rights reserved.</p>
             </div>
           </div>
         </div>
