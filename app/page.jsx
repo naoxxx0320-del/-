@@ -359,6 +359,24 @@ export default function Home() {
           </p>
         </section>
 
+        {/* ---------- THERAPIST ---------- */}
+        <div className="section-head">
+          <div className="sh-en">Therapist</div>
+          <div className="sh-jp">セラピスト</div>
+        </div>
+        <section className="concept">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="concept-img" src="therapist-intro.jpg" alt="セラピスト" />
+          <h3 className="concept-h">容姿端麗で確かな技術</h3>
+          <p className="concept-p">
+            当店には、モデルやアイドルを思わせる華やかな女性から、清楚で可憐な学生、
+            知的で色香ただようお姉様系まで、幅広いタイプのセラピストが在籍しています。
+            きっと、あなた好みのひとりが見つかるはずです。
+            デビュー前には技術・接客の研修を丁寧に重ね、確かな技術と心づかいで、
+            お客様を極上のひとときへとお連れいたします。
+          </p>
+        </section>
+
         {/* ---------- FIXED FOOTER ---------- */}
         <button
           className="scrolltop"
