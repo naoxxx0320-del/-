@@ -735,11 +735,33 @@ img {
 /* =========================================================
    SECTION BAND
    ========================================================= */
-.band {
+.section-head {
   position: relative;
   z-index: 2;
-  margin-top: 22px;
-  height: 60px;
+  margin-top: 24px;
+  padding: 4px 14px 14px;
+  text-align: center;
+  border-bottom: 1px solid rgba(160, 134, 79, 0.55);
+}
+.section-head .sh-en {
+  font-family: var(--font-serif-en), serif;
+  font-size: 34px;
+  letter-spacing: 0.04em;
+  color: var(--gold-deep);
+  line-height: 1.1;
+}
+.section-head .sh-jp {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 15px;
+  letter-spacing: 0.22em;
+  color: var(--brown);
+  margin-top: 4px;
+}
+.area-band {
+  position: relative;
+  z-index: 2;
+  margin-top: 16px;
+  height: 62px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -748,17 +770,15 @@ img {
   color: #fff;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
 }
-.band .dia {
-  font-size: 22px;
-  color: #fff;
+.area-band .ab-dia {
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.2));
 }
-.band .band-en {
-  font-family: var(--font-serif-en), serif;
-  font-style: italic;
-  letter-spacing: 0.18em;
-  font-size: 15px;
-  opacity: 0.85;
+.area-band .ab-name {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 26px;
+  letter-spacing: 0.12em;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 /* =========================================================

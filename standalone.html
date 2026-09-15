@@ -123,9 +123,12 @@ img { max-width: 100%; display: block; }
 .gname { font-family: var(--font-serif-jp), serif; font-size: 16px; color: var(--ink); letter-spacing: .02em; min-width: 6.8em; }
 .gtime { font-family: var(--font-serif-jp), serif; font-size: 16px; color: var(--ink); letter-spacing: .02em; }
 /* BAND */
-.band { position: relative; z-index: 2; margin-top: 22px; height: 60px; display: flex; align-items: center; justify-content: center; gap: 12px; background: linear-gradient(180deg, #ab9569 0%, #8f7c52 100%); color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }
-.band .dia { font-size: 22px; color: #fff; filter: drop-shadow(0 1px 1px rgba(0,0,0,.2)); }
-.band .band-en { font-family: var(--font-serif-en), serif; font-style: italic; letter-spacing: .18em; font-size: 15px; opacity: .85; }
+.section-head { position: relative; z-index: 2; margin-top: 24px; padding: 4px 14px 14px; text-align: center; border-bottom: 1px solid rgba(160,134,79,.55); }
+.section-head .sh-en { font-family: var(--font-serif-en), serif; font-size: 34px; letter-spacing: .04em; color: var(--gold-deep); line-height: 1.1; }
+.section-head .sh-jp { font-family: var(--font-serif-jp), serif; font-size: 15px; letter-spacing: .22em; color: var(--brown); margin-top: 4px; }
+.area-band { position: relative; z-index: 2; margin-top: 16px; height: 62px; display: flex; align-items: center; justify-content: center; gap: 12px; background: linear-gradient(180deg, #ab9569 0%, #8f7c52 100%); color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }
+.area-band .ab-dia { filter: drop-shadow(0 1px 1px rgba(0,0,0,.2)); }
+.area-band .ab-name { font-family: var(--font-serif-jp), serif; font-size: 26px; letter-spacing: .12em; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.25); }
 /* THERAPISTS */
 .therapists { position: relative; z-index: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 16px 12px; padding: 18px 14px 8px; }
 .tcard { background: #fff; border: 1px solid var(--gold-line); border-radius: 2px; overflow: hidden; box-shadow: 0 3px 10px rgba(120,96,60,.14); display: flex; flex-direction: column; }
@@ -292,7 +295,17 @@ body.menu-open { overflow: hidden; }
     </section>
 
     <!-- BAND -->
-    <div class="band"><span class="dia">&#9670;</span><span class="band-en">Today's Therapist</span><span class="dia">&#9670;</span></div>
+    <div class="section-head">
+      <div class="sh-en">Today's Therapist</div>
+      <div class="sh-jp">本日の出勤</div>
+    </div>
+    <div class="area-band">
+      <svg class="ab-dia" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+        <path d="M4.5 9 L12 2.5 L19.5 9 L12 21.5 Z" fill="none" stroke="#fff" stroke-width="1.2" stroke-linejoin="round" />
+        <path d="M4.5 9 H19.5 M9 9 L12 21.5 M15 9 L12 21.5 M9 9 L12 2.5 M15 9 L12 2.5" fill="none" stroke="#fff" stroke-width="0.9" />
+      </svg>
+      <span class="ab-name">亀戸</span>
+    </div>
 
     <!-- THERAPISTS -->
     <section class="therapists">
