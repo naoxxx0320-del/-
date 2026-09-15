@@ -398,6 +398,50 @@ export default function Home() {
           </p>
         </section>
 
+        {/* ---------- RESERVATION ---------- */}
+        <div className="section-head">
+          <div className="sh-en">Reservation</div>
+          <div className="sh-jp">ご予約</div>
+        </div>
+        <section className="reserve">
+          <p className="concept-p reserve-lead">
+            ご希望の日時・コース・セラピストをお申し付けください。
+            ご予約は、お電話・WEB予約・公式LINEにて承っております。
+            ご予約の可否、ご予約可能な場合はご案内サロンとご利用料金をお伝えいたします。
+          </p>
+          <a className="rz-tel" href="tel:05054449830">
+            <span className="rz-ic" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="40" height="40" fill="#edd39b">
+                <path d="M6.6 10.9c1.4 2.8 3.7 5.1 6.5 6.5l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.5.6.6 0 1 .5 1 1v3.5c0 .6-.4 1-1 1C10.4 21.6 2.4 13.6 2.4 3.6c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.5.1.3 0 .7-.2 1l-2.7 2.7z" />
+              </svg>
+            </span>
+            <span className="rz-tel-txt">
+              <b>お電話予約</b>
+              <span className="num">050-5444-9830</span>
+            </span>
+          </a>
+          <div className="rz-row">
+            <a className="rz-btn" href="#">
+              <span className="rz-ic" aria-hidden="true">
+                <svg viewBox="0 0 32 32" width="26" height="26" fill="none" stroke="#edd39b" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round">
+                  <rect x="3.5" y="6" width="25" height="16" rx="2" />
+                  <path d="M12 26 H20 M16 22 V26" />
+                </svg>
+              </span>
+              <span>WEB予約</span>
+            </a>
+            <a className="rz-btn" href="#">
+              <span className="rz-ic" aria-hidden="true">
+                <svg viewBox="0 0 32 32" width="28" height="28">
+                  <rect x="2" y="3" width="28" height="26" rx="8" fill="#06c755" />
+                  <path d="M16 8.4c-4.7 0-8.5 3-8.5 6.6 0 3.2 3 5.9 7 6.5.27.06.64.18.73.42.08.2.05.52.03.73l-.11.68c-.03.2-.16.8.72.44.88-.36 4.76-2.8 6.5-4.8C22.6 24.6 24.5 22 24.5 15c0-3.6-3.8-6.6-8.5-6.6z" fill="#fff" />
+                </svg>
+              </span>
+              <span>LINE予約</span>
+            </a>
+          </div>
+        </section>
+
         {/* ---------- FIXED FOOTER ---------- */}
         <button
           className="scrolltop"
