@@ -23,7 +23,7 @@ const OPTIONS = [
   { name: "パウダーマッサージ", price: "1,500" },
   { name: "スペシャルトリートメント", price: "3,000" },
   { name: "コスチュームチェンジ", price: "2,000" },
-  { name: "延長15分", price: "8,000" },
+  { name: "延長15分", price: "15,000" },
 ];
 
 const PASSWORD = "0426";
