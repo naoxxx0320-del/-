@@ -1114,6 +1114,76 @@ img {
 }
 
 /* =========================================================
+   RESERVATION
+   ========================================================= */
+.reserve {
+  position: relative;
+  z-index: 2;
+  padding: 6px 18px 10px;
+}
+.reserve-lead {
+  margin-bottom: 18px;
+}
+.rz-tel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: linear-gradient(180deg, #a8274d, #911f3f);
+  border: 2px solid #d8b877;
+  border-radius: 8px;
+  padding: 16px;
+  color: #edd39b;
+  box-shadow: 0 4px 12px rgba(60, 20, 30, 0.2);
+  margin-bottom: 12px;
+}
+.rz-tel .rz-ic {
+  display: flex;
+  align-items: center;
+}
+.rz-tel-txt {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.05;
+}
+.rz-tel-txt b {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 18px;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+}
+.rz-tel-txt .num {
+  font-family: var(--font-serif-en), serif;
+  font-size: 33px;
+  letter-spacing: 0.01em;
+}
+.rz-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.rz-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(180deg, #a8274d, #911f3f);
+  border: 2px solid #d8b877;
+  border-radius: 8px;
+  padding: 14px;
+  color: #edd39b;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 17px;
+  letter-spacing: 0.1em;
+  box-shadow: 0 3px 8px rgba(60, 20, 30, 0.18);
+}
+.rz-btn .rz-ic {
+  display: flex;
+  align-items: center;
+}
+
+/* =========================================================
    FIXED FOOTER BAR
    ========================================================= */
 .footerbar {
