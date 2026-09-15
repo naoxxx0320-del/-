@@ -790,7 +790,7 @@ img {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px 12px;
-  padding: 18px 14px 8px;
+  padding: 18px 14px 28px;
 }
 
 .tcard {
