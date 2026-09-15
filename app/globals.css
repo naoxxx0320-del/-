@@ -111,7 +111,7 @@ img {
     linear-gradient(180deg, #f6f1e9 0%, #efe8dc 40%, #f3ecdf 100%);
   box-shadow: 0 0 60px rgba(50, 34, 24, 0.25);
   overflow-x: hidden;
-  padding-bottom: 120px; /* room for fixed footer bar */
+  padding-bottom: 150px; /* room for fixed footer bar + breathing gap */
 }
 
 /* real marble background is applied to .device (inline style / data URI) */
@@ -1067,7 +1067,7 @@ img {
 .more {
   position: relative;
   z-index: 2;
-  margin: 14px 14px 0;
+  margin: 14px 14px 24px;
   text-align: center;
   padding: 14px;
   border: 1px solid var(--gold-line);
