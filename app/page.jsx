@@ -233,13 +233,18 @@ export default function Home() {
         <header className="hero-header">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img className="hero-img" src="hero-banner.jpg" alt="men's esthetic AROMA DAIAMOND アロマ ダイアモンド KAMEIDO / 亀戸" />
-          {/* transparent clickable area over the drawn hamburger icon */}
-          <button
-            className="hamburger hamburger-overlay"
-            aria-label="メニューを開く"
-            onClick={() => setMenuOpen(true)}
-          />
         </header>
+
+        {/* fixed hamburger — stays pinned top-right while scrolling */}
+        <button
+          className="hamburger-fixed"
+          aria-label="メニューを開く"
+          onClick={() => setMenuOpen(true)}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
 
         {/* ---------- NAV GRID ---------- */}
         <nav className="navgrid">
