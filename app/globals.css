@@ -653,85 +653,83 @@ img {
 
 /* 案内状況 board */
 .guide-date {
-  text-align: right;
+  text-align: left;
   font-family: var(--font-serif-en), serif;
-  font-size: 12px;
-  color: var(--gold-deep);
+  font-size: 13px;
+  color: var(--brown-2);
   letter-spacing: 0.04em;
-  margin-bottom: 2px;
+  margin-bottom: 6px;
 }
 .guide-title {
-  text-align: center;
+  text-align: left;
   font-family: var(--font-serif-jp), serif;
-  font-size: 16px;
-  color: var(--brown);
-  letter-spacing: 0.1em;
-  margin: 2px 0 14px;
+  font-size: 18px;
+  color: var(--ink);
+  letter-spacing: 0.03em;
+  margin: 0 0 12px;
   font-weight: 600;
 }
 .guide-title small {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--brown-2);
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
   font-weight: 400;
 }
+/* scrollable list area */
+.guide-scroll {
+  max-height: 300px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 4px;
+}
+.guide-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.guide-scroll::-webkit-scrollbar-thumb {
+  background: rgba(180, 154, 99, 0.5);
+  border-radius: 3px;
+}
 .guide-block {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 .guide-area {
   font-family: var(--font-serif-jp), serif;
-  font-size: 14px;
-  color: var(--gold-deep);
-  letter-spacing: 0.14em;
-  text-align: center;
-  padding: 3px 0;
-  margin-bottom: 8px;
-  border-top: 1px solid rgba(180, 154, 99, 0.4);
-  border-bottom: 1px solid rgba(180, 154, 99, 0.4);
-  background: linear-gradient(180deg, rgba(199, 173, 120, 0.12), rgba(199, 173, 120, 0.03));
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+  text-align: left;
+  padding: 2px 0 6px;
+  margin-bottom: 2px;
 }
 .guide-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px 10px;
 }
 .guide-list li {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 3px 0;
-  border-bottom: 1px dotted rgba(150, 120, 80, 0.3);
+  gap: 8px;
+  padding: 6px 2px;
 }
-.gst {
+.gheart {
   flex: 0 0 auto;
-  width: 26px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-serif-jp), serif;
-  font-size: 12px;
-  color: #fff;
-  border-radius: 2px;
-}
-.gst.full {
-  background: linear-gradient(180deg, #c72b45, #a8203a);
-}
-.gst.open {
-  background: linear-gradient(180deg, #4f9d68, #3c854f);
-}
-.gst.wait {
-  background: linear-gradient(180deg, #b79148, #9c7a37);
-  font-size: 10px;
+  font-size: 18px;
+  line-height: 1;
 }
 .gname {
   font-family: var(--font-serif-jp), serif;
-  font-size: 13.5px;
+  font-size: 16px;
   color: var(--ink);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
+  min-width: 6.8em;
+}
+.gtime {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 16px;
+  color: var(--ink);
+  letter-spacing: 0.02em;
 }
 
 /* =========================================================

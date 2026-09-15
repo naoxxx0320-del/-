@@ -109,18 +109,19 @@ img { max-width: 100%; display: block; }
 .info-head .ih-en { font-family: var(--font-serif-en), serif; font-style: italic; font-size: 26px; letter-spacing: .06em; color: var(--gold-deep); }
 .info-head .ih-en::after { content: ""; display: block; width: 46px; height: 1px; margin: 4px auto 0; background: var(--gold); }
 .info-head .ih-jp { font-family: var(--font-serif-jp), serif; font-size: 12px; letter-spacing: .2em; color: var(--brown-2); }
-.guide-date { text-align: right; font-family: var(--font-serif-en), serif; font-size: 12px; color: var(--gold-deep); letter-spacing: .04em; margin-bottom: 2px; }
-.guide-title { text-align: center; font-family: var(--font-serif-jp), serif; font-size: 16px; color: var(--brown); letter-spacing: .1em; margin: 2px 0 14px; font-weight: 600; }
-.guide-title small { font-size: 11px; color: var(--brown-2); letter-spacing: .02em; font-weight: 400; }
-.guide-block { margin-bottom: 12px; }
-.guide-area { font-family: var(--font-serif-jp), serif; font-size: 14px; color: var(--gold-deep); letter-spacing: .14em; text-align: center; padding: 3px 0; margin-bottom: 8px; border-top: 1px solid rgba(180,154,99,.4); border-bottom: 1px solid rgba(180,154,99,.4); background: linear-gradient(180deg, rgba(199,173,120,.12), rgba(199,173,120,.03)); }
-.guide-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
-.guide-list li { display: flex; align-items: center; gap: 7px; padding: 3px 0; border-bottom: 1px dotted rgba(150,120,80,.3); }
-.gst { flex: 0 0 auto; width: 26px; height: 22px; display: flex; align-items: center; justify-content: center; font-family: var(--font-serif-jp), serif; font-size: 12px; color: #fff; border-radius: 2px; }
-.gst.full { background: linear-gradient(180deg, #c72b45, #a8203a); }
-.gst.open { background: linear-gradient(180deg, #4f9d68, #3c854f); }
-.gst.wait { background: linear-gradient(180deg, #b79148, #9c7a37); font-size: 10px; }
-.gname { font-family: var(--font-serif-jp), serif; font-size: 13.5px; color: var(--ink); letter-spacing: .04em; }
+.guide-date { text-align: left; font-family: var(--font-serif-en), serif; font-size: 13px; color: var(--brown-2); letter-spacing: .04em; margin-bottom: 6px; }
+.guide-title { text-align: left; font-family: var(--font-serif-jp), serif; font-size: 18px; color: var(--ink); letter-spacing: .03em; margin: 0 0 12px; font-weight: 600; }
+.guide-title small { font-size: 13px; color: var(--brown-2); letter-spacing: 0; font-weight: 400; }
+.guide-scroll { max-height: 300px; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-right: 4px; }
+.guide-scroll::-webkit-scrollbar { width: 6px; }
+.guide-scroll::-webkit-scrollbar-thumb { background: rgba(180,154,99,.5); border-radius: 3px; }
+.guide-block { margin-bottom: 10px; }
+.guide-area { font-family: var(--font-serif-jp), serif; font-size: 18px; font-weight: 700; color: var(--ink); letter-spacing: .04em; text-align: left; padding: 2px 0 6px; margin-bottom: 2px; }
+.guide-list { list-style: none; margin: 0; padding: 0; }
+.guide-list li { display: flex; align-items: center; gap: 8px; padding: 6px 2px; }
+.gheart { flex: 0 0 auto; font-size: 18px; line-height: 1; }
+.gname { font-family: var(--font-serif-jp), serif; font-size: 16px; color: var(--ink); letter-spacing: .02em; min-width: 6.8em; }
+.gtime { font-family: var(--font-serif-jp), serif; font-size: 16px; color: var(--ink); letter-spacing: .02em; }
 /* BAND */
 .band { position: relative; z-index: 2; margin-top: 22px; height: 60px; display: flex; align-items: center; justify-content: center; gap: 12px; background: linear-gradient(180deg, #ab9569 0%, #8f7c52 100%); color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }
 .band .dia { font-size: 22px; color: #fff; filter: drop-shadow(0 1px 1px rgba(0,0,0,.2)); }
@@ -264,22 +265,29 @@ body.menu-open { overflow: hidden; }
     </div>
     <section class="frame">
       <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
-      <div class="guide-date">2026/9/14</div>
-      <h2 class="guide-title">只今の案内状況<small>（更新 22:26）</small></h2>
-      <div class="guide-block">
-        <div class="guide-area">亀戸</div>
-        <ul class="guide-list">
-          <li><span class="gst full">満</span><span class="gname">七星</span></li>
-          <li><span class="gst full">満</span><span class="gname">うさ</span></li>
-          <li><span class="gst open">空</span><span class="gname">ひなの</span></li>
-          <li><span class="gst full">満</span><span class="gname">りの</span></li>
-          <li><span class="gst open">空</span><span class="gname">まりん</span></li>
-          <li><span class="gst full">満</span><span class="gname">あんな</span></li>
-          <li><span class="gst full">満</span><span class="gname">みるく</span></li>
-          <li><span class="gst open">空</span><span class="gname">ここあ</span></li>
-          <li><span class="gst full">満</span><span class="gname">ゆい</span></li>
-          <li><span class="gst wait">受付</span><span class="gname">せな</span></li>
-        </ul>
+      <div class="guide-date">2026/9/15</div>
+      <h2 class="guide-title">只今の案内状況<small>（更新12:13）</small></h2>
+      <div class="guide-scroll">
+        <div class="guide-block">
+          <div class="guide-area">亀戸</div>
+          <ul class="guide-list">
+            <li><span class="gheart">&#128150;</span><span class="gname">久遠 えま</span><span class="gtime">15:30〜</span></li>
+            <li><span class="gheart">&#128150;</span><span class="gname">四葉 まや</span><span class="gtime">19:00〜</span></li>
+            <li><span class="gheart">&#128150;</span><span class="gname">音羽 みみ</span><span class="gtime">15:00〜</span></li>
+            <li><span class="gheart">&#128150;</span><span class="gname">心 かのん</span><span class="gtime">22:30〜</span></li>
+            <li><span class="gheart">&#128150;</span><span class="gname">白雪 おと</span><span class="gtime">13:00〜</span></li>
+            <li><span class="gheart">&#128150;</span><span class="gname">華宮 れいら</span><span class="gtime">20:00〜</span></li>
+            <li><span class="gheart">&#128150;</span><span class="gname">愛媛 なのか</span><span class="gtime">16:00〜</span></li>
+            <li><span class="gheart">&#128150;</span><span class="gname">音坂 みあ</span><span class="gtime">22:00〜</span></li>
+            <li><span class="gheart">&#128150;</span><span class="gname">小湊 えみか</span><span class="gtime">16:00〜</span></li>
+            <li><span class="gheart">&#128150;</span><span class="gname">神崎 りりな</span><span class="gtime">21:00〜</span></li>
+            <li><span class="gheart">&#128150;</span><span class="gname">月森 りん</span><span class="gtime">17:30〜</span></li>
+            <li><span class="gheart">&#128150;</span><span class="gname">星野 ひな</span><span class="gtime">18:00〜</span></li>
+            <li><span class="gheart">&#128150;</span><span class="gname">藤川 あい</span><span class="gtime">14:00〜</span></li>
+            <li><span class="gheart">&#128150;</span><span class="gname">水無月 さら</span><span class="gtime">23:00〜</span></li>
+            <li><span class="gheart">&#128150;</span><span class="gname">桜庭 みく</span><span class="gtime">19:30〜</span></li>
+          </ul>
+        </div>
       </div>
     </section>
 
