@@ -182,7 +182,13 @@ export default function Home() {
 
   return (
     <div className="stage">
-      <div className="device">
+      <div
+        className="device"
+        style={{
+          background:
+            "#f4efe7 url(bg-marble.jpg) top center / 100% auto repeat",
+        }}
+      >
         {/* ---------- HEADER ---------- */}
         <header className="hero-header">
           {/* eslint-disable-next-line @next/next/no-img-element */}
