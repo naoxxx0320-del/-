@@ -377,6 +377,27 @@ export default function Home() {
           </p>
         </section>
 
+        {/* ---------- ENVIRONMENT ---------- */}
+        <div className="section-head">
+          <div className="sh-en">Environment</div>
+          <div className="sh-jp">癒やしの環境</div>
+        </div>
+        <section className="concept">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="concept-img" src="environment.jpg" alt="癒やしの環境" />
+          <h3 className="concept-h">
+            完全個室の
+            <br />
+            ラグジュアリー空間
+          </h3>
+          <p className="concept-p">
+            リゾートホテルを思わせる上質な内装と、洗練されたおもてなし。
+            すべて完全個室のプライベートな空間で、周りを気にせず心からくつろいでいただけます。
+            夜景を眺めながら、日常の喧騒を忘れるひととき——
+            自分だけの隠れ家として、心と身体を解きほぐす特別な時間をお過ごしください。
+          </p>
+        </section>
+
         {/* ---------- FIXED FOOTER ---------- */}
         <button
           className="scrolltop"
