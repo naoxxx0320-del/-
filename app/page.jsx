@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 /* ---- data ---------------------------------------------------------- */
 
@@ -485,6 +486,9 @@ export default function Home() {
             </span>
           </p>
           <p className="sc-copy">All rights reserved.</p>
+          <Link className="secret-entry" href="/secret/">
+            <span className="se-lock" aria-hidden="true">🔒</span>秘密の空間
+          </Link>
         </div>
 
         {/* ---------- FIXED FOOTER ---------- */}
