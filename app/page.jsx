@@ -341,10 +341,6 @@ export default function Home() {
 
 
         {/* ---------- FIXED FOOTER ---------- */}
-        <div className="aichat">
-          <span className="bot">🤖</span>
-          <small>AiChat</small>
-        </div>
         <button
           className="scrolltop"
           aria-label="ページ上部へ"
@@ -358,13 +354,32 @@ export default function Home() {
           <a className="fb-tel" href="tel:05054449830">
             Tel:050-5444-9830
           </a>
-          <a className="fb-btn fb-line" href="#">
-            <span>LINE</span>
-            <small>予約</small>
+          <a className="fb-btn" href="#">
+            <span className="fb-ic" aria-hidden="true">
+              <svg viewBox="0 0 32 32" width="26" height="26">
+                <rect x="2" y="2" width="28" height="28" rx="8" fill="#06c755" />
+                <path
+                  d="M16 8.2c-5 0-9 3.1-9 6.9 0 3.4 3.1 6.3 7.4 6.85.28.06.66.19.76.43.08.22.05.55.03.77l-.12.72c-.04.22-.18.86.77.47.95-.4 5.1-3 6.96-5.14C21.9 24.9 25 22.1 25 15.1c0-3.8-4-6.9-9-6.9z"
+                  fill="#fff"
+                />
+              </svg>
+            </span>
+            <span className="fb-txt">
+              <b>LINE</b>
+              <small>予約</small>
+            </span>
           </a>
-          <a className="fb-btn fb-web" href="#">
-            <span>WEB</span>
-            <small>予約</small>
+          <a className="fb-btn" href="#">
+            <span className="fb-ic" aria-hidden="true">
+              <svg viewBox="0 0 32 32" width="26" height="26" fill="none" stroke="#edd39b" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round">
+                <rect x="3.5" y="6" width="25" height="16" rx="2" />
+                <path d="M12 26 H20 M16 22 V26" />
+              </svg>
+            </span>
+            <span className="fb-txt">
+              <b>WEB</b>
+              <small>予約</small>
+            </span>
           </a>
         </div>
 
@@ -426,11 +441,6 @@ export default function Home() {
               <div className="mt-hours">
                 [営業時間]10:00〜翌5:00 [電話受付]9:30〜翌4:00
               </div>
-            </div>
-
-            <div className="menu-aichat">
-              <span className="bot">🤖</span>
-              <small>AiChat</small>
             </div>
           </div>
         </div>

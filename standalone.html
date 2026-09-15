@@ -168,17 +168,15 @@ img { max-width: 100%; display: block; }
 /* MORE */
 .more { position: relative; z-index: 2; margin: 14px 14px 0; text-align: center; padding: 14px; border: 1px solid var(--gold-line); border-radius: 3px; background: linear-gradient(180deg, #fbf7ef, #f1e9d8); font-family: var(--font-serif-jp), serif; color: var(--brown); letter-spacing: .14em; }
 /* FOOTER */
-.footerbar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: var(--maxw); z-index: 30; display: flex; height: 62px; background: linear-gradient(180deg, #d9b184, #c19a63); box-shadow: 0 -4px 16px rgba(60,40,20,.2); }
-.footerbar .fb-tel { flex: 1.5; display: flex; align-items: center; justify-content: center; color: #fff; font-family: var(--font-serif-en), serif; font-size: 22px; letter-spacing: .02em; text-shadow: 0 1px 3px rgba(0,0,0,.3); }
-.footerbar .fb-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #fff; font-family: var(--font-serif-jp), serif; font-size: 14px; letter-spacing: .08em; border-left: 1px solid rgba(255,255,255,.35); }
-.footerbar .fb-line { background: linear-gradient(180deg, #06c755, #04a648); }
-.footerbar .fb-web { background: linear-gradient(180deg, #6f5f52, #574a41); }
-.footerbar .fb-btn small { font-size: 10px; opacity: .85; letter-spacing: .14em; }
-.aichat { position: fixed; bottom: 74px; left: calc(50% - var(--maxw) / 2 + 8px); z-index: 31; width: 66px; height: 66px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #b8365a, #7d1e3c); border: 3px solid #e9c9a0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
-.aichat .bot { font-size: 20px; }
-.aichat small { font-family: var(--font-serif-en), serif; font-weight: 700; font-size: 11px; color: #ffd9b0; }
+.footerbar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: var(--maxw); z-index: 30; display: flex; height: 62px; background: linear-gradient(180deg, #a8274d, #911f3f); border-top: 1px solid rgba(233,201,145,.55); box-shadow: 0 -4px 16px rgba(60,20,30,.28); }
+.footerbar .fb-tel { flex: 1.5; display: flex; align-items: center; justify-content: center; color: #edd39b; font-family: var(--font-serif-en), serif; font-size: 21px; letter-spacing: .02em; text-shadow: 0 1px 2px rgba(0,0,0,.35); }
+.footerbar .fb-btn { flex: 1; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px; color: #edd39b; border-left: 1px solid rgba(233,201,145,.4); }
+.footerbar .fb-ic { display: flex; align-items: center; }
+.footerbar .fb-txt { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.05; }
+.footerbar .fb-txt b { font-family: var(--font-serif-en), serif; font-weight: 600; font-size: 17px; letter-spacing: .06em; }
+.footerbar .fb-txt small { font-family: var(--font-serif-jp), serif; font-size: 11px; letter-spacing: .1em; opacity: .92; }
 .scrolltop { position: fixed; bottom: 74px; right: calc(50% - var(--maxw) / 2 + 10px); z-index: 31; width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--gold-line); background: rgba(255,255,255,.85); color: var(--gold-deep); font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(0,0,0,.15); }
-@media (max-width: 460px) { .aichat { left: 8px; } .scrolltop { right: 10px; } }
+@media (max-width: 460px) { .scrolltop { right: 10px; } }
 /* MENU */
 .menu-overlay { position: fixed; inset: 0; z-index: 50; display: flex; justify-content: center; background: rgba(20,10,12,.4); opacity: 0; pointer-events: none; transition: opacity .25s ease; }
 .menu-overlay.open { opacity: 1; pointer-events: auto; }
@@ -208,9 +206,6 @@ img { max-width: 100%; display: block; }
 .menu-tel { text-align: center; color: #fbeede; }
 .menu-tel .mt-num { font-family: var(--font-serif-en), serif; font-size: 40px; letter-spacing: .01em; text-shadow: 0 2px 5px rgba(0,0,0,.2); }
 .menu-tel .mt-hours { font-family: var(--font-serif-jp), serif; font-size: 12.5px; letter-spacing: .02em; margin-top: 6px; color: #f3e3d2; }
-.menu-aichat { position: absolute; left: 22px; bottom: 40px; width: 66px; height: 66px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #b8365a, #7d1e3c); border: 3px solid #e9c9a0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; }
-.menu-aichat .bot { font-size: 20px; }
-.menu-aichat small { font-family: var(--font-serif-en), serif; font-weight: 700; font-size: 11px; color: #ffd9b0; }
 body.menu-open { overflow: hidden; }
 </style>
 </head>
@@ -356,12 +351,17 @@ body.menu-open { overflow: hidden; }
     <a class="more" href="#">＞ 出勤セラピストを全て見る ＜</a>
 
     <!-- FOOTER -->
-    <div class="aichat"><span class="bot">&#129302;</span><small>AiChat</small></div>
     <button class="scrolltop" aria-label="ページ上部へ" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8963;</button>
     <div class="footerbar">
       <a class="fb-tel" href="tel:05054449830">Tel:050-5444-9830</a>
-      <a class="fb-btn fb-line" href="#"><span>LINE</span><small>予約</small></a>
-      <a class="fb-btn fb-web" href="#"><span>WEB</span><small>予約</small></a>
+      <a class="fb-btn" href="#">
+        <span class="fb-ic" aria-hidden="true"><svg viewBox="0 0 32 32" width="26" height="26"><rect x="2" y="2" width="28" height="28" rx="8" fill="#06c755"/><path d="M16 8.2c-5 0-9 3.1-9 6.9 0 3.4 3.1 6.3 7.4 6.85.28.06.66.19.76.43.08.22.05.55.03.77l-.12.72c-.04.22-.18.86.77.47.95-.4 5.1-3 6.96-5.14C21.9 24.9 25 22.1 25 15.1c0-3.8-4-6.9-9-6.9z" fill="#fff"/></svg></span>
+        <span class="fb-txt"><b>LINE</b><small>予約</small></span>
+      </a>
+      <a class="fb-btn" href="#">
+        <span class="fb-ic" aria-hidden="true"><svg viewBox="0 0 32 32" width="26" height="26" fill="none" stroke="#edd39b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><rect x="3.5" y="6" width="25" height="16" rx="2"/><path d="M12 26 H20 M16 22 V26"/></svg></span>
+        <span class="fb-txt"><b>WEB</b><small>予約</small></span>
+      </a>
     </div>
 
     <!-- MENU -->
@@ -393,7 +393,6 @@ body.menu-open { overflow: hidden; }
           <div class="mt-num">Tel:050-5444-9830</div>
           <div class="mt-hours">[営業時間]10:00〜翌5:00 [電話受付]9:30〜翌4:00</div>
         </div>
-        <div class="menu-aichat"><span class="bot">&#129302;</span><small>AiChat</small></div>
       </div>
     </div>
   </div>

@@ -1091,71 +1091,52 @@ img {
   z-index: 30;
   display: flex;
   height: 62px;
-  background: linear-gradient(180deg, #d9b184, #c19a63);
-  box-shadow: 0 -4px 16px rgba(60, 40, 20, 0.2);
+  background: linear-gradient(180deg, #a8274d, #911f3f);
+  border-top: 1px solid rgba(233, 201, 145, 0.55);
+  box-shadow: 0 -4px 16px rgba(60, 20, 30, 0.28);
 }
 .footerbar .fb-tel {
   flex: 1.5;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: #edd39b;
   font-family: var(--font-serif-en), serif;
-  font-size: 22px;
+  font-size: 21px;
   letter-spacing: 0.02em;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 .footerbar .fb-btn {
   flex: 1;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  color: #fff;
-  font-family: var(--font-serif-jp), serif;
-  font-size: 14px;
-  letter-spacing: 0.08em;
-  border-left: 1px solid rgba(255, 255, 255, 0.35);
+  gap: 8px;
+  color: #edd39b;
+  border-left: 1px solid rgba(233, 201, 145, 0.4);
 }
-.footerbar .fb-line {
-  background: linear-gradient(180deg, #06c755, #04a648);
+.footerbar .fb-ic {
+  display: flex;
+  align-items: center;
 }
-.footerbar .fb-web {
-  background: linear-gradient(180deg, #6f5f52, #574a41);
-}
-.footerbar .fb-btn small {
-  font-size: 10px;
-  opacity: 0.85;
-  letter-spacing: 0.14em;
-}
-
-/* AiChat floating */
-.aichat {
-  position: fixed;
-  bottom: 74px;
-  left: calc(50% - var(--maxw) / 2 + 8px);
-  z-index: 31;
-  width: 66px;
-  height: 66px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 40% 35%, #b8365a, #7d1e3c);
-  border: 3px solid #e9c9a0;
+.footerbar .fb-txt {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  align-items: flex-start;
+  line-height: 1.05;
 }
-.aichat .bot {
-  font-size: 20px;
-}
-.aichat small {
+.footerbar .fb-txt b {
   font-family: var(--font-serif-en), serif;
-  font-weight: 700;
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: 0.06em;
+}
+.footerbar .fb-txt small {
+  font-family: var(--font-serif-jp), serif;
   font-size: 11px;
-  color: #ffd9b0;
+  letter-spacing: 0.1em;
+  opacity: 0.92;
 }
 
 /* scroll top */
@@ -1177,9 +1158,6 @@ img {
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
 }
 @media (max-width: 460px) {
-  .aichat {
-    left: 8px;
-  }
   .scrolltop {
     right: 10px;
   }
@@ -1375,31 +1353,6 @@ img {
   letter-spacing: 0.02em;
   margin-top: 6px;
   color: #f3e3d2;
-}
-
-.menu-aichat {
-  position: absolute;
-  left: 22px;
-  bottom: 40px;
-  width: 66px;
-  height: 66px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 40% 35%, #b8365a, #7d1e3c);
-  border: 3px solid #e9c9a0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-}
-.menu-aichat .bot {
-  font-size: 20px;
-}
-.menu-aichat small {
-  font-family: var(--font-serif-en), serif;
-  font-weight: 700;
-  font-size: 11px;
-  color: #ffd9b0;
 }
 
 body.menu-open {
