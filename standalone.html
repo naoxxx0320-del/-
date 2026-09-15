@@ -178,9 +178,6 @@ img { max-width: 100%; display: block; }
 .aichat small { font-family: var(--font-serif-en), serif; font-weight: 700; font-size: 11px; color: #ffd9b0; }
 .scrolltop { position: fixed; bottom: 74px; right: calc(50% - var(--maxw) / 2 + 10px); z-index: 31; width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--gold-line); background: rgba(255,255,255,.85); color: var(--gold-deep); font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(0,0,0,.15); }
 @media (max-width: 460px) { .aichat { left: 8px; } .scrolltop { right: 10px; } }
-.stickers { position: absolute; z-index: 8; left: 0; top: 1080px; display: flex; flex-direction: column; gap: 2px; }
-.stickers .stk { width: 34px; height: 34px; background: #c0203a; color: #fff; display: flex; align-items: center; justify-content: center; font-family: var(--font-serif-jp), serif; font-size: 15px; border: 1px solid #fff; }
-.stickers .stk.jewel { background: transparent; border: none; font-size: 20px; }
 /* MENU */
 .menu-overlay { position: fixed; inset: 0; z-index: 50; display: flex; justify-content: center; background: rgba(20,10,12,.4); opacity: 0; pointer-events: none; transition: opacity .25s ease; }
 .menu-overlay.open { opacity: 1; pointer-events: auto; }
@@ -357,11 +354,6 @@ body.menu-open { overflow: hidden; }
     </section>
 
     <a class="more" href="#">＞ 出勤セラピストを全て見る ＜</a>
-
-    <!-- STICKERS -->
-    <div class="stickers">
-      <div class="stk">満</div><div class="stk">満</div><div class="stk jewel">&#128176;</div><div class="stk">満</div>
-    </div>
 
     <!-- FOOTER -->
     <div class="aichat"><span class="bot">&#129302;</span><small>AiChat</small></div>

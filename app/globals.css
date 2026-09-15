@@ -1176,34 +1176,6 @@ img {
   }
 }
 
-/* left floating status stickers */
-.stickers {
-  position: absolute;
-  z-index: 8;
-  left: 0;
-  top: 1080px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.stickers .stk {
-  width: 34px;
-  height: 34px;
-  background: #c0203a;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-serif-jp), serif;
-  font-size: 15px;
-  border: 1px solid #fff;
-}
-.stickers .stk.jewel {
-  background: transparent;
-  border: none;
-  font-size: 20px;
-}
-
 /* =========================================================
    HAMBURGER OVERLAY MENU
    ========================================================= */

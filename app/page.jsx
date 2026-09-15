@@ -331,13 +331,6 @@ export default function Home() {
           ＞ 出勤セラピストを全て見る ＜
         </a>
 
-        {/* ---------- LEFT STICKERS ---------- */}
-        <div className="stickers">
-          <div className="stk">満</div>
-          <div className="stk">満</div>
-          <div className="stk jewel">💠</div>
-          <div className="stk">満</div>
-        </div>
 
         {/* ---------- FIXED FOOTER ---------- */}
         <div className="aichat">
