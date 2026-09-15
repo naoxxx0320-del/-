@@ -463,6 +463,30 @@ export default function Home() {
           </div>
         </section>
 
+        {/* ---------- SITE FOOTER (link list + copyright) ---------- */}
+        <nav className="sitefoot">
+          {MENU.map((m, i) => (
+            <a className="sf-row" href="#" key={i}>
+              <span className="sf-en">{m.en}</span>
+              <span className="sf-jp">{m.jp}</span>
+            </a>
+          ))}
+        </nav>
+        <div
+          className="site-copy"
+          style={{
+            background: "#efe7d6 url(bg-marble.jpg) center / cover no-repeat",
+          }}
+        >
+          <p className="sc-line">
+            亀戸メンズエステ{" "}
+            <span className="sc-brand">
+              AROMA DAIAMOND（アロマ ダイアモンド）
+            </span>
+          </p>
+          <p className="sc-copy">All rights reserved.</p>
+        </div>
+
         {/* ---------- FIXED FOOTER ---------- */}
         <button
           className="scrolltop"
@@ -526,12 +550,14 @@ export default function Home() {
             </div>
 
             <div className="menu-list">
-              {MENU.map((m, i) => (
-                <a className="menu-row" href="#" key={i}>
-                  <span className="mr-en">{m.en}</span>
-                  <span className="mr-jp">{m.jp}</span>
-                </a>
-              ))}
+              <a href="#">トップ</a>
+              <a href="#">アクセス</a>
+              <a href="#">出勤情報</a>
+              <a href="#">外国人の方へ</a>
+              <a href="#">セラピスト</a>
+              <a href="#">スタッフ求人</a>
+              <a href="#">料金システム</a>
+              <a href="#">セラピスト求人</a>
             </div>
 
             <div className="menu-pay">
@@ -562,22 +588,6 @@ export default function Home() {
               <div className="mt-hours">
                 [営業時間]10:00〜翌5:00 [電話受付]9:30〜翌4:00
               </div>
-            </div>
-
-            <div
-              className="menu-foot"
-              style={{
-                background:
-                  "#efe7d6 url(bg-marble.jpg) center / cover no-repeat",
-              }}
-            >
-              <p className="mf-line">
-                亀戸メンズエステ{" "}
-                <span className="mf-brand">
-                  AROMA DAIAMOND（アロマ ダイアモンド）
-                </span>
-              </p>
-              <p className="mf-copy">All rights reserved.</p>
             </div>
           </div>
         </div>
