@@ -1079,6 +1079,41 @@ img {
 }
 
 /* =========================================================
+   CONCEPT
+   ========================================================= */
+.concept {
+  position: relative;
+  z-index: 2;
+  padding: 16px 18px 6px;
+}
+.concept-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 2px;
+  box-shadow: 0 8px 22px rgba(60, 40, 30, 0.2);
+}
+.concept-h {
+  text-align: center;
+  font-family: var(--font-serif-jp), serif;
+  font-weight: 600;
+  font-size: 27px;
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+  color: var(--gold-deep);
+  margin: 24px 0 16px;
+}
+.concept-p {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 14px;
+  line-height: 2;
+  letter-spacing: 0.04em;
+  color: var(--brown);
+  margin: 0;
+  text-align: justify;
+}
+
+/* =========================================================
    FIXED FOOTER BAR
    ========================================================= */
 .footerbar {
