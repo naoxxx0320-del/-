@@ -1536,11 +1536,12 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  width: min(360px, 100%);
-  margin: 26px auto 4px;
-  padding: 17px 18px;
-  border-radius: 10px;
+  gap: 10px;
+  width: max-content;
+  max-width: 100%;
+  margin: 24px auto 4px;
+  padding: 10px 20px;
+  border-radius: 8px;
   background: linear-gradient(180deg, #fdfaf3, #f3ebdb);
   border: 2px solid #c8a659;
   box-shadow: 0 4px 14px rgba(120, 90, 40, 0.18),
@@ -1553,10 +1554,14 @@ img {
 .secret-entry .se-txt {
   font-family: var(--font-serif-en), serif;
   font-weight: 600;
-  font-size: 24px;
-  letter-spacing: 0.14em;
+  font-size: 17px;
+  letter-spacing: 0.12em;
   white-space: nowrap;
   color: #2e2620;
+}
+.secret-entry .se-dia svg {
+  width: 22px;
+  height: 22px;
 }
 /* gold sparkle specks */
 .secret-entry::after {
@@ -1568,10 +1573,9 @@ img {
   height: 2px;
   border-radius: 50%;
   background: transparent;
-  box-shadow: 40px 20px 0 -0.5px #e3c793, 54px 30px 0 -1px #eadcae,
-    30px 50px 0 -0.5px #dcbd7e, 250px 24px 0 -0.5px #dcbd7e,
-    268px 34px 0 -1px #eadcae, 284px 18px 0 -0.5px #e3c793,
-    258px 52px 0 -0.5px #e3c793;
+  box-shadow: 16px 8px 0 -0.5px #e3c793, 26px 30px 0 -1px #eadcae,
+    calc(100% - 14px) 10px 0 -0.5px #dcbd7e,
+    calc(100% - 22px) 30px 0 -1px #eadcae;
   pointer-events: none;
 }
 
