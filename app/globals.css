@@ -1350,29 +1350,18 @@ img {
 }
 
 .menu-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 34px;
   margin: 6px 0 26px;
-  border-top: 1px solid rgba(255, 255, 255, 0.28);
 }
-.menu-row {
-  display: flex;
-  align-items: baseline;
-  gap: 16px;
-  padding: 15px 6px 13px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.28);
-}
-.menu-row .mr-en {
-  font-family: var(--font-serif-en), serif;
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: #e9cf98;
-  min-width: 108px;
-}
-.menu-row .mr-jp {
+.menu-list a {
   font-family: var(--font-serif-jp), serif;
-  font-size: 17px;
-  letter-spacing: 0.1em;
+  font-size: 19px;
   color: #f7ede0;
+  letter-spacing: 0.08em;
+  padding: 16px 4px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
 }
 
 .menu-pay {
@@ -1471,24 +1460,51 @@ img {
   color: #f3e3d2;
 }
 
-.menu-foot {
-  margin: 26px -22px -40px;
-  padding: 34px 24px 40px;
+/* site footer: link list (Top〜Contact) + marble copyright */
+.sitefoot {
+  margin-top: 34px;
+  background: #f6efe9;
+  border-top: 1px solid #e2d4bf;
+}
+.sf-row {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 16px 22px 14px;
+  border-bottom: 1px solid #e6dccb;
+}
+.sf-row .sf-en {
+  font-family: var(--font-serif-en), serif;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #a5813c;
+  min-width: 116px;
+}
+.sf-row .sf-jp {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 17px;
+  letter-spacing: 0.1em;
+  color: #3a3128;
+}
+
+.site-copy {
+  padding: 40px 24px 46px;
   text-align: center;
 }
-.menu-foot .mf-line {
+.site-copy .sc-line {
   font-family: var(--font-serif-jp), serif;
   font-size: 14px;
   line-height: 1.7;
   letter-spacing: 0.04em;
   color: #4a3f36;
 }
-.menu-foot .mf-line .mf-brand {
+.site-copy .sc-line .sc-brand {
   font-family: var(--font-serif-en), serif;
   font-weight: 600;
   color: #a5813c;
 }
-.menu-foot .mf-copy {
+.site-copy .sc-copy {
   font-family: var(--font-serif-en), serif;
   font-size: 15px;
   letter-spacing: 0.04em;
