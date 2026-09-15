@@ -809,6 +809,15 @@ img {
   background: linear-gradient(160deg, #e5d7bf 0%, #d3bf9d 55%, #c9b78f 100%);
   overflow: hidden;
 }
+.tcard-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  z-index: 1;
+}
 /* soft studio vignette */
 .tcard-photo::after {
   content: "";

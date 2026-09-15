@@ -71,6 +71,7 @@ const THERAPISTS = [
     schedSub: "ご予約受付中",
     status: "空きあり",
     sns: ["fgn", "blue", "zero2", "relaxi"],
+    photo: "therapist-mio.jpg",
     photoBg: "linear-gradient(160deg,#e7dac2 0%,#d4c09e 55%,#c8b58c 100%)",
   },
   {
@@ -132,10 +133,17 @@ function TherapistCard({ t }) {
   return (
     <article className="tcard">
       <div className="tcard-photo" style={{ background: t.photoBg }}>
-        <div className="silhouette" />
-        <div className={`face-heart ${t.heart}`}>
-          <span>{t.heartLabel}</span>
-        </div>
+        {t.photo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img className="tcard-img" src={t.photo} alt={t.name} />
+        ) : (
+          <>
+            <div className="silhouette" />
+            <div className={`face-heart ${t.heart}`}>
+              <span>{t.heartLabel}</span>
+            </div>
+          </>
+        )}
         {t.ribbon && (
           <div className="ribbon">
             <span>{t.ribbon}</span>
