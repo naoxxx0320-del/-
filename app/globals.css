@@ -130,16 +130,36 @@ img {
   height: auto;
   display: block;
 }
-/* transparent clickable hotspot over the banner's drawn hamburger */
-.hamburger.hamburger-overlay {
-  background: transparent;
-  backdrop-filter: none;
-  top: 6%;
-  right: 3%;
-  width: 12%;
-  height: 26%;
-  min-height: 34px;
-  border-radius: 6px;
+/* fixed hamburger — pinned to the top-right of the device while scrolling */
+.hamburger-fixed {
+  position: fixed;
+  z-index: 40;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  right: calc(50% - var(--maxw) / 2 + 12px);
+  width: 54px;
+  height: 54px;
+  border: none;
+  border-radius: 9px;
+  background: rgba(40, 24, 22, 0.62);
+  backdrop-filter: blur(3px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.hamburger-fixed span {
+  width: 26px;
+  height: 2px;
+  background: #f2e7d7;
+  border-radius: 2px;
+}
+@media (max-width: 460px) {
+  .hamburger-fixed {
+    right: 12px;
+  }
 }
 
 .hero-emblem {
