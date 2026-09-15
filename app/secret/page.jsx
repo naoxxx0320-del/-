@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 
 /* ---- data (プレースホルダー：後で自由に編集できます) ------------------ */
 
@@ -109,9 +108,9 @@ export default function Secret() {
               {err && (
                 <p className="lock-err">パスワードが違います。もう一度お試しください。</p>
               )}
-              <Link className="lock-back" href="/">
+              <a className="lock-back" href="../">
                 ＜ トップへ戻る
-              </Link>
+              </a>
             </div>
           </section>
         ) : (
@@ -196,9 +195,9 @@ export default function Secret() {
               <a className="sec-tel" href="tel:05054449830">
                 この内容で予約する（050-5444-9830）
               </a>
-              <Link className="sec-back" href="/">
+              <a className="sec-back" href="../">
                 ＜ トップページへ戻る
-              </Link>
+              </a>
             </div>
           </>
         )}
