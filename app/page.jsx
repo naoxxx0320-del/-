@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 
 /* ---- data ---------------------------------------------------------- */
 
@@ -486,7 +485,7 @@ export default function Home() {
             </span>
           </p>
           <p className="sc-copy">All rights reserved.</p>
-          <Link className="secret-entry" href="/secret/" aria-label="SECRET SPACE 秘密の空間">
+          <a className="secret-entry" href="secret/" aria-label="SECRET SPACE 秘密の空間">
             <span className="se-dia" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="30" height="30">
                 <path d="M4.5 9 L12 2.5 L19.5 9 L12 21.5 Z" fill="none" stroke="#c8a659" strokeWidth="1.1" strokeLinejoin="round" />
@@ -494,7 +493,7 @@ export default function Home() {
               </svg>
             </span>
             <span className="se-txt">SECRET SPACE</span>
-          </Link>
+          </a>
         </div>
 
         {/* ---------- FIXED FOOTER ---------- */}
