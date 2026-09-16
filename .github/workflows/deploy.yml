@@ -1,12 +1,14 @@
 name: Deploy to GitHub Pages
 
 # Publishes the static Next.js export to GitHub Pages.
-# GitHub Pages deploys run from the default branch (main), so this runs on
-# pushes to main and can also be started manually from the Actions tab.
+# 走行タイミング：main への push／手動実行／約15分ごと（スプレッドシート取り込み用）。
+# ビルド前に Googleスプレッドシートから最新データを取得してから公開します。
 on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: "*/15 * * * *" # 約15分ごとにシートを取得して再公開
 
 permissions:
   contents: read
@@ -33,6 +35,16 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      # Googleスプレッドシート（公開CSV）から最新データを取得して data/*.json を更新。
+      # 失敗しても直前のデータでビルドを続行（公開は止めない）。
+      - name: Refresh data from Google Sheets (non-blocking)
+        continue-on-error: true
+        env:
+          GUIDE_CSV_URL: ${{ vars.GUIDE_CSV_URL }}
+          SCHEDULE_CSV_URL: ${{ vars.SCHEDULE_CSV_URL }}
+          THERAPISTS_CSV_URL: ${{ vars.THERAPISTS_CSV_URL }}
+        run: node scripts/fetch-sheets.mjs
 
       - name: Build static export
         run: npm run build

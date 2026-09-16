@@ -6,13 +6,16 @@ Googleスプレッドシートに入力した内容を、約15分ごとに自動
 
 ```
 Googleスプレッドシート（スタッフが入力）
-   │ 「ウェブに公開(CSV)」の読み取り用URL
+   │ CSV読み取り用URL
    ▼
-GitHub Actions（update-data.yml / 約15分ごと）
-   │ scripts/fetch-sheets.mjs が取得 → data/*.json を更新 → push
+GitHub Actions（deploy.yml / 約15分ごと・push時・手動）
+   │ ① scripts/fetch-sheets.mjs がシートを取得して data/*.json を更新
+   │ ② サイトをビルド
    ▼
-GitHub Pages（deploy.yml）が自動で再ビルド・公開
+GitHub Pages に自動公開
 ```
+
+取得に失敗した場合は直前のデータのまま公開を続けます（サイトが止まりません）。
 
 - 費用はかかりません（公開リポジトリの GitHub Actions は無料）。
 - 認証キーは不要です（「ウェブに公開したCSV」を読むだけ）。
@@ -71,10 +74,10 @@ Googleスプレッドシートを新規作成し、下部のシートタブを3�
 
 登録した変数のシートだけが自動更新されます（未登録のものはサンプルのまま）。
 
-## 4. 動作確認
+## 4. 動作確認・即時反映
 
-- **Actions** タブ → **Update schedule data from Google Sheets** → **Run workflow** で手動実行できます。
-- 以後は約15分ごとに自動実行され、変更があればサイトへ反映されます。
+- 以後は**約15分ごとに自動**でシートを取得し、サイトへ反映されます。
+- すぐ反映したいときは **Actions タブ → "Deploy to GitHub Pages" → Run workflow** を実行してください（最新シートを取得して再公開します）。
 
 ## 手動での更新（スプレッドシートを使わない場合）
 
