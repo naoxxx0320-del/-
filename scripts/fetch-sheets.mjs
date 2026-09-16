@@ -59,12 +59,21 @@ function parseCSV(text) {
   return rows;
 }
 
-/** ヘッダ行 + データ行 → オブジェクト配列（空行は除外） */
-function toObjects(text) {
+/**
+ * ヘッダ行 + データ行 → オブジェクト配列（空行は除外）。
+ * `marker`（必須列名）を指定すると、その列名を含む行を見出し行として探し、
+ * それより上の説明行・空行は読み飛ばします（見つからなければ先頭行を見出しとする）。
+ */
+function toObjects(text, marker) {
   const rows = parseCSV(text).filter((r) => r.some((c) => c.trim() !== ""));
   if (rows.length === 0) return [];
-  const headers = rows[0].map((h) => h.trim());
-  return rows.slice(1).map((r) => {
+  let headerIdx = 0;
+  if (marker) {
+    const found = rows.findIndex((r) => r.map((c) => c.trim()).includes(marker));
+    if (found >= 0) headerIdx = found;
+  }
+  const headers = rows[headerIdx].map((h) => h.trim());
+  return rows.slice(headerIdx + 1).map((r) => {
     const o = {};
     headers.forEach((h, i) => (o[h] = (r[i] ?? "").trim()));
     return o;
@@ -171,9 +180,9 @@ function buildTherapists(objs) {
 /* ---- メイン ---- */
 async function run() {
   const jobs = [
-    { env: "GUIDE_CSV_URL", file: "guide.json", build: buildGuide },
-    { env: "SCHEDULE_CSV_URL", file: "schedule.json", build: buildSchedule },
-    { env: "THERAPISTS_CSV_URL", file: "therapists.json", build: buildTherapists },
+    { env: "GUIDE_CSV_URL", file: "guide.json", build: buildGuide, marker: "案内時間" },
+    { env: "SCHEDULE_CSV_URL", file: "schedule.json", build: buildSchedule, marker: "日付" },
+    { env: "THERAPISTS_CSV_URL", file: "therapists.json", build: buildTherapists, marker: "スケジュール" },
   ];
   let updated = 0;
   for (const j of jobs) {
@@ -184,7 +193,7 @@ async function run() {
     }
     try {
       const csv = await fetchCSV(url);
-      const objs = toObjects(csv);
+      const objs = toObjects(csv, j.marker);
       if (objs.length === 0) {
         console.log(`skip ${j.file}: シートが空です`);
         continue;
