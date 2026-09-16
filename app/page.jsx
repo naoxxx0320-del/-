@@ -158,7 +158,7 @@ export default function Home() {
                     <li key={j}>
                       <span className="gheart" aria-hidden="true">💖</span>
                       <span className="gname">{t.name}</span>
-                      <span className="gtime">{t.time}〜</span>
+                      {t.time && <span className="gtime">{t.time}〜</span>}
                       {t.status && (
                         <span
                           className={`gstatus ${STATUS_CLASS[t.status] || ""}`}

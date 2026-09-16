@@ -111,19 +111,21 @@ function jstNow() {
 
 /* ---- 変換ロジック ---- */
 
-// 案内状況: 列 = エリア, 名前, 案内時間, ステータス
-function buildGuide(objs) {
+// 只今の案内状況：セラピスト名簿（本日の出勤）から自動生成。
+// 出勤中(✖️以外)の人を、名前＋案内時刻＋ステータスで一覧化。日付・更新時刻は自動。
+function buildGuideFromRoster(roster) {
+  const { date, time } = jstNow();
   const areasMap = new Map();
-  for (const o of objs) {
-    const area = o["エリア"] || "亀戸";
+  for (const t of roster) {
+    if (t.absent) continue;
+    const area = t.area || "亀戸";
     if (!areasMap.has(area)) areasMap.set(area, []);
     areasMap.get(area).push({
-      name: o["名前"] || "",
-      time: o["案内時間"] || o["時間"] || "",
-      status: o["ステータス"] || "",
+      name: t.name,
+      time: (t.guideTime || "").replace(/[〜~\s]+$/, ""), // 末尾の〜は表示側で付与
+      status: t.status || "",
     });
   }
-  const { date, time } = jstNow();
   return {
     date,
     updated: time,
@@ -180,6 +182,8 @@ function buildRoster(objs) {
       sched: o["スケジュール"] || "",
       schedSub: o["サブ"] || "",
       status: o["ステータス"] || "",
+      guideTime: o["案内時刻"] || o["案内時間"] || "",
+      area: o["エリア"] || "亀戸",
       sns: (o["SNS"] || "").split(";").map((s) => s.trim()).filter(Boolean),
       ...(o["写真"] ? { photo: o["写真"] } : {}),
       photoBg: bgs[i % bgs.length],
@@ -190,9 +194,15 @@ function buildRoster(objs) {
 /* ---- メイン ---- */
 async function run() {
   const jobs = [
-    { env: "GUIDE_CSV_URL", file: "guide.json", build: buildGuide, marker: "案内時間" },
     { env: "SCHEDULE_CSV_URL", file: "schedule.json", build: buildSchedule, marker: "日付" },
-    { env: "THERAPISTS_CSV_URL", file: "roster.json", build: buildRoster, marker: "スケジュール" },
+    // セラピスト（本日の出勤）シートから roster.json を作り、案内状況(guide.json)も自動生成
+    {
+      env: "THERAPISTS_CSV_URL",
+      file: "roster.json",
+      build: buildRoster,
+      marker: "スケジュール",
+      derive: (roster) => ["guide.json", buildGuideFromRoster(roster)],
+    },
   ];
   let updated = 0;
   for (const j of jobs) {
@@ -208,8 +218,14 @@ async function run() {
         console.log(`skip ${j.file}: シートが空です`);
         continue;
       }
-      writeJSON(j.file, j.build(objs));
+      const built = j.build(objs);
+      writeJSON(j.file, built);
       updated++;
+      if (j.derive) {
+        const [dfile, dobj] = j.derive(built);
+        writeJSON(dfile, dobj);
+        updated++;
+      }
     } catch (e) {
       console.error(`error ${j.file}: ${e.message}`);
       process.exitCode = 1;
@@ -218,7 +234,7 @@ async function run() {
   console.log(`done. ${updated} file(s) updated.`);
 }
 
-export { parseCSV, toObjects, buildGuide, buildSchedule, buildRoster };
+export { parseCSV, toObjects, buildGuideFromRoster, buildSchedule, buildRoster };
 
 // 直接実行時のみ処理を走らせる（テストからの import では走らせない）
 if (
