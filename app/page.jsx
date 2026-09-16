@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import SiteChrome from "./_components/SiteChrome";
+import guideData from "../data/guide.json";
+import therapistsData from "../data/therapists.json";
 
 /* ---- data ---------------------------------------------------------- */
 
 const NAV = [
   { jp: "トップ", en: "Top", href: "./" },
-  { jp: "出勤情報", en: "Schedule", href: "#" },
+  { jp: "出勤情報", en: "Schedule", href: "schedule/" },
   { jp: "セラピスト", en: "Therapist", href: "therapist/" },
   { jp: "料金システム", en: "System", href: "#" },
   { jp: "アクセス", en: "Access", href: "#" },
@@ -33,63 +35,20 @@ const SLIDES = [
   { t: "32分\n無料", bg: "linear-gradient(135deg,#8a6f3a,#c2a35e)" },
 ];
 
-// 只今の案内状況（エリア別 在籍・受付状況ボード）
-const GUIDE_UPDATED = "12:13";
-const GUIDE_DATE = "2026/9/15";
-const GUIDE = [
-  {
-    area: "亀戸",
-    list: [
-      { name: "久遠 えま", time: "15:30" },
-      { name: "四葉 まや", time: "19:00" },
-      { name: "音羽 みみ", time: "15:00" },
-      { name: "心 かのん", time: "22:30" },
-      { name: "白雪 おと", time: "13:00" },
-      { name: "華宮 れいら", time: "20:00" },
-      { name: "愛媛 なのか", time: "16:00" },
-      { name: "音坂 みあ", time: "22:00" },
-      { name: "小湊 えみか", time: "16:00" },
-      { name: "神崎 りりな", time: "21:00" },
-      { name: "月森 りん", time: "17:30" },
-      { name: "星野 ひな", time: "18:00" },
-      { name: "藤川 あい", time: "14:00" },
-      { name: "水無月 さら", time: "23:00" },
-      { name: "桜庭 みく", time: "19:30" },
-    ],
-  },
-];
+// 只今の案内状況・本日の出勤（data/*.json 由来。GitHub Actions が
+// Googleスプレッドシートから自動更新します）
+const GUIDE_UPDATED = guideData.updated;
+const GUIDE_DATE = guideData.date;
+const GUIDE = guideData.areas;
+const THERAPISTS = therapistsData;
 
-const THERAPISTS = [
-  {
-    name: "みお",
-    age: "23",
-    heart: "pink",
-    heartLabel: "AJ",
-    ribbon: "出勤",
-    isNew: true,
-    stats: ["T.158", "B.86(D)", "W.57", "H.85"],
-    sched: "本日 13:00 〜 翌 2:00",
-    schedSub: "ご予約受付中",
-    status: "空きあり",
-    sns: ["fgn", "blue", "zero2", "relaxi"],
-    photo: "therapist-mio.jpg",
-    photoBg: "linear-gradient(160deg,#e7dac2 0%,#d4c09e 55%,#c8b58c 100%)",
-  },
-  {
-    name: "ゆな",
-    age: "20",
-    heart: "diamond",
-    heartLabel: "◆",
-    ribbon: null,
-    isNew: false,
-    stats: ["T.162", "B.84(C)", "W.56", "H.84"],
-    sched: "本日 15:00 〜 翌 5:00",
-    schedSub: "残りわずか",
-    status: "満員",
-    sns: ["x", "zero2", "relaxi", "insta"],
-    photoBg: "linear-gradient(160deg,#efe6d6 0%,#ddccb0 55%,#cebf9f 100%)",
-  },
-];
+// ステータス表示の色分けクラス
+const STATUS_CLASS = {
+  空きあり: "ok",
+  残りわずか: "few",
+  満員: "full",
+  受付終了: "closed",
+};
 
 /* ---- small pieces -------------------------------------------------- */
 
@@ -296,6 +255,13 @@ export default function Home() {
                       <span className="gheart" aria-hidden="true">💖</span>
                       <span className="gname">{t.name}</span>
                       <span className="gtime">{t.time}〜</span>
+                      {t.status && (
+                        <span
+                          className={`gstatus ${STATUS_CLASS[t.status] || ""}`}
+                        >
+                          {t.status}
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ul>

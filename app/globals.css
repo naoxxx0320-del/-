@@ -751,6 +751,37 @@ img {
   color: var(--ink);
   letter-spacing: 0.02em;
 }
+.gstatus {
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.gstatus.ok {
+  color: #1f7a4d;
+  background: #e7f5ec;
+  border-color: #b9e0c8;
+}
+.gstatus.few {
+  color: #b5641b;
+  background: #fbefe1;
+  border-color: #eccfa9;
+}
+.gstatus.full {
+  color: #8a8a8a;
+  background: #eeeeee;
+  border-color: #d8d8d8;
+}
+.gstatus.closed {
+  color: #9a3540;
+  background: #f6e6e8;
+  border-color: #e2c1c6;
+}
 
 /* =========================================================
    SECTION BAND
@@ -2052,6 +2083,82 @@ img {
   letter-spacing: 0.02em;
   text-decoration: none;
   box-shadow: 0 4px 12px rgba(60, 20, 30, 0.25);
+}
+
+/* ---- Schedule page ---- */
+.sch-tabs {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 14px 12px;
+  -webkit-overflow-scrolling: touch;
+}
+.sch-tab {
+  flex: 0 0 auto;
+  min-width: 66px;
+  padding: 9px 12px;
+  border: 1px solid #c9b48c;
+  border-radius: 8px;
+  background: #fffdf8;
+  color: #7a5b1f;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+.sch-tab.on {
+  background: linear-gradient(180deg, #a8274d, #911f3f);
+  border-color: #911f3f;
+  color: #f7e6c8;
+}
+.sch-wrap {
+  position: relative;
+  z-index: 2;
+  padding: 4px 16px 34px;
+}
+.sch-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: rgba(255, 253, 247, 0.72);
+  border: 1px solid #e4d7bd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.sch-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px;
+  border-bottom: 1px solid #ece0c8;
+}
+.sch-list li:last-child {
+  border-bottom: none;
+}
+.sch-heart {
+  flex: 0 0 auto;
+  color: #b7912f;
+  font-size: 15px;
+}
+.sch-name {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 16px;
+  color: var(--ink);
+  min-width: 6.4em;
+}
+.sch-time {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 14px;
+  color: #5b5040;
+}
+.sch-empty {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 14px;
+  color: #6b5a3f;
+  text-align: center;
+  padding: 24px 0;
 }
 
 body.menu-open {

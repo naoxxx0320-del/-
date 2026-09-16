@@ -11,7 +11,7 @@ import { useState, useEffect } from "react";
 const DRAWER = [
   { jp: "トップ", slug: "" },
   { jp: "アクセス", slug: null },
-  { jp: "出勤情報", slug: null },
+  { jp: "出勤情報", slug: "schedule" },
   { jp: "外国人の方へ", slug: "foreigners" },
   { jp: "セラピスト", slug: "therapist" },
   { jp: "スタッフ求人", slug: null },
@@ -21,7 +21,7 @@ const DRAWER = [
 
 const FOOT = [
   { en: "Top", jp: "トップ", slug: "" },
-  { en: "Schedule", jp: "出勤情報", slug: null },
+  { en: "Schedule", jp: "出勤情報", slug: "schedule" },
   { en: "Therapist", jp: "セラピスト", slug: "therapist" },
   { en: "System", jp: "料金システム", slug: null },
   { en: "Access", jp: "アクセス", slug: null },
