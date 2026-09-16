@@ -2161,6 +2161,16 @@ img {
   padding: 24px 0;
 }
 
+.therapists-empty {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 14px;
+  color: #6b5a3f;
+  padding: 26px 18px 30px;
+}
+
 body.menu-open {
   overflow: hidden;
 }

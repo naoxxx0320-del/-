@@ -284,15 +284,23 @@ export default function Home() {
         </div>
 
         {/* ---------- THERAPIST GRID ---------- */}
-        <section className="therapists">
-          {THERAPISTS.map((t, i) => (
-            <TherapistCard t={t} key={i} />
-          ))}
-        </section>
+        {THERAPISTS.length > 0 ? (
+          <>
+            <section className="therapists">
+              {THERAPISTS.map((t, i) => (
+                <TherapistCard t={t} key={i} />
+              ))}
+            </section>
 
-        <a className="more" href="#">
-          ＞ 出勤セラピストを全て見る ＜
-        </a>
+            <a className="more" href="#">
+              ＞ 出勤セラピストを全て見る ＜
+            </a>
+          </>
+        ) : (
+          <p className="therapists-empty">
+            本日の出勤情報は準備中です。しばらくお待ちください。
+          </p>
+        )}
 
         {/* ---------- CONCEPT ---------- */}
         <div className="section-head">
