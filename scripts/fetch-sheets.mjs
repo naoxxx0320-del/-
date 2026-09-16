@@ -153,36 +153,38 @@ function buildSchedule(objs) {
   return { area: objs[0]?.["エリア"] || "亀戸", days: [...daysMap.values()] };
 }
 
-// 本日の出勤カード: 列 = 名前,出勤,年齢,T,B,カップ,W,H,ハート,ラベル,新人,出勤リボン,スケジュール,サブ,ステータス,SNS,写真
-// 「出勤」列が ✖️（欠勤）の行はサイトに表示しません（○や空欄は表示）。
-function buildTherapists(objs) {
+// セラピスト名簿（本日の出勤カード＆出勤情報ページの照合元）:
+// 列 = 名前,出勤,年齢,T,B,カップ,W,H,ハート,ラベル,新人,出勤リボン,スケジュール,サブ,ステータス,SNS,写真
+// 全員ぶんを出力し、欠勤(✖️)は absent:true を付与（表示側で除外／案内に利用）。
+function buildRoster(objs) {
   const truthy = (v) => /^(1|true|○|◯|〇|はい|yes|y)$/i.test((v || "").trim());
   const bgs = [
     "linear-gradient(160deg,#e7dac2 0%,#d4c09e 55%,#c8b58c 100%)",
     "linear-gradient(160deg,#efe6d6 0%,#ddccb0 55%,#cebf9f 100%)",
   ];
   return objs
-    .filter((o) => !isAbsent(o["出勤"]))
+    .filter((o) => (o["名前"] || "").trim() !== "")
     .map((o, i) => ({
-    name: o["名前"] || "",
-    age: o["年齢"] || "",
-    heart: o["ハート"] || (i % 2 ? "diamond" : "pink"),
-    heartLabel: o["ラベル"] || (o["ハート"] === "diamond" ? "◆" : "AJ"),
-    ribbon: o["出勤リボン"] || null,
-    isNew: truthy(o["新人"]),
-    stats: [
-      `T.${o["T"] || ""}`,
-      `B.${o["B"] || ""}${o["カップ"] ? `(${o["カップ"]})` : ""}`,
-      `W.${o["W"] || ""}`,
-      `H.${o["H"] || ""}`,
-    ],
-    sched: o["スケジュール"] || "",
-    schedSub: o["サブ"] || "",
-    status: o["ステータス"] || "",
-    sns: (o["SNS"] || "").split(";").map((s) => s.trim()).filter(Boolean),
-    ...(o["写真"] ? { photo: o["写真"] } : {}),
-    photoBg: bgs[i % bgs.length],
-  }));
+      name: o["名前"] || "",
+      age: o["年齢"] || "",
+      heart: o["ハート"] || (i % 2 ? "diamond" : "pink"),
+      heartLabel: o["ラベル"] || (o["ハート"] === "diamond" ? "◆" : "AJ"),
+      ribbon: o["出勤リボン"] || null,
+      isNew: truthy(o["新人"]),
+      stats: [
+        `T.${o["T"] || ""}`,
+        `B.${o["B"] || ""}${o["カップ"] ? `(${o["カップ"]})` : ""}`,
+        `W.${o["W"] || ""}`,
+        `H.${o["H"] || ""}`,
+      ],
+      sched: o["スケジュール"] || "",
+      schedSub: o["サブ"] || "",
+      status: o["ステータス"] || "",
+      sns: (o["SNS"] || "").split(";").map((s) => s.trim()).filter(Boolean),
+      ...(o["写真"] ? { photo: o["写真"] } : {}),
+      photoBg: bgs[i % bgs.length],
+      absent: isAbsent(o["出勤"]),
+    }));
 }
 
 /* ---- メイン ---- */
@@ -190,7 +192,7 @@ async function run() {
   const jobs = [
     { env: "GUIDE_CSV_URL", file: "guide.json", build: buildGuide, marker: "案内時間" },
     { env: "SCHEDULE_CSV_URL", file: "schedule.json", build: buildSchedule, marker: "日付" },
-    { env: "THERAPISTS_CSV_URL", file: "therapists.json", build: buildTherapists, marker: "スケジュール" },
+    { env: "THERAPISTS_CSV_URL", file: "roster.json", build: buildRoster, marker: "スケジュール" },
   ];
   let updated = 0;
   for (const j of jobs) {
@@ -216,7 +218,7 @@ async function run() {
   console.log(`done. ${updated} file(s) updated.`);
 }
 
-export { parseCSV, toObjects, buildGuide, buildSchedule, buildTherapists };
+export { parseCSV, toObjects, buildGuide, buildSchedule, buildRoster };
 
 // 直接実行時のみ処理を走らせる（テストからの import では走らせない）
 if (

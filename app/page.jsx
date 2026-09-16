@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import SiteChrome from "./_components/SiteChrome";
+import TherapistCard from "./_components/TherapistCard";
 import guideData from "../data/guide.json";
-import therapistsData from "../data/therapists.json";
+import rosterData from "../data/roster.json";
 
 /* ---- data ---------------------------------------------------------- */
 
@@ -40,7 +41,8 @@ const SLIDES = [
 const GUIDE_UPDATED = guideData.updated;
 const GUIDE_DATE = guideData.date;
 const GUIDE = guideData.areas;
-const THERAPISTS = therapistsData;
+// 本日の出勤：欠勤(✖️)は除外して表示
+const THERAPISTS = rosterData.filter((t) => !t.absent);
 
 // ステータス表示の色分けクラス
 const STATUS_CLASS = {
@@ -49,104 +51,6 @@ const STATUS_CLASS = {
   満員: "full",
   受付終了: "closed",
 };
-
-/* ---- small pieces -------------------------------------------------- */
-
-function SnsBadge({ kind }) {
-  const map = {
-    fgn: (
-      <div className="s fgn" key="fgn">
-        <span>FGN</span>
-        <span>WELCOME</span>
-      </div>
-    ),
-    blue: (
-      <div className="s blue" key="blue">
-        ✦
-      </div>
-    ),
-    x: (
-      <div className="s x" key="x">
-        𝕏
-      </div>
-    ),
-    zero2: (
-      <div className="s zero2" key="zero2">
-        02
-      </div>
-    ),
-    insta: (
-      <div className="s insta" key="insta">
-        ⌾
-      </div>
-    ),
-    relaxi: (
-      <div className="s relaxi" key="relaxi">
-        R
-      </div>
-    ),
-  };
-  return map[kind] || null;
-}
-
-function TherapistCard({ t }) {
-  return (
-    <article className="tcard">
-      <div className="tcard-photo" style={{ background: t.photoBg }}>
-        {t.photo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img className="tcard-img" src={t.photo} alt={t.name} />
-        ) : (
-          <>
-            <div className="silhouette" />
-            <div className={`face-heart ${t.heart}`}>
-              <span>{t.heartLabel}</span>
-            </div>
-          </>
-        )}
-        {t.ribbon && (
-          <div className="ribbon">
-            <span>{t.ribbon}</span>
-          </div>
-        )}
-        {t.isNew && <div className="newbadge">新人</div>}
-        <div className="sns">
-          {t.sns.map((k) => (
-            <SnsBadge kind={k} key={k} />
-          ))}
-        </div>
-      </div>
-
-      <div className="tcard-body">
-        <div className="tcard-name">
-          <span className="nm">{t.name}</span>
-          <span className="ag">（{t.age}）</span>
-        </div>
-        <div className="tcard-stats">
-          {t.stats.map((s, i) => {
-            const [a, b] = s.split(".");
-            return (
-              <div className="st" key={i}>
-                <b>{a}</b> {b}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="tcard-sched">
-        <span className="clock">🕐</span>
-        <span>
-          {t.sched}
-          <span className="st-sub">{t.schedSub}</span>
-        </span>
-      </div>
-      <div className={`tcard-status ${t.status === "満員" ? "rest" : ""}`}>
-        {t.status}
-      </div>
-    </article>
-  );
-}
 
 /* ---- page ---------------------------------------------------------- */
 
