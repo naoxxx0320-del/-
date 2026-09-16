@@ -1787,6 +1787,273 @@ img {
   text-decoration: none;
 }
 
+/* =========================================================
+   SUB-PAGE HEADER (Therapist / Foreigners / …)
+   ========================================================= */
+.page-head {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 26px 62px 14px;
+  border-bottom: 1px solid #d8c8a8;
+  margin-bottom: 10px;
+}
+.page-head .ph-en {
+  font-family: var(--font-serif-en), serif;
+  font-style: italic;
+  font-size: 32px;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  color: #b18e46;
+}
+.page-head .ph-jp {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 16px;
+  letter-spacing: 0.34em;
+  color: #5b5040;
+  margin-top: 4px;
+}
+
+/* ---- Therapist grid ---- */
+.tp-grid {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding: 8px 14px 34px;
+}
+.tp-card {
+  background: #fff;
+  border: 1px solid #e4d7bd;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 3px 10px rgba(70, 48, 30, 0.1);
+}
+.tp-photo {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.tp-ribbon {
+  position: absolute;
+  top: 12px;
+  right: -26px;
+  width: 96px;
+  transform: rotate(45deg);
+  text-align: center;
+  background: linear-gradient(135deg, #a8274d, #7d1730);
+  color: #fff;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 3px 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+.tp-heart {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 46%;
+  aspect-ratio: 1 / 0.92;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+.tp-heart-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.tp-heart.aj .tp-heart-bg path {
+  fill: #f0a6ad;
+}
+.tp-heart.dia .tp-heart-bg path {
+  fill: #fff;
+}
+.tp-heart-txt {
+  position: relative;
+  font-family: var(--font-serif-en), serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 20px;
+  color: #fff;
+}
+.tp-heart-dia {
+  position: relative;
+  width: 42%;
+}
+.tp-badges {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: flex;
+  gap: 5px;
+}
+.tp-badge {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+.tp-badge.fgn {
+  background: #e0546a;
+  font-size: 8px;
+}
+.tp-badge.b02 {
+  background: #2fb6c6;
+  font-family: var(--font-serif-en), serif;
+  font-style: italic;
+  font-size: 11px;
+}
+.tp-badge.brk {
+  background: #8a4fd0;
+  font-family: var(--font-serif-en), serif;
+  font-style: italic;
+  font-size: 12px;
+}
+.tp-body {
+  padding: 10px 10px 13px;
+}
+.tp-name {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 17px;
+  color: #2f2618;
+  text-align: center;
+  letter-spacing: 0.06em;
+}
+.tp-sub {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 12.5px;
+  color: #6b5a3f;
+  text-align: center;
+  margin-top: 2px;
+}
+.tp-tags {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin-top: 9px;
+}
+.tp-tag {
+  border: 1px solid #cdae62;
+  border-radius: 4px;
+  padding: 5px 2px;
+  text-align: center;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 10.5px;
+  color: #8a6a25;
+  background: #fffdf8;
+  white-space: nowrap;
+}
+
+/* ---- Foreigners page ---- */
+.fgn {
+  position: relative;
+  z-index: 2;
+  padding: 6px 20px 36px;
+}
+.fgn-lead {
+  font-family: var(--font-serif-en), var(--font-serif-jp), serif;
+  font-size: 15px;
+  line-height: 1.85;
+  color: #3a2f20;
+}
+.fgn-lead b {
+  font-weight: 700;
+}
+.fgn-box {
+  margin: 22px 0 20px;
+  border: 1px solid #cdb069;
+  border-radius: 4px;
+  padding: 16px 16px 18px;
+  background: rgba(255, 253, 247, 0.6);
+}
+.fgn-box-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-serif-en), serif;
+  font-size: 19px;
+  letter-spacing: 0.02em;
+  color: #a5813c;
+  margin-bottom: 14px;
+}
+.fgn-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.fgn-steps li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 11px 2px;
+  border-top: 1px dashed #e0d2b4;
+}
+.fgn-steps li:first-child {
+  border-top: none;
+}
+.fs-n {
+  font-family: var(--font-serif-en), serif;
+  font-style: italic;
+  font-size: 22px;
+  line-height: 1.1;
+  color: #c8a659;
+  min-width: 34px;
+}
+.fs-txt {
+  display: flex;
+  flex-direction: column;
+}
+.fs-txt b {
+  font-family: var(--font-serif-en), serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2f2618;
+}
+.fs-txt small {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 11.5px;
+  color: #6b5a3f;
+  margin-top: 2px;
+}
+.fgn-note {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #3a3128;
+  margin-top: 8px;
+}
+.fgn-tel {
+  display: block;
+  margin-top: 18px;
+  padding: 14px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #a8274d, #911f3f);
+  border: 1px solid #d8b877;
+  color: #edd39b;
+  font-family: var(--font-serif-en), serif;
+  font-size: 20px;
+  text-align: center;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(60, 20, 30, 0.25);
+}
+
 body.menu-open {
   overflow: hidden;
 }
