@@ -131,12 +131,17 @@ function buildGuide(objs) {
   };
 }
 
-// 出勤情報: 列 = 日付, ラベル, 名前, 出勤時間, ステータス
+// 「出勤」列が欠勤（✖️ など）かどうか。○・空欄は出勤扱い（表示）。
+const isAbsent = (v) =>
+  /^(✖️|✖|✗|×|✕|x|欠|欠勤|休|no|false|非表示)$/i.test((v || "").trim());
+
+// 出勤情報: 列 = 日付, ラベル, 名前, 出勤時間, ステータス, 出勤(○/✖️)
 function buildSchedule(objs) {
   const daysMap = new Map();
   for (const o of objs) {
     const date = o["日付"] || "";
     if (!date) continue;
+    if (isAbsent(o["出勤"])) continue; // ✖️（欠勤）はサイトに出さない
     if (!daysMap.has(date))
       daysMap.set(date, { date, label: o["ラベル"] || date, list: [] });
     daysMap.get(date).list.push({
@@ -152,8 +157,6 @@ function buildSchedule(objs) {
 // 「出勤」列が ✖️（欠勤）の行はサイトに表示しません（○や空欄は表示）。
 function buildTherapists(objs) {
   const truthy = (v) => /^(1|true|○|◯|〇|はい|yes|y)$/i.test((v || "").trim());
-  const isAbsent = (v) =>
-    /^(✖️|✖|✗|×|✕|x|欠|欠勤|休|no|false|非表示)$/i.test((v || "").trim());
   const bgs = [
     "linear-gradient(160deg,#e7dac2 0%,#d4c09e 55%,#c8b58c 100%)",
     "linear-gradient(160deg,#efe6d6 0%,#ddccb0 55%,#cebf9f 100%)",
