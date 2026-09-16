@@ -148,14 +148,19 @@ function buildSchedule(objs) {
   return { area: objs[0]?.["エリア"] || "亀戸", days: [...daysMap.values()] };
 }
 
-// 本日の出勤カード: 列 = 名前,年齢,T,B,カップ,W,H,ハート,ラベル,新人,出勤リボン,スケジュール,サブ,ステータス,SNS,写真
+// 本日の出勤カード: 列 = 名前,出勤,年齢,T,B,カップ,W,H,ハート,ラベル,新人,出勤リボン,スケジュール,サブ,ステータス,SNS,写真
+// 「出勤」列が ✖️（欠勤）の行はサイトに表示しません（○や空欄は表示）。
 function buildTherapists(objs) {
-  const truthy = (v) => /^(1|true|○|◯|はい|yes|y)$/i.test((v || "").trim());
+  const truthy = (v) => /^(1|true|○|◯|〇|はい|yes|y)$/i.test((v || "").trim());
+  const isAbsent = (v) =>
+    /^(✖️|✖|✗|×|✕|x|欠|欠勤|休|no|false|非表示)$/i.test((v || "").trim());
   const bgs = [
     "linear-gradient(160deg,#e7dac2 0%,#d4c09e 55%,#c8b58c 100%)",
     "linear-gradient(160deg,#efe6d6 0%,#ddccb0 55%,#cebf9f 100%)",
   ];
-  return objs.map((o, i) => ({
+  return objs
+    .filter((o) => !isAbsent(o["出勤"]))
+    .map((o, i) => ({
     name: o["名前"] || "",
     age: o["年齢"] || "",
     heart: o["ハート"] || (i % 2 ? "diamond" : "pink"),
