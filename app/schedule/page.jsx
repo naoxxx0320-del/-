@@ -2,20 +2,30 @@
 
 import { useState } from "react";
 import SiteChrome from "../_components/SiteChrome";
+import TherapistCard from "../_components/TherapistCard";
 import schedule from "../../data/schedule.json";
+import roster from "../../data/roster.json";
 
-const STATUS_CLASS = {
-  空きあり: "ok",
-  残りわずか: "few",
-  満員: "full",
-  受付終了: "closed",
-  出勤: "ok",
-};
+// 名前 → プロフィール（写真・スペック等は「本日の出勤」シートで一元管理）
+const PROFILE = Object.fromEntries(roster.map((p) => [p.name, p]));
 
 export default function Schedule() {
   const days = schedule.days || [];
   const [active, setActive] = useState(0);
   const day = days[active] || { list: [] };
+
+  // 出勤情報の各行に、名前一致でプロフィールを合成（出勤時間・ステータスは行の値を使用）
+  const cards = day.list.map((e) => {
+    const p = PROFILE[e.name] || {};
+    return {
+      ...p,
+      name: e.name,
+      sched: e.time || p.sched || "",
+      status: e.status || p.status || "",
+      schedSub: "",
+      absent: undefined,
+    };
+  });
 
   return (
     <div className="stage">
@@ -51,26 +61,15 @@ export default function Schedule() {
           <span className="ab-name">{schedule.area || "亀戸"}</span>
         </div>
 
-        <section className="sch-wrap">
-          {day.list.length === 0 ? (
-            <p className="sch-empty">この日の出勤情報はまだありません。</p>
-          ) : (
-            <ul className="sch-list">
-              {day.list.map((e, i) => (
-                <li key={i}>
-                  <span className="sch-heart" aria-hidden="true">💠</span>
-                  <span className="sch-name">{e.name}</span>
-                  <span className="sch-time">{e.time}</span>
-                  {e.status && (
-                    <span className={`gstatus ${STATUS_CLASS[e.status] || ""}`}>
-                      {e.status}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        {cards.length === 0 ? (
+          <p className="therapists-empty">この日の出勤情報はまだありません。</p>
+        ) : (
+          <section className="therapists">
+            {cards.map((t, i) => (
+              <TherapistCard t={t} base="../" key={i} />
+            ))}
+          </section>
+        )}
 
         <SiteChrome base="../" />
       </div>
