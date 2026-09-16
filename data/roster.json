@@ -10,6 +10,8 @@
     "sched": "本日 13:00 〜 翌 2:00",
     "schedSub": "ご予約受付中",
     "status": "空きあり",
+    "guideTime": "15:30〜",
+    "area": "亀戸",
     "sns": ["fgn", "blue", "zero2", "relaxi"],
     "photo": "therapist-mio.jpg",
     "photoBg": "linear-gradient(160deg,#e7dac2 0%,#d4c09e 55%,#c8b58c 100%)",
@@ -26,6 +28,8 @@
     "sched": "本日 15:00 〜 翌 5:00",
     "schedSub": "残りわずか",
     "status": "満員",
+    "guideTime": "",
+    "area": "亀戸",
     "sns": ["x", "zero2", "relaxi", "insta"],
     "photoBg": "linear-gradient(160deg,#efe6d6 0%,#ddccb0 55%,#cebf9f 100%)",
     "absent": false
