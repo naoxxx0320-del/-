@@ -77,27 +77,45 @@ export default function Reserve() {
 
   const day = days[dayIdx] || { list: [], label: "" };
 
-  // フォームを開いたとき、現在の予約状況を JSONP で取得（重複予約を防ぐ）
+  // 現在の予約状況を JSONP で取得（重複予約を防ぐ）。
+  // ・セラピストを選ぶたび／ページ復帰時に取り直し
+  // ・末尾に時刻を付けてブラウザ／CDNのキャッシュを回避（＝常に最新）
   useEffect(() => {
     if (!cfg.endpoint) return;
-    const cb = "__resvAvail_" + Math.random().toString(36).slice(2);
-    const script = document.createElement("script");
-    const done = () => {
-      try {
-        delete window[cb];
-      } catch (_) {}
-      script.remove();
+    let cancelled = false;
+    const load = () => {
+      const cb = "__resvAvail_" + Math.random().toString(36).slice(2);
+      const script = document.createElement("script");
+      const done = () => {
+        try {
+          delete window[cb];
+        } catch (_) {}
+        script.remove();
+      };
+      window[cb] = (data) => {
+        if (!cancelled) setBooked(Array.isArray(data) ? data : []);
+        done();
+      };
+      script.src =
+        cfg.endpoint +
+        (cfg.endpoint.includes("?") ? "&" : "?") +
+        "callback=" +
+        cb +
+        "&_=" +
+        Date.now();
+      script.onerror = done;
+      document.body.appendChild(script);
     };
-    window[cb] = (data) => {
-      setBooked(Array.isArray(data) ? data : []);
-      done();
+    load();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") load();
     };
-    script.src =
-      cfg.endpoint + (cfg.endpoint.includes("?") ? "&" : "?") + "callback=" + cb;
-    script.onerror = done;
-    document.body.appendChild(script);
-    return done;
-  }, []);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [therapist, dayIdx]);
 
   // 選択中セラピストの出勤時間 → 予約可能スロット
   const shiftStr = useMemo(() => {
