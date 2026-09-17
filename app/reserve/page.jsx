@@ -31,9 +31,14 @@ function genSlots(shift) {
   for (let t = s.start; t <= s.end - 60; t += 5) out.push(fmtMin(t));
   return out;
 }
-/* 時刻ラベル（"13:00" / "翌2:00"）→ 分 */
+/* 時刻ラベル（"13:00" / "翌2:00"）→ 分。
+   Googleスプレッドシートが時刻を日付値に変換した場合
+   （例 "1899-12-30T21:00:00.000Z"）にも対応。 */
 function labelToMin(s) {
-  const m = String(s || "").match(/(翌)?\s*(\d{1,2}):(\d{2})/);
+  s = String(s || "");
+  const iso = s.match(/^\d{4}-\d{2}-\d{2}T(\d{2}):(\d{2})/);
+  if (iso) return +iso[1] * 60 + +iso[2]; // 変換済み時刻（UTCの時:分＝表示時刻）
+  const m = s.match(/(翌)?\s*(\d{1,2}):(\d{2})/);
   if (!m) return null;
   return +m[2] * 60 + +m[3] + (m[1] ? 1440 : 0);
 }
