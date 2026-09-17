@@ -59,7 +59,7 @@ export default function Therapist() {
         ) : (
           <section className="tp-grid">
             {THERAPISTS.map((t, i) => (
-              <article className="tp-card" key={i}>
+              <a className="tp-card" href={`${i + 1}/`} key={i}>
                 <div className="tp-photo" style={{ background: t.bg }}>
                   {t.ribbon && <span className="tp-ribbon">出勤</span>}
                   {t.photo ? (
@@ -95,7 +95,7 @@ export default function Therapist() {
                     </div>
                   )}
                 </div>
-              </article>
+              </a>
             ))}
           </section>
         )}

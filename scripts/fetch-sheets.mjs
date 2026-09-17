@@ -187,8 +187,10 @@ function buildSchedule(objs) {
   return { area: objs[0]?.["エリア"] || "亀戸", days: [...daysMap.values()] };
 }
 
-// セラピスト名簿（本日の出勤カード／出勤情報／セラピスト一覧の照合元）:
-// 列 = 名前,出勤,案内時刻,年齢,T,B,カップ,W,H,ハート,ラベル,新人,出勤リボン,スケジュール,サブ,ステータス,タグ,SNS,写真
+// セラピスト名簿（本日の出勤カード／出勤情報／セラピスト一覧・詳細ページの照合元）:
+// 列 = 名前,出勤,案内時刻,年齢,T,B,カップ,W,H,ハート,ラベル,新人,出勤リボン,スケジュール,サブ,ステータス,タグ,SNS,写真,プロフィール
+//   ・写真   … 複数枚は「;」区切り（先頭がメイン、残りは詳細ページのサブ写真）
+//   ・プロフィール … 詳細ページの紹介文（「コメント」「紹介文」列でも可）
 // 全員ぶんを出力し、欠勤(✖️)は absent:true を付与（表示側で除外／案内に利用）。
 function buildRoster(objs) {
   const truthy = (v) => /^(1|true|○|◯|〇|はい|yes|y)$/i.test((v || "").trim());
@@ -221,7 +223,15 @@ function buildRoster(objs) {
       guideTime: o["案内時刻"] || o["案内時間"] || "",
       area: o["エリア"] || "亀戸",
       sns: (o["SNS"] || "").split(";").map((s) => s.trim()).filter(Boolean),
-      ...(o["写真"] ? { photo: o["写真"] } : {}),
+      // 写真列は「;」区切りで複数指定可。先頭がメイン写真、残りは詳細ページのサブ写真。
+      ...(() => {
+        const photos = (o["写真"] || "")
+          .split(";")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        return photos.length ? { photo: photos[0], photos } : {};
+      })(),
+      profile: o["プロフィール"] || o["コメント"] || o["紹介文"] || "",
       photoBg: bgs[i % bgs.length],
       absent: isAbsent(o["出勤"]),
     }));
