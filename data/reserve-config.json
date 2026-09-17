@@ -1,0 +1,46 @@
+{
+  "endpoint": "",
+  "email": "naoxxx0320@gmail.com",
+  "area": "亀戸",
+  "courseNote": "150分以上のコースは本指名でのご予約のみ可能です。",
+  "courses": [
+    { "label": "60分コース", "price": 15000, "honshimei": false },
+    { "label": "70分オールあおむけコース", "price": 19000, "honshimei": false },
+    { "label": "90分コース", "price": 19000, "honshimei": false },
+    { "label": "120分コース", "price": 24000, "honshimei": false },
+    { "label": "150分コース", "price": 29000, "honshimei": true },
+    { "label": "180分コース", "price": 34000, "honshimei": true },
+    { "label": "210分コース", "price": 39000, "honshimei": true },
+    { "label": "240分コース", "price": 44000, "honshimei": true },
+    { "label": "270分コース", "price": 49000, "honshimei": true },
+    { "label": "300分コース", "price": 54000, "honshimei": true },
+    { "label": "480分コース", "price": 84000, "honshimei": true }
+  ],
+  "pays": [
+    "現金",
+    "カード（別途手数料が発生します）",
+    "PayPay（別途手数料が発生します）"
+  ],
+  "sources": [
+    "店舗HP",
+    "X（旧Twitter）",
+    "Instagram",
+    "TikTok",
+    "GoogleMap",
+    "02（ゼロツー）",
+    "Relaxi（リラクシィ）",
+    "メンズエステランキング",
+    "エステ魂",
+    "駅ちか",
+    "シティヘブン",
+    "看板",
+    "知人の紹介",
+    "該当なし"
+  ],
+  "notes": [
+    "ご予約時間の前後に40分以上の空白時間がある場合、お時間の調整又はキャンセルさせていただく場合がございます。",
+    "各種割引は、WEB・お電話ともにご予約時にご申告がない場合、受付できません。",
+    "各種オプションはルームにて直接セラピストにご相談ください。",
+    "150分以上のコースは本指名のセラピストのみご予約可能になります。"
+  ]
+}

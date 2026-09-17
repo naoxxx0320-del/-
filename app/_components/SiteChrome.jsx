@@ -118,7 +118,7 @@ export default function SiteChrome({ base = "" }) {
             <small>予約</small>
           </span>
         </a>
-        <a className="fb-btn" href="#">
+        <a className="fb-btn" href={`${base}reserve/`}>
           <span className="fb-ic" aria-hidden="true">
             <svg viewBox="0 0 32 32" width="26" height="26" fill="none" stroke="#edd39b" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round">
               <rect x="3.5" y="6" width="25" height="16" rx="2" />

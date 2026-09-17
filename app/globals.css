@@ -2408,3 +2408,494 @@ a.tp-card:hover {
 body.menu-open {
   overflow: hidden;
 }
+
+/* ============================================================
+   WEB予約ツール（/reserve）
+   ============================================================ */
+.rsv-stage {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  background: #eef1f4;
+}
+.rsv {
+  width: 100%;
+  max-width: var(--maxw);
+  background: #f4f6f8;
+  min-height: 100vh;
+  padding-bottom: 40px;
+  font-family: var(--font-serif-jp), "Hiragino Kaku Gothic ProN", sans-serif;
+}
+.rsv-head {
+  background: linear-gradient(135deg, #3a2f22, #5a4a33);
+  color: #f2e7cf;
+  text-align: center;
+  padding: 16px 12px 14px;
+}
+.rsv-logo {
+  font-size: 21px;
+  letter-spacing: 0.18em;
+  font-weight: 600;
+}
+.rsv-sub {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: #d8c8a6;
+  margin-top: 3px;
+}
+.rsv-lead {
+  font-size: 13.5px;
+  color: #40372a;
+  padding: 14px 16px 0;
+  line-height: 1.7;
+}
+
+/* セクション見出し */
+.rsv-sec {
+  background: #fff;
+  margin: 12px 10px 0;
+  border-radius: 8px;
+  padding: 14px 13px 16px;
+  box-shadow: 0 1px 4px rgba(40, 30, 20, 0.06);
+}
+.rsv-h {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 15px;
+  color: #2f6bb0;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.rsv-n {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #2f6bb0;
+  color: #fff;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 日付バー */
+.rsv-daybar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.rsv-day-nav {
+  flex: 0 0 auto;
+  border: 1px solid #b7d0b7;
+  background: #fff;
+  color: #4a8a4a;
+  border-radius: 6px;
+  padding: 8px 9px;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.rsv-day-nav:disabled {
+  opacity: 0.4;
+}
+.rsv-day-sel {
+  flex: 1;
+  border: 1px solid #cfd6dc;
+  border-radius: 6px;
+  padding: 9px 8px;
+  font-size: 14px;
+  background: #fff;
+  color: #2f2a22;
+}
+
+/* セラピスト選択 */
+.rsv-thera {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+.rsv-tcard {
+  position: relative;
+  border: 2px solid #e0e4e8;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0 0 8px;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: center;
+}
+.rsv-tcard.on {
+  border-color: #2f6bb0;
+  box-shadow: 0 0 0 1px #2f6bb0 inset;
+}
+.rsv-tphoto {
+  display: block;
+  aspect-ratio: 3 / 4;
+  background: linear-gradient(160deg, #e7dac2, #cbb992);
+  overflow: hidden;
+}
+.rsv-tphoto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.rsv-theart {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 30px;
+  color: #fff;
+}
+.rsv-tname {
+  display: block;
+  font-size: 13px;
+  color: #2f2a22;
+  margin-top: 5px;
+  font-weight: 600;
+}
+.rsv-tage {
+  display: block;
+  font-size: 11px;
+  color: #6b5f4c;
+}
+.rsv-ttime {
+  display: block;
+  font-size: 10px;
+  color: #8a7c64;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+.rsv-tcheck {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #2f6bb0;
+  color: #fff;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rsv-omakase {
+  width: 100%;
+  margin-top: 10px;
+  border: 2px dashed #c4b98f;
+  background: #fffdf6;
+  color: #7a6a3a;
+  border-radius: 8px;
+  padding: 11px;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+.rsv-omakase.on {
+  border-style: solid;
+  border-color: #2f6bb0;
+  color: #2f6bb0;
+  background: #eef4fb;
+}
+.rsv-empty,
+.rsv-hint {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  color: #8a7c64;
+  padding: 8px 2px;
+}
+
+/* 時間スロット */
+.rsv-times {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 210px;
+  overflow-y: auto;
+  padding: 2px;
+}
+.rsv-time {
+  flex: 0 0 auto;
+  min-width: 58px;
+  border: 1px solid #cfd6dc;
+  background: #fff;
+  border-radius: 6px;
+  padding: 8px 4px;
+  font-size: 13px;
+  color: #33475b;
+  cursor: pointer;
+}
+.rsv-time.on {
+  background: #2f6bb0;
+  border-color: #2f6bb0;
+  color: #fff;
+}
+
+/* コース */
+.rsv-note {
+  font-size: 12px;
+  color: #9a5a5a;
+  margin-bottom: 10px;
+}
+.rsv-courses {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rsv-course {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #dfe4e8;
+  border-radius: 7px;
+  padding: 11px 12px;
+  cursor: pointer;
+}
+.rsv-course.on {
+  border-color: #2f6bb0;
+  background: #eff5fc;
+}
+.rsv-course input {
+  accent-color: #2f6bb0;
+  width: 17px;
+  height: 17px;
+}
+.rsv-cname {
+  flex: 1;
+  font-size: 14px;
+  color: #2f2a22;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.rsv-honshimei {
+  font-size: 10px;
+  color: #fff;
+  background: #b8863a;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+.rsv-cprice {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #33475b;
+}
+
+/* 入力フィールド */
+.rsv-field {
+  display: block;
+  margin-bottom: 13px;
+}
+.rsv-label {
+  display: block;
+  font-size: 13px;
+  color: #40372a;
+  margin-bottom: 5px;
+}
+.rsv-label i {
+  font-style: normal;
+  font-size: 10.5px;
+  color: #c0392b;
+  margin-left: 6px;
+}
+.rsv-field input,
+.rsv-field textarea,
+.rsv-source-other {
+  width: 100%;
+  border: 1px solid #cfd6dc;
+  border-radius: 6px;
+  padding: 10px 11px;
+  font-size: 15px;
+  color: #2f2a22;
+  background: #fff;
+  font-family: inherit;
+}
+.rsv-field input:focus,
+.rsv-field textarea:focus,
+.rsv-source-other:focus {
+  outline: 2px solid #2f6bb0;
+  border-color: #2f6bb0;
+}
+.rsv-pay {
+  margin-top: 4px;
+}
+.rsv-radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  color: #33302a;
+  padding: 7px 2px;
+}
+.rsv-radio input {
+  accent-color: #2f6bb0;
+  width: 17px;
+  height: 17px;
+}
+
+/* きっかけ */
+.rsv-sources {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 10px;
+}
+.rsv-source-other {
+  margin-top: 10px;
+}
+
+/* 注意事項 */
+.rsv-notes {
+  margin: 14px 10px 0;
+  background: #fbf7ee;
+  border: 1px solid #ecdcc0;
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.rsv-notes-h {
+  font-size: 13px;
+  color: #7a5a2a;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.rsv-notes ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.rsv-notes li {
+  font-size: 12px;
+  color: #5a4d38;
+  line-height: 1.7;
+  margin-bottom: 4px;
+}
+
+/* ボタン・エラー */
+.rsv-submit {
+  display: block;
+  width: calc(100% - 20px);
+  margin: 18px 10px 0;
+  background: linear-gradient(135deg, #2f6bb0, #295f9e);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(41, 95, 158, 0.3);
+}
+.rsv-submit:disabled {
+  opacity: 0.6;
+}
+.rsv-edit {
+  display: block;
+  width: calc(100% - 20px);
+  margin: 10px 10px 0;
+  background: #fff;
+  color: #5a4a33;
+  border: 1px solid #cfd6dc;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.rsv-back {
+  display: block;
+  text-align: center;
+  margin: 14px 10px 0;
+  color: #6b5f4c;
+  font-size: 13px;
+  text-decoration: none;
+}
+.rsv-err {
+  margin: 14px 10px 0;
+  background: #fdecea;
+  border: 1px solid #f5c6c0;
+  color: #b02a1a;
+  border-radius: 7px;
+  padding: 11px 13px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* 確認画面 */
+.rsv-confirm {
+  width: calc(100% - 20px);
+  margin: 14px 10px 0;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(40, 30, 20, 0.06);
+}
+.rsv-confirm th,
+.rsv-confirm td {
+  text-align: left;
+  padding: 11px 12px;
+  font-size: 13.5px;
+  border-bottom: 1px solid #eef1f4;
+  vertical-align: top;
+}
+.rsv-confirm th {
+  width: 34%;
+  background: #f6f8fa;
+  color: #5a4a33;
+  font-weight: 600;
+}
+.rsv-confirm td {
+  color: #2f2a22;
+}
+
+/* 完了画面 */
+.rsv-done {
+  text-align: center;
+  padding: 34px 22px;
+}
+.rsv-done-ic {
+  width: 66px;
+  height: 66px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: #2e8b57;
+  color: #fff;
+  font-size: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rsv-done h2 {
+  font-size: 19px;
+  color: #2f2a22;
+  margin-bottom: 12px;
+}
+.rsv-done p {
+  font-size: 13.5px;
+  color: #50463a;
+  line-height: 1.85;
+  margin-bottom: 18px;
+}
+.rsv-done-box {
+  text-align: left;
+  background: #fff;
+  border: 1px solid #e4e8ec;
+  border-radius: 8px;
+  padding: 14px;
+}
+.rsv-done-box div {
+  font-size: 13.5px;
+  color: #2f2a22;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f2f4;
+}
+.rsv-done-box div:last-child {
+  border-bottom: none;
+}
+.rsv-done-box b {
+  display: inline-block;
+  width: 84px;
+  color: #6b5f4c;
+  font-weight: 600;
+}
