@@ -106,7 +106,21 @@ function toObjects(text, marker) {
 async function fetchCSV(url) {
   const res = await fetch(url, { redirect: "follow" });
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-  return res.text();
+  const text = await res.text();
+  // 共有設定切れ等でCSVの代わりにHTML（ログイン/エラー画面）が返ることがある。
+  // それをデータとして取り込むと空データで上書きしてしまうため、エラー扱いにする。
+  const head = text.slice(0, 300).trim().toLowerCase();
+  if (head.startsWith("<!doctype") || head.startsWith("<html") || head.startsWith("<head")) {
+    throw new Error("CSVではなくHTMLが返却されました（シートの共有設定/URLを確認してください）");
+  }
+  return text;
+}
+
+/** 生成結果が空か（days が空、または配列が空）。空なら既存データを保持する。 */
+function isEmptyBuilt(built) {
+  if (Array.isArray(built)) return built.length === 0;
+  if (built && Array.isArray(built.days)) return built.days.length === 0;
+  return false;
 }
 
 function readJSON(name) {
@@ -320,6 +334,10 @@ async function run() {
         continue;
       }
       const built = j.build(objs);
+      if (isEmptyBuilt(built)) {
+        console.log(`skip ${j.file}: 生成結果が空のため既存データを保持`);
+        continue;
+      }
       writeJSON(j.file, built);
       updated++;
       if (j.derive) {
