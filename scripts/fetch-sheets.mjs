@@ -137,13 +137,22 @@ function buildGuideFromRoster(roster) {
 const isAbsent = (v) =>
   /^(✖️|✖|✗|×|✕|x|欠|欠勤|休|no|false|非表示)$/i.test((v || "").trim());
 
-// 出勤情報: 列 = 日付, ラベル, 名前, 出勤時間, ステータス, 出勤(○/✖️)
+// 「在籍」列が非在籍（退店・休業など）かどうか。在籍・空欄・○は在籍扱い（表示）。
+const isInactive = (v) =>
+  /^(退店|退職|卒業|休業|休職|off|非表示|×|✖️|✖)$/i.test((v || "").trim());
+
+// 「区分」列が未確定（申請中・希望休など）かどうか。確定・空欄はサイト表示。
+const isDraft = (v) =>
+  /^(申請|申請中|希望|希望休|未確定|保留|draft|下書き)$/i.test((v || "").trim());
+
+// 出勤情報: 列 = 日付, ラベル, 名前, 出勤時間, ステータス, 出勤(○/✖️), 区分(確定/申請中/希望休)
 function buildSchedule(objs) {
   const daysMap = new Map();
   for (const o of objs) {
     const date = o["日付"] || "";
     if (!date) continue;
     if (isAbsent(o["出勤"])) continue; // ✖️（欠勤）はサイトに出さない
+    if (isDraft(o["区分"])) continue; // 申請中・希望休はサイトに出さない（確定のみ）
     if (!daysMap.has(date))
       daysMap.set(date, { date, label: o["ラベル"] || date, list: [] });
     daysMap.get(date).list.push({
@@ -166,6 +175,7 @@ function buildRoster(objs) {
   ];
   return objs
     .filter((o) => (o["名前"] || "").trim() !== "")
+    .filter((o) => !isInactive(o["在籍"])) // 退店・休業は全ページから除外
     .map((o, i) => ({
       name: o["名前"] || "",
       age: o["年齢"] || "",
