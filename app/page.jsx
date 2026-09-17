@@ -288,7 +288,7 @@ export default function Home() {
             </span>
           </a>
           <div className="rz-row">
-            <a className="rz-btn" href="#">
+            <a className="rz-btn" href="reserve/">
               <span className="rz-ic" aria-hidden="true">
                 <svg viewBox="0 0 32 32" width="26" height="26" fill="none" stroke="#edd39b" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round">
                   <rect x="3.5" y="6" width="25" height="16" rx="2" />
