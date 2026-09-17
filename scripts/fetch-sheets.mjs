@@ -202,6 +202,7 @@ function buildRoster(objs) {
     .filter((o) => (o["名前"] || "").trim() !== "")
     .filter((o) => !isInactive(o["在籍"])) // 退店・休業は全ページから除外
     .map((o, i) => ({
+      id: i + 1, // 詳細ページ /therapist/<id>/ の安定ID（名簿の並び順）
       name: o["名前"] || "",
       age: o["年齢"] || "",
       heart: o["ハート"] || (i % 2 ? "diamond" : "pink"),
@@ -266,6 +267,31 @@ function applyPhotoOverrides(roster) {
   return out;
 }
 
+/** セラピスト詳細の上書き（data/therapist-details.json）を roster に適用。
+ *  セラピスト名 → { nameFull, age, height, cup, stats, tags, sns, profile ... } を
+ *  シートの値に浅くマージ（指定した項目のみ上書き）。詳細ページの紹介文など、
+ *  シートに列が無い情報を Claude 側で管理し、シート更新でも消えないようにする。 */
+function applyDetailOverrides(roster) {
+  const p = join(DATA, "therapist-details.json");
+  if (!existsSync(p)) return roster;
+  let map = {};
+  try {
+    map = JSON.parse(readFileSync(p, "utf8"));
+  } catch (e) {
+    console.error("therapist-details parse error:", e.message);
+    return roster;
+  }
+  let n = 0;
+  const out = roster.map((t) => {
+    const ov = map[t.name];
+    if (!ov || typeof ov !== "object") return t;
+    n++;
+    return { ...t, ...ov };
+  });
+  if (n) console.log(`therapist-details: ${n} 名に適用`);
+  return out;
+}
+
 /* ---- メイン ---- */
 async function run() {
   const jobs = [
@@ -306,10 +332,11 @@ async function run() {
       process.exitCode = 1;
     }
   }
-  // 写真の上書き対応表を roster.json に適用（シート取得の有無にかかわらず常に）
+  // 写真・詳細の上書きを roster.json に適用（シート取得の有無にかかわらず常に）
   const roster = readJSON("roster.json");
   if (roster) {
-    const applied = applyPhotoOverrides(roster);
+    let applied = applyPhotoOverrides(roster);
+    applied = applyDetailOverrides(applied);
     if (JSON.stringify(applied) !== JSON.stringify(roster)) {
       writeJSON("roster.json", applied);
       updated++;

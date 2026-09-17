@@ -192,7 +192,7 @@ export default function Home() {
           <>
             <section className="therapists">
               {THERAPISTS.map((t, i) => (
-                <TherapistCard t={t} key={i} />
+                <TherapistCard t={t} href={`therapist/${t.id ?? i + 1}/`} key={i} />
               ))}
             </section>
 

@@ -8,7 +8,8 @@ export const metadata = {
 };
 
 // 在籍セラピスト一覧（「本日の出勤」シートから紐づけ）
-const THERAPISTS = roster.map((t) => ({
+const THERAPISTS = roster.map((t, i) => ({
+  id: t.id ?? i + 1,
   name: t.name,
   age: t.age,
   height: t.height || (t.stats?.[0] || "").replace("T.", ""),
@@ -59,7 +60,7 @@ export default function Therapist() {
         ) : (
           <section className="tp-grid">
             {THERAPISTS.map((t, i) => (
-              <a className="tp-card" href={`${i + 1}/`} key={i}>
+              <a className="tp-card" href={`${t.id}/`} key={i}>
                 <div className="tp-photo" style={{ background: t.bg }}>
                   {t.ribbon && <span className="tp-ribbon">出勤</span>}
                   {t.photo ? (

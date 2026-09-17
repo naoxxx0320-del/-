@@ -3,7 +3,7 @@
 
 import { photoSrc as buildPhotoSrc } from "./photo";
 
-function SnsBadge({ kind }) {
+export function SnsBadge({ kind }) {
   const map = {
     fgn: (
       <div className="s fgn" key="fgn">
@@ -40,12 +40,13 @@ function SnsBadge({ kind }) {
   return map[kind] || null;
 }
 
-export default function TherapistCard({ t, base = "" }) {
+export default function TherapistCard({ t, base = "", href }) {
   const stats = t.stats || [];
   const sns = t.sns || [];
   const photoSrc = buildPhotoSrc(t.photo, base);
+  const Tag = href ? "a" : "article";
   return (
-    <article className="tcard">
+    <Tag className="tcard" {...(href ? { href } : {})}>
       <div className="tcard-photo" style={{ background: t.photoBg }}>
         {t.photo ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -106,6 +107,6 @@ export default function TherapistCard({ t, base = "" }) {
           {t.status}
         </div>
       )}
-    </article>
+    </Tag>
   );
 }

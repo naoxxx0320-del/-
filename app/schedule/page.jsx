@@ -66,7 +66,12 @@ export default function Schedule() {
         ) : (
           <section className="therapists">
             {cards.map((t, i) => (
-              <TherapistCard t={t} base="../" key={i} />
+              <TherapistCard
+                t={t}
+                base="../"
+                href={t.id ? `../therapist/${t.id}/` : undefined}
+                key={i}
+              />
             ))}
           </section>
         )}
