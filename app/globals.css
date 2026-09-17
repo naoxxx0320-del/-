@@ -853,6 +853,17 @@ img {
   display: flex;
   flex-direction: column;
 }
+a.tcard {
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+a.tcard:active {
+  transform: scale(0.98);
+}
+a.tcard:hover {
+  box-shadow: 0 5px 16px rgba(120, 96, 60, 0.24);
+}
 
 .tcard-photo {
   position: relative;
@@ -992,6 +1003,13 @@ img {
   display: flex;
   gap: 5px;
   align-items: center;
+}
+/* 詳細ページ用：カード内オーバーレイではなく中央寄せの行 */
+.sns.inline {
+  position: static;
+  justify-content: center;
+  gap: 10px;
+  margin: 2px 0 14px;
 }
 .sns .s {
   width: 30px;
@@ -2064,74 +2082,42 @@ a.tp-card:hover {
   object-fit: cover;
   display: block;
 }
-.td-info {
-  background: rgba(255, 253, 248, 0.92);
-  border: 1px solid #e4d7bd;
-  border-radius: 6px;
-  padding: 16px 15px 18px;
-  box-shadow: 0 2px 8px rgba(70, 48, 30, 0.08);
-}
-.td-name {
-  text-align: center;
+/* 名前ヘッダー（下線付き大見出し） */
+.td-title {
   font-family: var(--font-serif-jp), serif;
-  color: #2f2618;
-  border-bottom: 1px solid #e0d3b6;
+  font-size: 27px;
+  font-weight: 500;
+  text-align: center;
+  letter-spacing: 0.08em;
+  color: #5a4a2c;
   padding-bottom: 10px;
-  margin-bottom: 12px;
+  margin: 6px 0 12px;
+  border-bottom: 2px solid #cdae62;
 }
-.td-name .nm {
-  font-size: 24px;
-  letter-spacing: 0.08em;
-}
-.td-name .ag {
-  font-size: 15px;
-  color: #6b5a3f;
-  margin-left: 2px;
-}
-.td-new {
-  display: inline-block;
-  vertical-align: middle;
-  margin-left: 8px;
-  background: linear-gradient(135deg, #a8274d, #7d1730);
-  color: #fff;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  padding: 2px 8px;
-  border-radius: 10px;
-}
-.td-size {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 12px;
-}
-.td-size-item {
-  border: 1px solid #d9c48c;
-  border-radius: 5px;
-  padding: 7px 2px 6px;
-  text-align: center;
-  background: #fff;
-}
-.td-size-item b {
-  display: block;
-  font-family: var(--font-serif-en), serif;
-  font-style: italic;
-  font-size: 12px;
-  color: #b18e46;
-  line-height: 1;
-}
-.td-size-item span {
-  display: block;
+/* スペック行（年齢・身長・三サイズ） */
+.td-spec {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
   font-family: var(--font-serif-jp), serif;
-  font-size: 13px;
-  color: #2f2618;
-  margin-top: 3px;
+  font-size: 15px;
+  color: #3a2f20;
+  margin-bottom: 14px;
+}
+.td-spec-item {
+  white-space: nowrap;
 }
 .td-tags {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.td-tags .tp-tag {
+  padding: 9px 4px;
+  font-size: 13px;
+  border-radius: 5px;
 }
 .td-sched {
   display: flex;
@@ -2157,23 +2143,72 @@ a.tp-card:hover {
 .td-status.full {
   background: #9a3b3b;
 }
-.td-profile {
+/* お店コメント（装飾枠付き） */
+.td-comment {
+  position: relative;
+  margin: 4px 0 16px;
+  padding: 22px 18px 20px;
+  background: #fffdf8;
+  border: 1px solid #cdae62;
+  outline: 3px solid #fffdf8;
+  outline-offset: -6px;
+  box-shadow: 0 2px 10px rgba(70, 48, 30, 0.1),
+    inset 0 0 0 4px rgba(205, 174, 98, 0.28);
+}
+.tdc-corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: #b8912f;
+  border-style: solid;
+  border-width: 0;
+}
+.tdc-corner.tl {
+  top: 7px;
+  left: 7px;
+  border-top-width: 2px;
+  border-left-width: 2px;
+}
+.tdc-corner.tr {
+  top: 7px;
+  right: 7px;
+  border-top-width: 2px;
+  border-right-width: 2px;
+}
+.tdc-corner.bl {
+  bottom: 7px;
+  left: 7px;
+  border-bottom-width: 2px;
+  border-left-width: 2px;
+}
+.tdc-corner.br {
+  bottom: 7px;
+  right: 7px;
+  border-bottom-width: 2px;
+  border-right-width: 2px;
+}
+.tdc-head {
+  text-align: center;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 17px;
+  letter-spacing: 0.14em;
+  color: #6b5426;
   margin-bottom: 14px;
 }
-.td-profile-h {
-  font-family: var(--font-serif-jp), serif;
-  font-size: 13px;
-  letter-spacing: 0.2em;
-  color: #b18e46;
-  border-left: 3px solid #cdae62;
-  padding-left: 8px;
-  margin-bottom: 6px;
+.tdc-dia {
+  color: #cdae62;
+  margin: 0 8px;
+  font-size: 14px;
 }
-.td-profile p {
+.tdc-p {
   font-family: var(--font-serif-jp), serif;
-  font-size: 13.5px;
-  line-height: 1.85;
+  font-size: 14px;
+  line-height: 1.95;
   color: #3a2f20;
+  margin-bottom: 14px;
+}
+.tdc-p:last-child {
+  margin-bottom: 0;
 }
 .td-back {
   display: block;
