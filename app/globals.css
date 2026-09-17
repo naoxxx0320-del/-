@@ -2878,6 +2878,28 @@ body.menu-open {
   align-items: center;
   justify-content: center;
 }
+.rsv-done-ic.mail {
+  background: #d99a2b;
+  font-size: 30px;
+}
+.rsv-pending {
+  background: #fff7e6;
+  border: 1px solid #f0d79a;
+  color: #9a6a1a;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+.rsv-done-box-h {
+  font-size: 12px;
+  color: #8a7c64;
+  font-weight: 600;
+  padding: 0 0 6px !important;
+  border-bottom: 1px solid #f0f2f4;
+}
 .rsv-done h2 {
   font-size: 19px;
   color: #2f2a22;
