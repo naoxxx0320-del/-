@@ -6,37 +6,337 @@
     "heartLabel": "AJ",
     "ribbon": "出勤",
     "isNew": true,
-    "stats": ["T.158", "B.86(D)", "W.57", "H.85"],
+    "stats": [
+      "T.158",
+      "B.86(D)",
+      "W.57",
+      "H.85"
+    ],
     "height": "158",
     "cup": "D",
-    "tags": ["ピュア妹系", "スレンダー美女", "透明感抜群", "愛情たっぷり"],
-    "sched": "本日 13:00 〜 翌 2:00",
+    "tags": [
+      "ピュア妹系",
+      "スレンダー美女",
+      "透明感抜群",
+      "愛情たっぷり"
+    ],
+    "sched": "本日 13:00〜翌2:00",
     "schedSub": "ご予約受付中",
     "status": "空きあり",
     "guideTime": "15:30〜",
     "area": "亀戸",
-    "sns": ["fgn", "blue", "zero2", "relaxi"],
+    "sns": [
+      "fgn",
+      "blue",
+      "zero2",
+      "relaxi"
+    ],
     "photo": "therapist-mio.jpg",
     "photoBg": "linear-gradient(160deg,#e7dac2 0%,#d4c09e 55%,#c8b58c 100%)",
     "absent": false
   },
   {
-    "name": "ゆな",
-    "age": "20",
+    "name": "花恋",
+    "age": "24",
     "heart": "diamond",
     "heartLabel": "◆",
+    "ribbon": "出勤",
+    "isNew": false,
+    "stats": [
+      "T.160",
+      "B.87(E)",
+      "W.58",
+      "H.86"
+    ],
+    "height": "160",
+    "cup": "E",
+    "tags": [
+      "清楚系",
+      "笑顔が素敵",
+      "美乳",
+      "神対応"
+    ],
+    "sched": "本日 16:00〜翌3:00",
+    "schedSub": "受付中",
+    "status": "空きあり",
+    "guideTime": "16:00〜",
+    "area": "亀戸",
+    "sns": [
+      "fgn",
+      "zero2",
+      "relaxi",
+      "insta"
+    ],
+    "photo": "therapist-karen.jpg",
+    "photoBg": "linear-gradient(160deg,#efe6d6 0%,#ddccb0 55%,#cebf9f 100%)",
+    "absent": false
+  },
+  {
+    "name": "ゆな",
+    "age": "20",
+    "heart": "pink",
+    "heartLabel": "AJ",
     "ribbon": null,
     "isNew": false,
-    "stats": ["T.162", "B.84(C)", "W.56", "H.84"],
+    "stats": [
+      "T.162",
+      "B.84(C)",
+      "W.56",
+      "H.84"
+    ],
     "height": "162",
     "cup": "C",
-    "tags": ["超絶美女", "高身長", "高リピート率", "大人の魅力"],
-    "sched": "本日 15:00 〜 翌 5:00",
+    "tags": [
+      "超絶美女",
+      "高身長",
+      "高リピート率",
+      "大人の魅力"
+    ],
+    "sched": "本日 15:00〜翌5:00",
     "schedSub": "残りわずか",
     "status": "満員",
     "guideTime": "",
     "area": "亀戸",
-    "sns": ["x", "zero2", "relaxi", "insta"],
+    "sns": [
+      "x",
+      "zero2",
+      "relaxi",
+      "insta"
+    ],
+    "photoBg": "linear-gradient(160deg,#e7dac2 0%,#d4c09e 55%,#c8b58c 100%)",
+    "absent": false
+  },
+  {
+    "name": "あやか",
+    "age": "26",
+    "heart": "diamond",
+    "heartLabel": "◆",
+    "ribbon": null,
+    "isNew": false,
+    "stats": [
+      "T.165",
+      "B.88(F)",
+      "W.58",
+      "H.88"
+    ],
+    "height": "165",
+    "cup": "F",
+    "tags": [
+      "妖艶",
+      "モデル系",
+      "美脚",
+      "テク抜群"
+    ],
+    "sched": "本日 18:00〜翌2:00",
+    "schedSub": "",
+    "status": "空きあり",
+    "guideTime": "18:00〜",
+    "area": "亀戸",
+    "sns": [
+      "fgn",
+      "blue",
+      "zero2"
+    ],
+    "photoBg": "linear-gradient(160deg,#efe6d6 0%,#ddccb0 55%,#cebf9f 100%)",
+    "absent": false
+  },
+  {
+    "name": "みなみ",
+    "age": "21",
+    "heart": "pink",
+    "heartLabel": "AJ",
+    "ribbon": null,
+    "isNew": true,
+    "stats": [
+      "T.155",
+      "B.83(C)",
+      "W.55",
+      "H.83"
+    ],
+    "height": "155",
+    "cup": "C",
+    "tags": [
+      "新人",
+      "ロリ系",
+      "純粋",
+      "甘え上手"
+    ],
+    "sched": "本日 17:00〜23:00",
+    "schedSub": "",
+    "status": "空きあり",
+    "guideTime": "17:00〜",
+    "area": "亀戸",
+    "sns": [
+      "zero2",
+      "relaxi"
+    ],
+    "photoBg": "linear-gradient(160deg,#e7dac2 0%,#d4c09e 55%,#c8b58c 100%)",
+    "absent": false
+  },
+  {
+    "name": "れな",
+    "age": "23",
+    "heart": "diamond",
+    "heartLabel": "◆",
+    "ribbon": "出勤",
+    "isNew": false,
+    "stats": [
+      "T.159",
+      "B.85(D)",
+      "W.57",
+      "H.85"
+    ],
+    "height": "159",
+    "cup": "D",
+    "tags": [
+      "お姉様系",
+      "色白",
+      "癒やし",
+      "包容力"
+    ],
+    "sched": "本日 19:30〜翌4:00",
+    "schedSub": "",
+    "status": "残りわずか",
+    "guideTime": "19:30〜",
+    "area": "亀戸",
+    "sns": [
+      "fgn",
+      "zero2",
+      "relaxi"
+    ],
+    "photoBg": "linear-gradient(160deg,#efe6d6 0%,#ddccb0 55%,#cebf9f 100%)",
+    "absent": false
+  },
+  {
+    "name": "ゆい",
+    "age": "22",
+    "heart": "pink",
+    "heartLabel": "AJ",
+    "ribbon": null,
+    "isNew": false,
+    "stats": [
+      "T.157",
+      "B.84(C)",
+      "W.56",
+      "H.84"
+    ],
+    "height": "157",
+    "cup": "C",
+    "tags": [
+      "清楚",
+      "美肌",
+      "スレンダー",
+      "笑顔"
+    ],
+    "sched": "",
+    "schedSub": "",
+    "status": "",
+    "guideTime": "",
+    "area": "亀戸",
+    "sns": [
+      "zero2"
+    ],
+    "photoBg": "linear-gradient(160deg,#e7dac2 0%,#d4c09e 55%,#c8b58c 100%)",
+    "absent": true
+  },
+  {
+    "name": "まりな",
+    "age": "25",
+    "heart": "diamond",
+    "heartLabel": "◆",
+    "ribbon": null,
+    "isNew": false,
+    "stats": [
+      "T.163",
+      "B.86(D)",
+      "W.58",
+      "H.86"
+    ],
+    "height": "163",
+    "cup": "D",
+    "tags": [
+      "大人可愛い",
+      "グラマー",
+      "小顔",
+      "上品"
+    ],
+    "sched": "本日 20:00〜翌5:00",
+    "schedSub": "",
+    "status": "空きあり",
+    "guideTime": "20:00〜",
+    "area": "亀戸",
+    "sns": [
+      "fgn",
+      "blue",
+      "relaxi"
+    ],
+    "photoBg": "linear-gradient(160deg,#efe6d6 0%,#ddccb0 55%,#cebf9f 100%)",
+    "absent": false
+  },
+  {
+    "name": "ちなつ",
+    "age": "20",
+    "heart": "pink",
+    "heartLabel": "AJ",
+    "ribbon": null,
+    "isNew": true,
+    "stats": [
+      "T.154",
+      "B.82(B)",
+      "W.54",
+      "H.82"
+    ],
+    "height": "154",
+    "cup": "B",
+    "tags": [
+      "未経験",
+      "清純",
+      "小柄",
+      "一生懸命"
+    ],
+    "sched": "本日 14:00〜22:00",
+    "schedSub": "",
+    "status": "空きあり",
+    "guideTime": "14:00〜",
+    "area": "亀戸",
+    "sns": [
+      "zero2",
+      "relaxi"
+    ],
+    "photoBg": "linear-gradient(160deg,#e7dac2 0%,#d4c09e 55%,#c8b58c 100%)",
+    "absent": false
+  },
+  {
+    "name": "さき",
+    "age": "27",
+    "heart": "diamond",
+    "heartLabel": "◆",
+    "ribbon": null,
+    "isNew": false,
+    "stats": [
+      "T.166",
+      "B.89(F)",
+      "W.59",
+      "H.89"
+    ],
+    "height": "166",
+    "cup": "F",
+    "tags": [
+      "妖艶美人",
+      "高身長",
+      "美乳",
+      "テクニシャン"
+    ],
+    "sched": "本日 21:00〜翌5:00",
+    "schedSub": "",
+    "status": "空きあり",
+    "guideTime": "21:00〜",
+    "area": "亀戸",
+    "sns": [
+      "fgn",
+      "zero2",
+      "insta"
+    ],
     "photoBg": "linear-gradient(160deg,#efe6d6 0%,#ddccb0 55%,#cebf9f 100%)",
     "absent": false
   }
