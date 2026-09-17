@@ -1,79 +1,24 @@
 import SiteChrome from "../_components/SiteChrome";
+import roster from "../../data/roster.json";
 
 export const metadata = {
   title: "セラピスト｜AROMA DAIAMOND 亀戸 メンズエステ",
   description: "AROMA DAIAMOND（アロマ ダイアモンド）亀戸 在籍セラピスト一覧。",
 };
 
-/* 在籍セラピスト（プレースホルダー：後で編集できます） */
-const THERAPISTS = [
-  {
-    name: "柊 雫",
-    age: 22,
-    height: 154,
-    cup: "C",
-    heart: "aj",
-    ribbon: false,
-    fgn: true,
-    tags: ["ピュア妹系", "スレンダー美女", "透明感抜群", "愛情たっぷり"],
-    bg: "linear-gradient(160deg,#e7dac2 0%,#d4c09e 55%,#c8b58c 100%)",
-  },
-  {
-    name: "早乙女 せいら",
-    age: 28,
-    height: 165,
-    cup: "E",
-    heart: "dia",
-    ribbon: true,
-    fgn: false,
-    tags: ["超絶美女", "高身長", "高リピート率", "大人の魅力"],
-    bg: "linear-gradient(160deg,#efe6d6 0%,#ddccb0 55%,#cebf9f 100%)",
-  },
-  {
-    name: "月森 りん",
-    age: 24,
-    height: 158,
-    cup: "D",
-    heart: "dia",
-    ribbon: false,
-    fgn: true,
-    tags: ["清楚系", "美脚", "小顔美人", "癒やし上手"],
-    bg: "linear-gradient(160deg,#e9dcc6 0%,#d0bd97 55%,#c4b184 100%)",
-  },
-  {
-    name: "神崎 りりな",
-    age: 21,
-    height: 160,
-    cup: "C",
-    heart: "aj",
-    ribbon: true,
-    fgn: false,
-    tags: ["モデル系", "明るい性格", "テク抜群", "指名多数"],
-    bg: "linear-gradient(160deg,#efe7d8 0%,#dccdb2 55%,#ccbd9c 100%)",
-  },
-  {
-    name: "白雪 おと",
-    age: 23,
-    height: 162,
-    cup: "D",
-    heart: "dia",
-    ribbon: false,
-    fgn: true,
-    tags: ["色白美肌", "おっとり", "包容力", "リピート必至"],
-    bg: "linear-gradient(160deg,#e6d9c1 0%,#cfbc94 55%,#c3b082 100%)",
-  },
-  {
-    name: "音羽 みみ",
-    age: 20,
-    height: 156,
-    cup: "B",
-    heart: "aj",
-    ribbon: true,
-    fgn: false,
-    tags: ["新人", "ロリ可愛い", "純真無垢", "甘えん坊"],
-    bg: "linear-gradient(160deg,#eee6d4 0%,#dbcaad 55%,#cbbb98 100%)",
-  },
-];
+// 在籍セラピスト一覧（「本日の出勤」シートから紐づけ）
+const THERAPISTS = roster.map((t) => ({
+  name: t.name,
+  age: t.age,
+  height: t.height || (t.stats?.[0] || "").replace("T.", ""),
+  cup: t.cup || "",
+  heart: t.heart === "diamond" ? "dia" : "aj",
+  ribbon: !!t.ribbon,
+  fgn: (t.sns || []).includes("fgn"),
+  tags: t.tags || [],
+  photo: t.photo,
+  bg: t.photoBg,
+}));
 
 function Heart({ kind }) {
   return (
@@ -108,34 +53,55 @@ export default function Therapist() {
           <div className="ph-jp">セラピスト</div>
         </div>
 
-        <section className="tp-grid">
-          {THERAPISTS.map((t, i) => (
-            <article className="tp-card" key={i}>
-              <div className="tp-photo" style={{ background: t.bg }}>
-                {t.ribbon && <span className="tp-ribbon">出勤</span>}
-                <Heart kind={t.heart} />
-                <div className="tp-badges">
-                  {t.fgn && <span className="tp-badge fgn">FGN</span>}
-                  <span className="tp-badge b02">02</span>
-                  <span className="tp-badge brk">R</span>
+        {THERAPISTS.length === 0 ? (
+          <p className="therapists-empty">セラピスト情報は準備中です。</p>
+        ) : (
+          <section className="tp-grid">
+            {THERAPISTS.map((t, i) => (
+              <article className="tp-card" key={i}>
+                <div className="tp-photo" style={{ background: t.bg }}>
+                  {t.ribbon && <span className="tp-ribbon">出勤</span>}
+                  {t.photo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      className="tp-photo-img"
+                      src={
+                        /^https?:\/\//.test(t.photo)
+                          ? t.photo
+                          : `../${t.photo}`
+                      }
+                      alt={t.name}
+                    />
+                  ) : (
+                    <Heart kind={t.heart} />
+                  )}
+                  <div className="tp-badges">
+                    {t.fgn && <span className="tp-badge fgn">FGN</span>}
+                    <span className="tp-badge b02">02</span>
+                    <span className="tp-badge brk">R</span>
+                  </div>
                 </div>
-              </div>
-              <div className="tp-body">
-                <div className="tp-name">{t.name}</div>
-                <div className="tp-sub">
-                  {t.age}歳 {t.height}cm ({t.cup})
+                <div className="tp-body">
+                  <div className="tp-name">{t.name}</div>
+                  <div className="tp-sub">
+                    {t.age && `${t.age}歳 `}
+                    {t.height && `${t.height}cm `}
+                    {t.cup && `(${t.cup})`}
+                  </div>
+                  {t.tags.length > 0 && (
+                    <div className="tp-tags">
+                      {t.tags.map((tag, j) => (
+                        <span className="tp-tag" key={j}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div className="tp-tags">
-                  {t.tags.map((tag, j) => (
-                    <span className="tp-tag" key={j}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </article>
-          ))}
-        </section>
+              </article>
+            ))}
+          </section>
+        )}
 
         <SiteChrome base="../" />
       </div>
