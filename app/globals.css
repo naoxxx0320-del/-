@@ -2633,6 +2633,18 @@ body.menu-open {
   border-color: #2f6bb0;
   color: #fff;
 }
+.rsv-time.taken {
+  color: #b7bec5;
+  background: #f1f3f5;
+  border-color: #e6e9ec;
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+.rsv-legend {
+  font-size: 12px;
+  color: #8a7c64;
+  margin-top: 8px;
+}
 
 /* コース */
 .rsv-note {

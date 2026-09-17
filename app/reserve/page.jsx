@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { photoSrc } from "../_components/photo";
 import schedule from "../../data/schedule.json";
 import roster from "../../data/roster.json";
@@ -31,6 +31,17 @@ function genSlots(shift) {
   for (let t = s.start; t <= s.end - 60; t += 5) out.push(fmtMin(t));
   return out;
 }
+/* 時刻ラベル（"13:00" / "翌2:00"）→ 分 */
+function labelToMin(s) {
+  const m = String(s || "").match(/(翌)?\s*(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  return +m[2] * 60 + +m[3] + (m[1] ? 1440 : 0);
+}
+/* コース名（"60分コース"）→ 所要分 */
+function courseMinOf(c) {
+  const m = String(c || "").match(/(\d+)\s*分/);
+  return m ? +m[1] : 60;
+}
 
 export default function Reserve() {
   const days = schedule.days || [];
@@ -50,8 +61,31 @@ export default function Reserve() {
   });
   const [confirming, setConfirming] = useState(false);
   const [state, setState] = useState({ sending: false, done: false, error: "" });
+  const [booked, setBooked] = useState([]); // 既存予約（スプレッドシートから取得）
 
   const day = days[dayIdx] || { list: [], label: "" };
+
+  // フォームを開いたとき、現在の予約状況を JSONP で取得（重複予約を防ぐ）
+  useEffect(() => {
+    if (!cfg.endpoint) return;
+    const cb = "__resvAvail_" + Math.random().toString(36).slice(2);
+    const script = document.createElement("script");
+    const done = () => {
+      try {
+        delete window[cb];
+      } catch (_) {}
+      script.remove();
+    };
+    window[cb] = (data) => {
+      setBooked(Array.isArray(data) ? data : []);
+      done();
+    };
+    script.src =
+      cfg.endpoint + (cfg.endpoint.includes("?") ? "&" : "?") + "callback=" + cb;
+    script.onerror = done;
+    document.body.appendChild(script);
+    return done;
+  }, []);
 
   // 選択中セラピストの出勤時間 → 予約可能スロット
   const shiftStr = useMemo(() => {
@@ -59,6 +93,23 @@ export default function Reserve() {
     return e ? e.time : "";
   }, [day, therapist]);
   const slots = useMemo(() => genSlots(parseShift(shiftStr)), [shiftStr]);
+
+  // 選択中セラピスト・日付で「埋まっている時間帯」（コース所要時間を考慮）
+  const occupied = useMemo(
+    () =>
+      booked
+        .filter((b) => b.th === therapist && b.d === (day.label || ""))
+        .map((b) => {
+          const s = labelToMin(b.t);
+          return s == null ? null : { s, e: s + courseMinOf(b.c) };
+        })
+        .filter(Boolean),
+    [booked, therapist, day]
+  );
+  const isTaken = (slot) => {
+    const m = labelToMin(slot);
+    return m != null && occupied.some((r) => m >= r.s && m < r.e);
+  };
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const pickTherapist = (name) => {
@@ -70,6 +121,8 @@ export default function Reserve() {
   const validate = () => {
     if (!therapist) return "セラピストを選んでください。";
     if (!time) return "予約時間を選んでください。";
+    if (isTaken(time))
+      return "申し訳ございません。その時間は予約が入りました。別の時間をお選びください。";
     if (courseI < 0) return "コースを選んでください。";
     if (course?.honshimei && therapist === "おまかせ（指名なし）")
       return "150分以上のコースは本指名（セラピストご指名）でのみご予約いただけます。";
@@ -325,18 +378,31 @@ export default function Reserve() {
             <span className="rsv-n">2</span>予約時間を選んでください
           </h2>
           {therapist ? (
-            <div className="rsv-times">
-              {slots.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  className={`rsv-time ${time === s ? "on" : ""}`}
-                  onClick={() => setTime(s)}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+            <>
+              <div className="rsv-times">
+                {slots.map((s) => {
+                  const taken = isTaken(s);
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      disabled={taken}
+                      className={`rsv-time ${time === s ? "on" : ""} ${
+                        taken ? "taken" : ""
+                      }`}
+                      onClick={() => !taken && setTime(s)}
+                    >
+                      {s}
+                    </button>
+                  );
+                })}
+              </div>
+              {occupied.length > 0 && (
+                <p className="rsv-legend">
+                  取り消し線の時間は予約済みで選べません。
+                </p>
+              )}
+            </>
           ) : (
             <p className="rsv-hint">先にセラピストを選んでください。</p>
           )}
