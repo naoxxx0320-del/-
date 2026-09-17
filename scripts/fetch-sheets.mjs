@@ -11,12 +11,35 @@
  * これにより、URL 登録前でもサンプルデータのままサイトが動作します。
  */
 
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, join } from "node:path";
+import { createHash } from "node:crypto";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const DATA = join(ROOT, "data");
+const PUBLIC = join(ROOT, "public");
+
+/** public/ 内の画像ファイルの内容ハッシュ（版）を data/photo-versions.json に出力。
+ *  写真を同じファイル名で差し替えても、内容が変わればURLの ?v= が変わり、
+ *  ブラウザ／CDNのキャッシュを確実に無効化できる。 */
+function writePhotoVersions() {
+  const versions = {};
+  try {
+    for (const f of readdirSync(PUBLIC)) {
+      if (!/\.(jpe?g|png|webp|gif)$/i.test(f)) continue;
+      const buf = readFileSync(join(PUBLIC, f));
+      versions[f] = createHash("md5").update(buf).digest("hex").slice(0, 8);
+    }
+    writeFileSync(
+      join(DATA, "photo-versions.json"),
+      JSON.stringify(versions, null, 2) + "\n"
+    );
+    console.log(`photo-versions: ${Object.keys(versions).length} 件`);
+  } catch (e) {
+    console.error("photo-versions error:", e.message);
+  }
+}
 
 /* ---- CSV パーサ（引用符・改行対応） ---- */
 function parseCSV(text) {
@@ -244,6 +267,7 @@ async function run() {
       process.exitCode = 1;
     }
   }
+  writePhotoVersions();
   console.log(`done. ${updated} file(s) updated.`);
 }
 
