@@ -42,6 +42,18 @@ function courseMinOf(c) {
   const m = String(c || "").match(/(\d+)\s*分/);
   return m ? +m[1] : 60;
 }
+/* 希望日(例 "2026/9/16") + 時刻ラベル("13:00"/"翌2:00") → JSTの壁時計 "YYYY/MM/DD HH:mm"。
+   翌なら日付を+1。キャンセル期限の判定に使う。 */
+function apptString(dateStr, timeLabel) {
+  const dm = String(dateStr || "").match(/(\d+)\/(\d+)\/(\d+)/);
+  const tm = String(timeLabel || "").match(/(翌)?\s*(\d{1,2}):(\d{2})/);
+  if (!dm || !tm) return "";
+  const dt = new Date(+dm[1], +dm[2] - 1, +dm[3] + (tm[1] ? 1 : 0), +tm[2], +tm[3]);
+  const p = (n) => String(n).padStart(2, "0");
+  return `${dt.getFullYear()}/${p(dt.getMonth() + 1)}/${p(dt.getDate())} ${p(
+    dt.getHours()
+  )}:${p(dt.getMinutes())}`;
+}
 
 export default function Reserve() {
   const days = schedule.days || [];
@@ -161,6 +173,7 @@ export default function Reserve() {
     const body = new URLSearchParams({
       date: day.label || "",
       time,
+      appt: apptString(day.date, time), // キャンセル期限の判定に使う正確な日時（JST）
       course: course.label,
       price: yen(course.price),
       therapist,
