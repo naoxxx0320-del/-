@@ -209,13 +209,20 @@ export default function Reserve() {
             <div className="rsv-sub">AROMA DAIAMOND｜亀戸</div>
           </div>
           <div className="rsv-done">
-            <div className="rsv-done-ic">✓</div>
-            <h2>ご予約を受け付けました</h2>
+            <div className="rsv-done-ic mail">✉</div>
+            <h2>確認メールをお送りしました</h2>
+            <div className="rsv-pending">
+              まだご予約は完了していません。メールに記載の
+              「予約を確定する」リンクを開くと、ご予約が確定します。
+            </div>
             <p>
-              ご予約ありがとうございます。内容を確認のうえ、担当より折り返しご連絡いたします。
-              確認のご連絡までしばらくお待ちください。
+              ご入力のメールアドレス（<b>{form.email}</b>）宛に確認メールをお送りしました。
+              メール内のリンクを開いてご予約を確定してください。
+              数分たっても届かない場合は、迷惑メールフォルダのご確認、
+              またはお電話（050-5444-9830）をお願いいたします。
             </p>
             <div className="rsv-done-box">
+              <div className="rsv-done-box-h">仮予約の内容</div>
               <div>
                 <b>希望日時</b>
                 {day.label} {time}
