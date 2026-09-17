@@ -79,13 +79,6 @@ export default function Reserve() {
   const [confirming, setConfirming] = useState(false);
   const [state, setState] = useState({ sending: false, done: false, error: "" });
   const [booked, setBooked] = useState([]); // 既存予約（スプレッドシートから取得）
-  const [dbg, setDbg] = useState(false); // ?debug=1 のとき診断表示
-
-  useEffect(() => {
-    try {
-      setDbg(new URLSearchParams(window.location.search).get("debug") === "1");
-    } catch (_) {}
-  }, []);
 
   const day = days[dayIdx] || { list: [], label: "" };
 
@@ -450,19 +443,6 @@ export default function Reserve() {
               {occupied.length > 0 && (
                 <p className="rsv-legend">
                   取り消し線の時間は予約済みで選べません。
-                </p>
-              )}
-              {dbg && (
-                <p
-                  className="rsv-legend"
-                  style={{ color: "#b02a1a", wordBreak: "break-all" }}
-                >
-                  [debug] 取得予約:{booked.length}件 / この人の該当:
-                  {occupied.length}件 / 選択:{therapist || "-"} / 日付:
-                  {day.label || "-"}
-                  {booked[0]
-                    ? ` / 例:${JSON.stringify(booked[0])}`
-                    : " / データ空(または取得失敗)"}
                 </p>
               )}
             </>
