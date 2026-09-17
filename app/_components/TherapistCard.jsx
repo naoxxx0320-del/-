@@ -1,6 +1,8 @@
 /* 出勤セラピストカード（トップの「本日の出勤」と出勤情報ページで共用）。
    欠損フィールドに強い作り（stats / sns が無くても崩れない）。 */
 
+import { photoSrc as buildPhotoSrc } from "./photo";
+
 function SnsBadge({ kind }) {
   const map = {
     fgn: (
@@ -41,8 +43,7 @@ function SnsBadge({ kind }) {
 export default function TherapistCard({ t, base = "" }) {
   const stats = t.stats || [];
   const sns = t.sns || [];
-  const photoSrc =
-    t.photo && (/^https?:\/\//.test(t.photo) ? t.photo : `${base}${t.photo}`);
+  const photoSrc = buildPhotoSrc(t.photo, base);
   return (
     <article className="tcard">
       <div className="tcard-photo" style={{ background: t.photoBg }}>

@@ -1,4 +1,5 @@
 import SiteChrome from "../_components/SiteChrome";
+import { photoSrc } from "../_components/photo";
 import roster from "../../data/roster.json";
 
 export const metadata = {
@@ -65,11 +66,7 @@ export default function Therapist() {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       className="tp-photo-img"
-                      src={
-                        /^https?:\/\//.test(t.photo)
-                          ? t.photo
-                          : `../${t.photo}`
-                      }
+                      src={photoSrc(t.photo, "../")}
                       alt={t.name}
                     />
                   ) : (
