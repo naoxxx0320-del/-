@@ -237,6 +237,35 @@ function buildRoster(objs) {
     }));
 }
 
+/** 写真の上書き対応表（data/photo-overrides.json）を roster に適用。
+ *  セラピスト名 → ファイル名（複数枚は配列）で、シートの写真列より優先。
+ *  → 画像を渡してもらえれば Claude 側でここを管理でき、シート更新でも消えない。
+ *  例: { "花恋": "therapist-karen.jpg", "みお": ["mio1.jpg","mio2.jpg"] } */
+function applyPhotoOverrides(roster) {
+  const p = join(DATA, "photo-overrides.json");
+  if (!existsSync(p)) return roster;
+  let map = {};
+  try {
+    map = JSON.parse(readFileSync(p, "utf8"));
+  } catch (e) {
+    console.error("photo-overrides parse error:", e.message);
+    return roster;
+  }
+  let n = 0;
+  const out = roster.map((t) => {
+    const ov = map[t.name];
+    if (ov == null) return t;
+    const photos = (Array.isArray(ov) ? ov : [ov])
+      .map((s) => String(s).trim())
+      .filter(Boolean);
+    if (!photos.length) return t;
+    n++;
+    return { ...t, photo: photos[0], photos };
+  });
+  if (n) console.log(`photo-overrides: ${n} 名に適用`);
+  return out;
+}
+
 /* ---- メイン ---- */
 async function run() {
   const jobs = [
@@ -275,6 +304,15 @@ async function run() {
     } catch (e) {
       console.error(`error ${j.file}: ${e.message}`);
       process.exitCode = 1;
+    }
+  }
+  // 写真の上書き対応表を roster.json に適用（シート取得の有無にかかわらず常に）
+  const roster = readJSON("roster.json");
+  if (roster) {
+    const applied = applyPhotoOverrides(roster);
+    if (JSON.stringify(applied) !== JSON.stringify(roster)) {
+      writeJSON("roster.json", applied);
+      updated++;
     }
   }
   writePhotoVersions();
