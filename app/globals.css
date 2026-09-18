@@ -2230,114 +2230,21 @@ a.tp-card:hover {
   width: 100%;
   height: auto;
 }
-.sys-wrap {
+/* コース詳細見出し */
+.sys-detail-head {
   position: relative;
   z-index: 2;
-  padding: 18px 16px 30px;
-}
-.sys-card {
-  position: relative;
-  background: rgba(255, 253, 248, 0.94);
-  border: 1px solid #cdae62;
-  padding: 26px 18px 22px;
-  margin-bottom: 24px;
-  box-shadow: 0 3px 12px rgba(70, 48, 30, 0.12),
-    inset 0 0 0 4px rgba(205, 174, 98, 0.22);
-}
-.sys-dia {
-  position: absolute;
-  width: 22px;
-  height: 22px;
-}
-.sys-dia.tl { top: 10px; left: 10px; }
-.sys-dia.tr { top: 10px; right: 10px; }
-.sys-dia.bl { bottom: 10px; left: 10px; }
-.sys-dia.br { bottom: 10px; right: 10px; }
-.sys-cardhead {
   text-align: center;
-  margin-bottom: 16px;
+  margin: 22px 0 14px;
 }
-.sys-cardhead .en {
-  font-family: var(--font-serif-en), serif;
-  font-size: 30px;
-  letter-spacing: 0.08em;
-  color: #b0923f;
-  line-height: 1;
-}
-.sys-cardhead .en small {
-  display: block;
-  font-style: italic;
-  font-size: 19px;
-  color: #c8a96a;
-  margin-top: -2px;
-}
-.sys-list {
-  padding: 0 4px;
-}
-.sys-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 9px 0;
-  font-family: var(--font-serif-jp), serif;
-}
-.sys-row .nm {
-  font-size: 14.5px;
-  color: #2f2618;
-}
-.sys-row .dots {
-  flex: 1;
-  border-bottom: 1px dotted #cbb489;
-  transform: translateY(-4px);
-  min-width: 14px;
-}
-.sys-row .pr {
-  font-size: 14.5px;
-  color: #3a2f20;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.sys-notes {
-  margin-top: 10px;
-  padding: 0 4px;
-}
-.sys-notes p {
-  font-family: var(--font-serif-jp), serif;
-  font-size: 11.5px;
-  color: #7a6a48;
-  line-height: 1.75;
-}
-.sys-divider {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #d8c48c, transparent);
-  margin: 16px 4px;
-}
-.sys-subhead {
-  text-align: center;
-  font-family: var(--font-serif-en), serif;
-  font-size: 24px;
-  color: #b0923f;
-  letter-spacing: 0.06em;
-  margin: 22px 0 12px;
-}
-.sys-subhead small {
-  font-style: italic;
-  font-size: 16px;
-  color: #c8a96a;
-  margin-left: 4px;
-}
-.sys-subhead2 {
-  text-align: center;
-  margin: 4px 0 16px;
-}
-.sys-subhead2 .en {
+.sys-detail-head .en {
   display: block;
   font-family: var(--font-serif-en), serif;
   font-style: italic;
-  font-size: 26px;
+  font-size: 27px;
   color: #b18e46;
 }
-.sys-subhead2 .jp {
+.sys-detail-head .jp {
   display: block;
   font-family: var(--font-serif-jp), serif;
   font-size: 14px;
@@ -2345,50 +2252,53 @@ a.tp-card:hover {
   color: #5b5040;
   margin-top: 2px;
 }
+/* コース詳細バンド（フル幅） */
+.sys-courses {
+  position: relative;
+  z-index: 2;
+  padding-bottom: 26px;
+}
 .sys-course {
-  margin-bottom: 16px;
-  border-radius: 5px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(70, 48, 30, 0.1);
+  margin-bottom: 12px;
 }
 .sys-c-head {
-  background: linear-gradient(135deg, #b6a26a, #8f7b45);
+  background: linear-gradient(180deg, #ada579, #948c66);
   color: #fff;
   text-align: center;
-  padding: 12px 10px;
+  padding: 15px 12px;
   font-family: var(--font-serif-jp), serif;
-  font-size: 17px;
+  font-size: 22px;
+  font-weight: 500;
   letter-spacing: 0.04em;
+  text-shadow: 0 1px 2px rgba(80, 66, 30, 0.28);
 }
 .sys-c-body {
-  background: #fffdf8;
-  border: 1px solid #ecdcc0;
-  border-top: none;
-  padding: 14px 15px 15px;
+  background: rgba(255, 253, 247, 0.82);
+  padding: 18px 20px 20px;
 }
 .sys-c-desc {
   font-family: var(--font-serif-jp), serif;
-  font-size: 14px;
+  font-size: 15.5px;
   line-height: 1.95;
-  color: #3a2f20;
+  color: #2f2a20;
 }
 .sys-hi {
-  color: #9a2b32;
+  color: #8a1f2b;
   font-weight: 700;
 }
 .sys-c-shi {
-  margin-top: 10px;
+  margin-top: 12px;
   font-family: var(--font-serif-jp), serif;
-  font-size: 12.5px;
-  color: #8a6a25;
-  line-height: 1.75;
+  font-size: 13px;
+  color: #8f7b3e;
+  line-height: 1.8;
 }
 .sys-c-note {
-  margin-top: 10px;
+  margin-top: 12px;
   font-family: var(--font-serif-jp), serif;
-  font-size: 12px;
-  color: #6b5a3f;
-  line-height: 1.75;
+  font-size: 12.5px;
+  color: #5b5040;
+  line-height: 1.8;
 }
 
 /* ---- Foreigners page ---- */
