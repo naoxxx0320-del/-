@@ -1,4 +1,5 @@
 import SiteChrome from "../_components/SiteChrome";
+import { photoSrc } from "../_components/photo";
 
 export const metadata = {
   title: "料金システム｜AROMA DAIAMOND 亀戸 メンズエステ",
@@ -8,45 +9,6 @@ export const metadata = {
 
 const yen = (n) => n.toLocaleString("ja-JP") + "円";
 const SHI = "全身オイルトリートメント、全身アロママッサージ、ヘッドマッサージ、ディープリンパ";
-
-// COURSE LIST（表示用の一覧）
-const COURSE_ROWS = [
-  { nm: "60分コース", pr: yen(15000) },
-  { nm: "70分オールあおむけコース", pr: yen(19000) },
-  { nm: "90分コース", pr: yen(19000) },
-  { nm: "120分コース", pr: yen(24000) },
-  { nm: "150分コース", pr: yen(29000) },
-  { nm: "延長30分", pr: yen(7000) },
-];
-
-const COURSE_NOTES = [
-  "※入室後のコース変更はお断りしております。",
-  "※延長ご希望の場合はセラピストにお申しつけください。",
-  "※150分以上のコースは本指名様のみのコースとなっております。",
-];
-
-// 指名・入会
-const NOM_ROWS = [
-  { nm: "入会金", pr: "2,000円 → 0円" },
-  { nm: "写真指名", pr: yen(1000) },
-  { nm: "本指名", pr: yen(1000) },
-  { nm: "姫予約", pr: yen(2000) },
-];
-
-// OPTION menu（名称は当店仕様に変更）
-const OPTION_ROWS = [
-  { nm: "大量ホットオイル", pr: "無料" },
-  { nm: "ディープリンパマッサージ", pr: "無料" },
-  { nm: "パウダーマッサージ", pr: yen(1000) },
-  { nm: "ホイップトリートメント", pr: yen(2000) },
-  { nm: "ダイヤプラス（ディープリンパ）", pr: "1,000円 / 10分" },
-  { nm: "ダイヤアップ（衣装チェンジ）", pr: yen(2000) },
-];
-
-const TAX_NOTES = [
-  "※クレジット決済10%・PayPay決済5%のTAXをいただきます。",
-  "※海外製のクレジットカードはご使用できません。",
-];
 
 // 各コースの説明（＋1,000版の料金に合わせて表示）
 const COURSE_DETAILS = [
@@ -85,25 +47,6 @@ const COURSE_DETAILS = [
   },
 ];
 
-function Row({ nm, pr }) {
-  return (
-    <div className="sys-row">
-      <span className="nm">{nm}</span>
-      <span className="dots" />
-      <span className="pr">{pr}</span>
-    </div>
-  );
-}
-
-function Dia({ cls }) {
-  return (
-    <svg className={`sys-dia ${cls}`} viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4.5 9 L12 2.5 L19.5 9 L12 21.5 Z" fill="none" stroke="#c8a659" strokeWidth="1.1" strokeLinejoin="round" />
-      <path d="M4.5 9 H19.5 M9 9 L12 21.5 M15 9 L12 21.5 M9 9 L12 2.5 M15 9 L12 2.5" fill="none" stroke="#c8a659" strokeWidth="0.8" />
-    </svg>
-  );
-}
-
 export default function System() {
   return (
     <div className="stage">
@@ -114,58 +57,15 @@ export default function System() {
             "#f4efe7 url(../bg-marble.jpg) top center / 100% auto repeat",
         }}
       >
-        <div className="page-head">
-          <div className="ph-en">System</div>
-          <div className="ph-jp">料金システム</div>
-        </div>
+        {/* ---- 料金表（画像） ---- */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          className="sys-img"
+          src={photoSrc("system-price.jpg", "../")}
+          alt="料金システム COURSE LIST／OPTION menu｜AROMA DAIAMOND 亀戸"
+        />
 
         <div className="sys-wrap">
-          {/* ---- COURSE LIST / 指名 / OPTION ---- */}
-          <section className="sys-card">
-            <Dia cls="tl" />
-            <Dia cls="tr" />
-            <Dia cls="bl" />
-            <Dia cls="br" />
-
-            <div className="sys-cardhead">
-              <div className="en">
-                COURSE<small>list</small>
-              </div>
-            </div>
-
-            <div className="sys-list">
-              {COURSE_ROWS.map((r) => (
-                <Row key={r.nm} {...r} />
-              ))}
-            </div>
-            <div className="sys-notes">
-              {COURSE_NOTES.map((n, i) => (
-                <p key={i}>{n}</p>
-              ))}
-            </div>
-
-            <div className="sys-divider" />
-            <div className="sys-list">
-              {NOM_ROWS.map((r) => (
-                <Row key={r.nm} {...r} />
-              ))}
-            </div>
-
-            <div className="sys-subhead">
-              OPTION<small>menu</small>
-            </div>
-            <div className="sys-list">
-              {OPTION_ROWS.map((r) => (
-                <Row key={r.nm} {...r} />
-              ))}
-            </div>
-            <div className="sys-notes">
-              {TAX_NOTES.map((n, i) => (
-                <p key={i}>{n}</p>
-              ))}
-            </div>
-          </section>
-
           {/* ---- 各コースの説明 ---- */}
           <div className="sys-subhead2">
             <span className="en">Course</span>
