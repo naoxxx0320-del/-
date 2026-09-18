@@ -65,13 +65,13 @@ export default function System() {
           alt="料金システム COURSE LIST／OPTION menu｜AROMA DAIAMOND 亀戸"
         />
 
-        <div className="sys-wrap">
-          {/* ---- 各コースの説明 ---- */}
-          <div className="sys-subhead2">
-            <span className="en">Course</span>
-            <span className="jp">コース詳細</span>
-          </div>
+        {/* ---- 各コースの説明 ---- */}
+        <div className="sys-detail-head">
+          <span className="en">Course</span>
+          <span className="jp">コース詳細</span>
+        </div>
 
+        <section className="sys-courses">
           {COURSE_DETAILS.map((c) => (
             <article className="sys-course" key={c.title}>
               <div className="sys-c-head">
@@ -90,7 +90,7 @@ export default function System() {
               </div>
             </article>
           ))}
-        </div>
+        </section>
 
         <SiteChrome base="../" />
       </div>
