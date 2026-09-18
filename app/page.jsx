@@ -12,7 +12,7 @@ const NAV = [
   { jp: "トップ", en: "Top", href: "./" },
   { jp: "出勤情報", en: "Schedule", href: "schedule/" },
   { jp: "セラピスト", en: "Therapist", href: "therapist/" },
-  { jp: "料金システム", en: "System", href: "#" },
+  { jp: "料金システム", en: "System", href: "system/" },
   { jp: "アクセス", en: "Access", href: "#" },
   { jp: "外国人の方へ", en: "For foreigners", href: "foreigners/" },
   { jp: "スタッフ求人", en: "Careers", href: "#" },
