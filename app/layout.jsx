@@ -1,4 +1,5 @@
 import "./globals.css";
+import AiChat from "./_components/AiChat";
 
 export const metadata = {
   title: "AROMA DAIAMOND｜アロマ ダイアモンド｜亀戸 メンズエステ",
@@ -29,7 +30,10 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <AiChat />
+      </body>
     </html>
   );
 }
