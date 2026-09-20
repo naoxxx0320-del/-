@@ -40,13 +40,26 @@ export function SnsBadge({ kind }) {
   return map[kind] || null;
 }
 
-export default function TherapistCard({ t, base = "", href }) {
+/* 空き状況テキスト → 色分け用クラス（空きあり=緑 / 残りわずか=橙 / 満員=灰） */
+export function statusClass(status) {
+  const s = String(status || "");
+  if (s.includes("満")) return "full";
+  if (s.includes("わずか") || s.includes("残")) return "few";
+  if (s.includes("空き") || s.includes("受付")) return "ok";
+  return "";
+}
+
+export default function TherapistCard({ t, base = "", href, reserveHref }) {
   const stats = t.stats || [];
   const sns = t.sns || [];
   const photoSrc = buildPhotoSrc(t.photo, base);
-  const Tag = href ? "a" : "article";
-  return (
-    <Tag className="tcard" {...(href ? { href } : {})}>
+  const isFull = statusClass(t.status) === "full";
+
+  // 詳細ページへのリンク（あれば）で写真〜ステータスを包む。
+  // 予約ボタンは別リンクのため、アンカーの入れ子を避けて分離する。
+  const Hit = href ? "a" : "div";
+  const content = (
+    <Hit className="tcard-hit" {...(href ? { href } : {})}>
       <div className="tcard-photo" style={{ background: t.photoBg }}>
         {t.photo ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -103,10 +116,27 @@ export default function TherapistCard({ t, base = "", href }) {
         </div>
       )}
       {t.status && (
-        <div className={`tcard-status ${t.status === "満員" ? "rest" : ""}`}>
+        <div className={`tcard-status ${statusClass(t.status)}`}>
+          <span className="tcard-status-dot" aria-hidden="true" />
           {t.status}
         </div>
       )}
-    </Tag>
+    </Hit>
+  );
+
+  return (
+    <article className="tcard">
+      {content}
+      {reserveHref && !isFull && (
+        <a className="tcard-reserve" href={reserveHref}>
+          この時間で予約する →
+        </a>
+      )}
+      {reserveHref && isFull && (
+        <div className="tcard-reserve disabled" aria-disabled="true">
+          満員（予約不可）
+        </div>
+      )}
+    </article>
   );
 }
