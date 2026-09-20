@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import SiteChrome from "../_components/SiteChrome";
-import TherapistCard from "../_components/TherapistCard";
+import StaffCard from "../_components/StaffCard";
 import schedule from "../../data/schedule.json";
 import roster from "../../data/roster.json";
 
@@ -64,12 +64,14 @@ export default function Schedule() {
         {cards.length === 0 ? (
           <p className="therapists-empty">この日の出勤情報はまだありません。</p>
         ) : (
-          <section className="therapists">
+          <section className="staff-grid">
             {cards.map((t, i) => (
-              <TherapistCard
+              <StaffCard
                 t={t}
                 base="../"
-                href={t.id ? `../therapist/${t.id}/` : undefined}
+                href={t.id ? `../therapist/${t.id}/` : "#"}
+                sched={t.sched}
+                status={t.status}
                 reserveHref={`../reserve/?t=${encodeURIComponent(t.name)}&d=${encodeURIComponent(
                   day.date || day.label || ""
                 )}`}
