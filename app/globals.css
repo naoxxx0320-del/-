@@ -3844,13 +3844,20 @@ body.menu-open {
   transform: scaleX(-1);
 }
 
-.staff-hit {
-  display: flex;
-  flex-direction: column;
+/* 写真＋情報をまとめる領域（ここにカード全体リンクをかぶせる） */
+.staff-main {
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+/* カード全体を覆う詳細リンク（ハートはこの上に重ねて別クリックに） */
+.staff-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   text-decoration: none;
-  color: inherit;
 }
 .staff-photo {
   position: relative;
@@ -3904,17 +3911,34 @@ body.menu-open {
   position: absolute;
   top: 12px;
   right: 12px;
+  z-index: 2; /* カード全体リンクより前面（ハート単独でタップ可能に） */
   width: 34px;
   height: 34px;
   border-radius: 50%;
   display: grid;
   place-items: center;
+  padding: 0;
+  cursor: pointer;
   background: radial-gradient(circle at 32% 28%, #f0d693, #c39a54);
   border: 1.5px solid #e7cd8b;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+  transition: transform 0.12s ease, box-shadow 0.14s ease;
 }
+/* 未登録：輪郭のみ／登録済み：塗りつぶし＋発光 */
 .staff-heart svg {
+  fill: none;
+  stroke: #f6e8bd;
+  stroke-width: 2.4;
+}
+.staff-heart.on svg {
   fill: #f6e8bd;
+  stroke: #f6e8bd;
+}
+.staff-heart.on {
+  box-shadow: 0 0 0 2px rgba(246, 232, 189, 0.55), 0 1px 5px rgba(0, 0, 0, 0.5);
+}
+.staff-heart:active {
+  transform: scale(0.92);
 }
 .staff-name {
   font-family: var(--font-serif-jp), serif;

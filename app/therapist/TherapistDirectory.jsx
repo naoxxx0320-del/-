@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import StaffCard from "../_components/StaffCard";
+import { readFavs } from "../_components/FavoriteHeart";
 
 const TABS = [
   { key: "all", label: "すべて" },
@@ -9,9 +10,10 @@ const TABS = [
   { key: "new", label: "新人" },
   { key: "pop", label: "人気" },
   { key: "rec", label: "おすすめ" },
+  { key: "fav", label: "♥ お気に入り" },
 ];
 
-function match(t, key) {
+function match(t, key, favs) {
   const tags = t.tags || [];
   switch (key) {
     case "today":
@@ -22,6 +24,8 @@ function match(t, key) {
       return tags.includes("人気");
     case "rec":
       return tags.includes("おすすめ");
+    case "fav":
+      return favs.has(String(t.id));
     default:
       return true;
   }
@@ -29,7 +33,21 @@ function match(t, key) {
 
 export default function TherapistDirectory({ roster }) {
   const [tab, setTab] = useState("all");
-  const list = roster.filter((t) => match(t, tab));
+  const [favs, setFavs] = useState(new Set());
+
+  // お気に入り（localStorage）を読み込み、変更に追従
+  useEffect(() => {
+    const sync = () => setFavs(readFavs());
+    sync();
+    window.addEventListener("favchange", sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener("favchange", sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+
+  const list = roster.filter((t) => match(t, tab, favs));
 
   return (
     <>
@@ -51,7 +69,11 @@ export default function TherapistDirectory({ roster }) {
       </div>
 
       {list.length === 0 ? (
-        <p className="therapists-empty">該当するセラピストはいません。</p>
+        <p className="therapists-empty">
+          {tab === "fav"
+            ? "お気に入りはまだありません。カード右上の♥を押すと登録できます。"
+            : "該当するセラピストはいません。"}
+        </p>
       ) : (
         <section className="staff-grid">
           {list.map((t, i) => (
