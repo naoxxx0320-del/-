@@ -14,6 +14,7 @@ export default function sitemap() {
     ["therapist/", 0.9],
     ["system/", 0.8],
     ["reserve/", 0.8],
+    ["gallery/", 0.6],
     ["foreigners/", 0.5],
   ];
 
