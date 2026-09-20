@@ -356,6 +356,7 @@ img {
   color: #dcb877;
   text-align: center;
   line-height: 1.25;
+  white-space: nowrap; /* 英字は常に1行（カード高さを均一・コンパクトに保つ） */
 }
 .nav-chev {
   position: absolute;

@@ -1,4 +1,5 @@
 import SiteChrome from "../_components/SiteChrome";
+import NavGrid from "../_components/NavGrid";
 import roster from "../../data/roster.json";
 import { abs } from "../_lib/site";
 import Breadcrumbs from "../_components/Breadcrumbs";
@@ -37,6 +38,8 @@ export default function Therapist() {
           <div className="staff-hero-sub">美しさと癒しを、最高の形で——</div>
           <div className="staff-hero-badge">Special Girls</div>
         </section>
+
+        <NavGrid base="../" />
 
         {roster.length === 0 ? (
           <p className="therapists-empty">セラピスト情報は準備中です。</p>

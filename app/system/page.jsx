@@ -1,4 +1,5 @@
 import SiteChrome from "../_components/SiteChrome";
+import NavGrid from "../_components/NavGrid";
 import { photoSrc } from "../_components/photo";
 import { abs } from "../_lib/site";
 import Breadcrumbs from "../_components/Breadcrumbs";
@@ -62,6 +63,9 @@ export default function System() {
         }}
       >
         <Breadcrumbs items={[{ name: "料金システム", path: "system/" }]} />
+
+        <NavGrid base="../" />
+
         {/* ---- 料金表（画像） ---- */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

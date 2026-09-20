@@ -1,4 +1,5 @@
 import SiteChrome from "../../_components/SiteChrome";
+import NavGrid from "../../_components/NavGrid";
 import { SnsBadge } from "../../_components/TherapistCard";
 import { photoSrc } from "../../_components/photo";
 import roster from "../../../data/roster.json";
@@ -84,6 +85,8 @@ export default function TherapistDetail({ params }) {
           <div className="ph-en">Therapist</div>
           <div className="ph-jp">セラピスト紹介</div>
         </div>
+
+        <NavGrid base="../../" />
 
         <section className="td-wrap">
           <TherapistGallery
