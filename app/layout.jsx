@@ -2,6 +2,7 @@ import "./globals.css";
 import { SITE, SITE_URL, abs } from "./_lib/site";
 import StructuredData from "./_components/StructuredData";
 import Analytics from "./_components/Analytics";
+import AiChat from "./_components/AiChat";
 
 const siteTitle = `${SITE.name}｜${SITE.nameJa}｜${SITE.area} メンズエステ`;
 
@@ -78,6 +79,7 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         {children}
+        <AiChat />
         <Analytics />
       </body>
     </html>
