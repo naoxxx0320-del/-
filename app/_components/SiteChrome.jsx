@@ -15,6 +15,7 @@ const DRAWER = [
   { jp: "出勤情報", slug: "schedule" },
   { jp: "外国人の方へ", slug: "foreigners" },
   { jp: "セラピスト", slug: "therapist" },
+  { jp: "フォトギャラリー", slug: "gallery" },
   { jp: "スタッフ求人", slug: null },
   { jp: "料金システム", slug: "system" },
   { jp: "セラピスト求人", slug: null },
