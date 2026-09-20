@@ -15,10 +15,10 @@ const DRAWER = [
   { jp: "出勤情報", slug: "schedule" },
   { jp: "外国人の方へ", slug: "foreigners" },
   { jp: "セラピスト", slug: "therapist" },
-  { jp: "フォトギャラリー", slug: "gallery" },
   { jp: "スタッフ求人", slug: null },
   { jp: "料金システム", slug: "system" },
   { jp: "セラピスト求人", slug: null },
+  { jp: "フォトギャラリー", slug: "gallery", wide: true },
 ];
 
 const FOOT = [
@@ -155,7 +155,7 @@ export default function SiteChrome({ base = "" }) {
 
           <div className="menu-list">
             {DRAWER.map((d, i) => (
-              <a href={href(d.slug)} key={i}>
+              <a href={href(d.slug)} key={i} className={d.wide ? "wide" : undefined}>
                 {d.jp}
               </a>
             ))}

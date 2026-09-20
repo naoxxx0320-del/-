@@ -1476,6 +1476,11 @@ a.tcard-hit:active {
   padding: 16px 4px 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.4);
 }
+/* 全幅で最下部に1行表示（改行させない）項目 */
+.menu-list a.wide {
+  grid-column: 1 / -1;
+  white-space: nowrap;
+}
 
 .menu-pay {
   display: grid;
