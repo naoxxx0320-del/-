@@ -5,6 +5,7 @@ import SiteChrome from "./_components/SiteChrome";
 import TherapistCard from "./_components/TherapistCard";
 import guideData from "../data/guide.json";
 import rosterData from "../data/roster.json";
+import links from "../data/links.json";
 
 /* ---- data ---------------------------------------------------------- */
 
@@ -297,7 +298,7 @@ export default function Home() {
               </span>
               <span>WEB予約</span>
             </a>
-            <a className="rz-btn" href="#">
+            <a className="rz-btn" href={links.line} target="_blank" rel="noopener noreferrer">
               <span className="rz-ic" aria-hidden="true">
                 <svg viewBox="0 0 32 32" width="28" height="28">
                   <rect x="2" y="3" width="28" height="26" rx="8" fill="#06c755" />

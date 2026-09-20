@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import links from "../../data/links.json";
 
 /* Shared site chrome: fixed hamburger, full footer (sitemap + copyright +
    secret entry), scroll-top and the drawer menu.
@@ -106,7 +107,7 @@ export default function SiteChrome({ base = "" }) {
         <a className="fb-tel" href="tel:05054449830">
           Tel:050-5444-9830
         </a>
-        <a className="fb-btn" href="#">
+        <a className="fb-btn" href={links.line} target="_blank" rel="noopener noreferrer">
           <span className="fb-ic" aria-hidden="true">
             <svg viewBox="0 0 32 32" width="26" height="26">
               <rect x="2" y="2" width="28" height="28" rx="8" fill="#06c755" />
