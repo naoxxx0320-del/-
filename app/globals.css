@@ -853,16 +853,44 @@ img {
   display: flex;
   flex-direction: column;
 }
-a.tcard {
+/* カード本体（写真〜ステータス）。詳細リンクのときは <a>、無いときは <div>。 */
+.tcard-hit {
+  display: flex;
+  flex-direction: column;
+}
+a.tcard-hit {
   color: inherit;
   text-decoration: none;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: transform 0.12s ease;
 }
-a.tcard:active {
+a.tcard-hit:active {
   transform: scale(0.98);
 }
-a.tcard:hover {
+.tcard:has(a.tcard-hit):hover {
   box-shadow: 0 5px 16px rgba(120, 96, 60, 0.24);
+}
+
+/* 「この時間で予約する」ボタン（出勤情報カードから予約フォームへ直行） */
+.tcard-reserve {
+  display: block;
+  text-align: center;
+  padding: 12px 10px;
+  background: linear-gradient(180deg, #d8b25a 0%, #b6862f 100%);
+  color: #3a2c0e;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+}
+.tcard-reserve:active {
+  filter: brightness(0.96);
+}
+.tcard-reserve.disabled {
+  background: #ece7de;
+  color: #a79c8c;
+  font-weight: 600;
+  cursor: not-allowed;
 }
 
 .tcard-photo {
@@ -1118,15 +1146,31 @@ a.tcard:hover {
 }
 
 .tcard-status {
-  background: linear-gradient(180deg, #c33050, #a8203f);
+  background: linear-gradient(180deg, #6a5c54, #574a44);
   color: #fff;
   text-align: center;
   padding: 9px;
   font-family: var(--font-serif-jp), serif;
   font-size: 13px;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.16em;
 }
-.tcard-status.rest {
+.tcard-status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  margin-right: 7px;
+  vertical-align: middle;
+}
+/* 空きあり=緑 / 残りわずか=橙 / 満員=灰 */
+.tcard-status.ok {
+  background: linear-gradient(180deg, #2f9a63, #1f7a4c);
+}
+.tcard-status.few {
+  background: linear-gradient(180deg, #d39a3a, #bb7c1e);
+}
+.tcard-status.full {
   background: linear-gradient(180deg, #6a5c54, #574a44);
 }
 

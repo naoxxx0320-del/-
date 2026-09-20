@@ -70,6 +70,9 @@ export default function Schedule() {
                 t={t}
                 base="../"
                 href={t.id ? `../therapist/${t.id}/` : undefined}
+                reserveHref={`../reserve/?t=${encodeURIComponent(t.name)}&d=${encodeURIComponent(
+                  day.date || day.label || ""
+                )}`}
                 key={i}
               />
             ))}

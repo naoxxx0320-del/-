@@ -82,6 +82,28 @@ export default function Reserve() {
 
   const day = days[dayIdx] || { list: [], label: "" };
 
+  // 出勤情報ページからの遷移（?t=セラピスト名&d=日付）を初期選択に反映する。
+  // 例: /reserve/?t=みお&d=2026/9/16
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const q = new URLSearchParams(window.location.search);
+    const t = q.get("t");
+    const d = q.get("d");
+    let idx = dayIdx;
+    if (d) {
+      const i = days.findIndex((x) => x.date === d || x.label === d);
+      if (i >= 0) {
+        idx = i;
+        setDayIdx(i);
+      }
+    }
+    if (t) {
+      const inList = (days[idx]?.list || []).some((e) => e.name === t);
+      if (inList) setTherapist(t);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // 現在の予約状況を JSONP で取得（重複予約を防ぐ）。
   // ・セラピストを選ぶたび／ページ復帰時に取り直し
   // ・末尾に時刻を付けてブラウザ／CDNのキャッシュを回避（＝常に最新）
