@@ -146,12 +146,50 @@ export default function Reserve() {
     return m != null && occupied.some((r) => m >= r.s && m < r.e);
   };
 
+  // 予約可能スロットを「時間帯（〜時台）」ごとにまとめる。
+  // 5分刻みのボタンが一列に並ぶと選びにくいため、時間帯の見出しで区切る。
+  const slotGroups = useMemo(() => {
+    const groups = [];
+    let cur = null;
+    for (const s of slots) {
+      const min = labelToMin(s);
+      if (min == null) continue;
+      const h = Math.floor(min / 60); // 0〜28（24以上は翌日）
+      if (!cur || cur.h !== h) {
+        const label = h >= 24 ? `翌${h - 24}時台` : `${h}時台`;
+        cur = { h, label, slots: [] };
+        groups.push(cur);
+      }
+      const taken = occupied.some((r) => min >= r.s && min < r.e);
+      cur.slots.push({ label: s, taken });
+    }
+    return groups;
+  }, [slots, occupied]);
+
+  // 空きスロット総数（サマリー表示用）
+  const availCount = useMemo(
+    () => slotGroups.reduce((n, g) => n + g.slots.filter((s) => !s.taken).length, 0),
+    [slotGroups]
+  );
+
+  const course = courseI >= 0 ? cfg.courses[courseI] : null;
+
+  // 進捗ステッパー用：各ステップの完了状態
+  const steps = [
+    { label: "セラピスト", done: !!therapist },
+    { label: "時間", done: !!time },
+    { label: "コース", done: courseI >= 0 },
+    {
+      label: "お客様情報",
+      done: !!(form.name.trim() && form.email.trim() && form.tel.trim()),
+    },
+  ];
+
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const pickTherapist = (name) => {
     setTherapist(name);
     setTime("");
   };
-  const course = courseI >= 0 ? cfg.courses[courseI] : null;
 
   const validate = () => {
     if (!therapist) return "セラピストを選んでください。";
@@ -329,6 +367,20 @@ export default function Reserve() {
           <div className="rsv-sub">AROMA DAIAMOND｜亀戸</div>
         </div>
 
+        {/* 進捗ステッパー */}
+        <ol className="rsv-steps" aria-label="予約の進捗">
+          {steps.map((s, i) => (
+            <li
+              key={i}
+              className={`rsv-step ${s.done ? "done" : ""}`}
+              aria-current={s.done ? undefined : "step"}
+            >
+              <span className="rsv-step-dot">{s.done ? "✓" : i + 1}</span>
+              <span className="rsv-step-label">{s.label}</span>
+            </li>
+          ))}
+        </ol>
+
         {/* 1 セラピスト */}
         <section className="rsv-sec">
           <h2 className="rsv-h">
@@ -421,31 +473,59 @@ export default function Reserve() {
             <span className="rsv-n">2</span>予約時間を選んでください
           </h2>
           {therapist ? (
-            <>
-              <div className="rsv-times">
-                {slots.map((s) => {
-                  const taken = isTaken(s);
-                  return (
-                    <button
-                      key={s}
-                      type="button"
-                      disabled={taken}
-                      className={`rsv-time ${time === s ? "on" : ""} ${
-                        taken ? "taken" : ""
-                      }`}
-                      onClick={() => !taken && setTime(s)}
-                    >
-                      {s}
-                    </button>
-                  );
-                })}
-              </div>
-              {occupied.length > 0 && (
-                <p className="rsv-legend">
-                  取り消し線の時間は予約済みで選べません。
+            slotGroups.length > 0 ? (
+              <>
+                <p className="rsv-avail">
+                  <b>{therapist}</b>：{day.label} は
+                  <span className="rsv-avail-num">{availCount}</span>
+                  枠が予約可能です（開始時間をお選びください）
                 </p>
-              )}
-            </>
+                <div className="rsv-timegroups">
+                  {slotGroups.map((g) => {
+                    const gAvail = g.slots.filter((s) => !s.taken).length;
+                    return (
+                      <div className="rsv-timegroup" key={g.h}>
+                        <div className="rsv-timegroup-h">
+                          <span className="rsv-timegroup-label">{g.label}</span>
+                          <span
+                            className={`rsv-timegroup-badge ${
+                              gAvail === 0 ? "full" : ""
+                            }`}
+                          >
+                            {gAvail === 0 ? "満" : `空き ${gAvail}`}
+                          </span>
+                        </div>
+                        <div className="rsv-times">
+                          {g.slots.map((s) => (
+                            <button
+                              key={s.label}
+                              type="button"
+                              disabled={s.taken}
+                              className={`rsv-time ${time === s.label ? "on" : ""} ${
+                                s.taken ? "taken" : ""
+                              }`}
+                              onClick={() => !s.taken && setTime(s.label)}
+                            >
+                              {s.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {occupied.length > 0 && (
+                  <p className="rsv-legend">
+                    取り消し線の時間は予約済みで選べません。
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="rsv-hint">
+                この日の {therapist} さんは受付可能な時間がありません。
+                別の日・セラピストをお選びください。
+              </p>
+            )
           ) : (
             <p className="rsv-hint">先にセラピストを選んでください。</p>
           )}
@@ -575,6 +655,27 @@ export default function Reserve() {
             ))}
           </ul>
         </section>
+
+        {/* 選択内容サマリー */}
+        {(therapist || time || course) && (
+          <div className="rsv-summary">
+            <div className="rsv-summary-h">選択中の内容</div>
+            <dl className="rsv-summary-grid">
+              <div>
+                <dt>セラピスト</dt>
+                <dd>{therapist || "未選択"}</dd>
+              </div>
+              <div>
+                <dt>日時</dt>
+                <dd>{time ? `${day.label} ${time}` : "未選択"}</dd>
+              </div>
+              <div>
+                <dt>コース</dt>
+                <dd>{course ? `${course.label}（${yen(course.price)}）` : "未選択"}</dd>
+              </div>
+            </dl>
+          </div>
+        )}
 
         {state.error && <p className="rsv-err">{state.error}</p>}
         <button className="rsv-submit" onClick={goConfirm}>
