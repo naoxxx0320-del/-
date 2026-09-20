@@ -3,6 +3,7 @@
    （名前・ダイヤ＋年齢・T/B/W/H）＋ゴールドのハート。
    出勤情報ページ用に sched（出勤時間）/ status（空き状況）/ reserveHref（予約）を任意で表示。 */
 import { photoSrc } from "./photo";
+import FavoriteHeart from "./FavoriteHeart";
 
 // 表示するリボン（優先度：本日出勤 > 人気 > おすすめ > 新人）
 export function ribbonOf(t) {
@@ -73,9 +74,12 @@ export default function StaffCard({
   return (
     <article className="staff-card">
       <div className="staff-card-inner">
-        <Corner pos="tl" />
-        <Corner pos="tr" />
-        <a className="staff-hit" href={href}>
+        <div className="staff-main">
+          <Corner pos="tl" />
+          <Corner pos="tr" />
+          {/* カード全体を覆うリンク（ハートと入れ子にならないストレッチリンク方式） */}
+          <a className="staff-hit" href={href} aria-label={`${t.name} の詳細`} />
+
           <div className="staff-photo" style={{ background: t.photoBg }}>
             {rb && <span className={`staff-ribbon ${rb.cls}`}>{rb.label}</span>}
             {src ? (
@@ -89,11 +93,7 @@ export default function StaffCard({
           </div>
 
           <div className="staff-info">
-            <span className="staff-heart" aria-hidden="true">
-              <svg viewBox="0 0 32 29" width="16" height="15">
-                <path d="M16 28C6 20.5 1.5 14.6 1.5 9.2 1.5 5.2 4.6 2.5 8.3 2.5c2.6 0 5 1.4 6.2 3.6l1.5 2.6 1.5-2.6c1.2-2.2 3.6-3.6 6.2-3.6 3.7 0 6.8 2.7 6.8 6.7 0 5.4-4.5 11.3-14.5 18.8z" />
-              </svg>
-            </span>
+            <FavoriteHeart id={t.id} />
 
             <div className="staff-name">{t.name}</div>
 
@@ -121,7 +121,7 @@ export default function StaffCard({
               </div>
             )}
           </div>
-        </a>
+        </div>
 
         {status && (
           <div className={`staff-status ${scls}`}>
