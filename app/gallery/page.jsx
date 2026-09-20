@@ -1,6 +1,7 @@
 import SiteChrome from "../_components/SiteChrome";
 import { abs } from "../_lib/site";
 import GalleryClient from "./GalleryClient";
+import Breadcrumbs from "../_components/Breadcrumbs";
 
 export const metadata = {
   title: "フォトギャラリー",
@@ -20,6 +21,7 @@ export default function Gallery() {
             "#f4efe7 url(../bg-marble.jpg) top center / 100% auto repeat",
         }}
       >
+        <Breadcrumbs items={[{ name: "フォトギャラリー", path: "gallery/" }]} />
         <div className="page-head">
           <div className="ph-en">Gallery</div>
           <div className="ph-jp">フォトギャラリー</div>

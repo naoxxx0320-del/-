@@ -29,6 +29,11 @@ export const metadata = {
   ],
   applicationName: SITE.name,
   alternates: { canonical: SITE_URL },
+  manifest: abs("manifest.webmanifest"),
+  icons: {
+    icon: [{ url: abs("icon.svg"), type: "image/svg+xml" }],
+    apple: [{ url: abs("icon.svg") }],
+  },
   openGraph: {
     type: "website",
     locale: SITE.locale,
@@ -62,6 +67,7 @@ export const viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  themeColor: "#2a0a0d",
 };
 
 export default function RootLayout({ children }) {

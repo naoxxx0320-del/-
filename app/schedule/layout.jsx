@@ -1,6 +1,7 @@
 // /schedule はクライアントコンポーネントのため、メタデータはこの
 // サーバー用レイアウトで付与する（canonical を自ページに向ける）。
 import { abs } from "../_lib/site";
+import Breadcrumbs from "../_components/Breadcrumbs";
 
 export const metadata = {
   title: "出勤情報",
@@ -11,5 +12,10 @@ export const metadata = {
 };
 
 export default function ScheduleLayout({ children }) {
-  return children;
+  return (
+    <>
+      <Breadcrumbs items={[{ name: "出勤情報", path: "schedule/" }]} />
+      {children}
+    </>
+  );
 }

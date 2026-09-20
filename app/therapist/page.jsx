@@ -2,6 +2,7 @@ import SiteChrome from "../_components/SiteChrome";
 import { photoSrc } from "../_components/photo";
 import roster from "../../data/roster.json";
 import { abs } from "../_lib/site";
+import Breadcrumbs from "../_components/Breadcrumbs";
 
 export const metadata = {
   title: "セラピスト",
@@ -53,6 +54,7 @@ export default function Therapist() {
             "#f4efe7 url(../bg-marble.jpg) top center / 100% auto repeat",
         }}
       >
+        <Breadcrumbs items={[{ name: "セラピスト", path: "therapist/" }]} />
         <div className="page-head">
           <div className="ph-en">Therapist</div>
           <div className="ph-jp">セラピスト</div>
