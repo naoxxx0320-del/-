@@ -1,0 +1,19 @@
+{
+  "name": "AROMA DAIAMOND｜アロマ ダイアモンド｜亀戸 メンズエステ",
+  "short_name": "AROMA DAIAMOND",
+  "description": "宝石のように美しいセラピスト達。極上の癒しと刺激の空間 men's esthetic AROMA DAIAMOND（アロマ ダイアモンド）亀戸。",
+  "start_url": "https://naoxxx0320-del.github.io/-/",
+  "scope": "https://naoxxx0320-del.github.io/-/",
+  "display": "standalone",
+  "background_color": "#2a0a0d",
+  "theme_color": "#2a0a0d",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "https://naoxxx0320-del.github.io/-/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

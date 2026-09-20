@@ -4,6 +4,7 @@ import { photoSrc } from "../../_components/photo";
 import roster from "../../../data/roster.json";
 import TherapistGallery from "./TherapistGallery";
 import { abs } from "../../_lib/site";
+import Breadcrumbs from "../../_components/Breadcrumbs";
 
 const BASE = "../../"; // /therapist/[id]/ はルートから2階層下
 
@@ -73,6 +74,12 @@ export default function TherapistDetail({ params }) {
           background: "#f4efe7 url(../../bg-marble.jpg) top center / 100% auto repeat",
         }}
       >
+        <Breadcrumbs
+          items={[
+            { name: "セラピスト", path: "therapist/" },
+            { name: t.nameFull || t.name, path: `therapist/${params.id}/` },
+          ]}
+        />
         <div className="page-head">
           <div className="ph-en">Therapist</div>
           <div className="ph-jp">セラピスト紹介</div>

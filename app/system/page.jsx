@@ -1,6 +1,7 @@
 import SiteChrome from "../_components/SiteChrome";
 import { photoSrc } from "../_components/photo";
 import { abs } from "../_lib/site";
+import Breadcrumbs from "../_components/Breadcrumbs";
 
 export const metadata = {
   title: "料金システム",
@@ -60,6 +61,7 @@ export default function System() {
             "#f4efe7 url(../bg-marble.jpg) top center / 100% auto repeat",
         }}
       >
+        <Breadcrumbs items={[{ name: "料金システム", path: "system/" }]} />
         {/* ---- 料金表（画像） ---- */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

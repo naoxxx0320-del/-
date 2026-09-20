@@ -1,6 +1,7 @@
 // /reserve はクライアントコンポーネントのため、メタデータはこの
 // サーバー用レイアウトで付与する（canonical を自ページに向ける）。
 import { abs } from "../_lib/site";
+import Breadcrumbs from "../_components/Breadcrumbs";
 
 export const metadata = {
   title: "WEB予約",
@@ -11,5 +12,10 @@ export const metadata = {
 };
 
 export default function ReserveLayout({ children }) {
-  return children;
+  return (
+    <>
+      <Breadcrumbs items={[{ name: "WEB予約", path: "reserve/" }]} />
+      {children}
+    </>
+  );
 }

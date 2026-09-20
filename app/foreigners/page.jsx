@@ -1,5 +1,6 @@
 import SiteChrome from "../_components/SiteChrome";
 import { abs } from "../_lib/site";
+import Breadcrumbs from "../_components/Breadcrumbs";
 
 export const metadata = {
   title: "外国人の方へ / For Foreign Customers",
@@ -45,6 +46,7 @@ export default function Foreigners() {
             "#f4efe7 url(../bg-marble.jpg) top center / 100% auto repeat",
         }}
       >
+        <Breadcrumbs items={[{ name: "外国人の方へ", path: "foreigners/" }]} />
         <div className="page-head">
           <div className="ph-en">For foreign customers</div>
           <div className="ph-jp">外国人の方へ</div>
