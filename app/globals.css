@@ -3786,12 +3786,14 @@ body.menu-open {
   z-index: 2;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr; /* 各行の高さを揃える（相方カードと同じ高さに） */
   gap: 12px;
   padding: 6px 12px 16px;
 }
 /* 角丸ゴールドグラデーションの二重フレーム */
 .staff-card {
   position: relative;
+  height: 100%; /* グリッドセル（＝行の高さ）いっぱいに広げる */
   padding: 3px; /* フレームの太さ */
   border-radius: 16px;
   background: linear-gradient(150deg, #f2dca0 0%, #bd8f45 42%, #f2dca0 68%, #a9793b 100%);
@@ -3809,6 +3811,9 @@ body.menu-open {
 }
 .staff-card-inner {
   position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   border-radius: 13px;
   overflow: hidden;
   background: linear-gradient(180deg, #61101c, #420b14);
@@ -3840,13 +3845,17 @@ body.menu-open {
 }
 
 .staff-hit {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
   text-decoration: none;
   color: inherit;
 }
 .staff-photo {
   position: relative;
-  aspect-ratio: 3 / 4;
+  flex: 1 0 auto; /* 余った高さは写真が埋める（下部の余白を解消） */
+  aspect-ratio: 3 / 4; /* 基本の縦横比。行が高いときはここから伸びる */
   overflow: hidden;
   background: linear-gradient(160deg, #e7dac2 0%, #d3bf9d 55%, #c9b78f 100%);
 }
@@ -3887,6 +3896,7 @@ body.menu-open {
 /* 情報パネル */
 .staff-info {
   position: relative;
+  flex: 0 0 auto;
   padding: 12px 14px 14px;
   background: radial-gradient(120% 90% at 50% 0%, #6a1120 0%, #4c0c15 75%);
 }
