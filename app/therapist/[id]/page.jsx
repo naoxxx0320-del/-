@@ -95,7 +95,10 @@ export default function TherapistDetail({ params }) {
           />
 
           {/* 名前ヘッダー */}
-          <h1 className="td-title">{t.nameFull || t.name}</h1>
+          <h1 className="td-title">
+            {t.nameFull || t.name}
+            {t.isNew && <span className="td-new">NEW</span>}
+          </h1>
 
           {/* スペック行 */}
           {parts.length > 0 && (

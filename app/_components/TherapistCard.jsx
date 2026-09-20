@@ -77,7 +77,7 @@ export default function TherapistCard({ t, base = "", href, reserveHref }) {
             <span>{t.ribbon}</span>
           </div>
         )}
-        {t.isNew && <div className="newbadge">新人</div>}
+        {t.isNew && <div className="newbadge">NEW</div>}
         {sns.length > 0 && (
           <div className="sns">
             {sns.map((k) => (

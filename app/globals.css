@@ -2179,6 +2179,22 @@ a.tp-card:hover {
   margin: 6px 0 12px;
   border-bottom: 2px solid #cdae62;
 }
+.td-new {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 10px;
+  background: linear-gradient(180deg, #8f1223, #6a0e19);
+  color: #f3d99c;
+  font-family: var(--font-serif-en), serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(240, 214, 150, 0.5);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  transform: translateY(-3px);
+}
 /* スペック行（年齢・身長・三サイズ） */
 .td-spec {
   display: flex;
@@ -3902,6 +3918,11 @@ body.menu-open {
   border-top: 1px solid rgba(240, 214, 150, 0.4);
   border-bottom: 1px solid rgba(240, 214, 150, 0.4);
   z-index: 3;
+}
+.staff-ribbon.new {
+  font-family: var(--font-serif-en), serif;
+  font-weight: 700;
+  letter-spacing: 0.16em;
 }
 /* 情報パネル */
 .staff-info {
