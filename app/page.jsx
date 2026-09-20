@@ -3,6 +3,7 @@
 import { useState } from "react";
 import SiteChrome from "./_components/SiteChrome";
 import TherapistCard from "./_components/TherapistCard";
+import NavIcon, { NavGoldDef } from "./_components/NavIcon";
 import guideData from "../data/guide.json";
 import rosterData from "../data/roster.json";
 import links from "../data/links.json";
@@ -10,14 +11,14 @@ import links from "../data/links.json";
 /* ---- data ---------------------------------------------------------- */
 
 const NAV = [
-  { jp: "トップ", en: "Top", href: "./" },
-  { jp: "出勤情報", en: "Schedule", href: "schedule/" },
-  { jp: "セラピスト", en: "Therapist", href: "therapist/" },
-  { jp: "料金システム", en: "System", href: "system/" },
-  { jp: "アクセス", en: "Access", href: "#" },
-  { jp: "外国人の方へ", en: "For foreigners", href: "foreigners/" },
-  { jp: "スタッフ求人", en: "Careers", href: "#" },
-  { jp: "セラピスト求人", en: "Recruit", href: "#" },
+  { jp: "トップ", en: "Top", href: "./", icon: "crown" },
+  { jp: "出勤情報", en: "Schedule", href: "schedule/", icon: "calendar" },
+  { jp: "セラピスト", en: "Therapist", href: "therapist/", icon: "therapist" },
+  { jp: "料金システム", en: "System", href: "system/", icon: "yen" },
+  { jp: "アクセス", en: "Access", href: "#", icon: "building" },
+  { jp: "外国人の方へ", en: "For foreigners", href: "foreigners/", icon: "globe" },
+  { jp: "スタッフ求人", en: "Careers", href: "#", icon: "group" },
+  { jp: "セラピスト求人", en: "Recruit", href: "#", icon: "envelope" },
 ];
 
 // Hero slides — the small thumbnails below switch the big image.
@@ -75,10 +76,19 @@ export default function Home() {
 
         {/* ---------- NAV GRID ---------- */}
         <nav className="navgrid">
+          <NavGoldDef />
           {NAV.map((n) => (
             <a className="nav-btn" href={n.href} key={n.en}>
+              <span className="nav-ic">
+                <NavIcon name={n.icon} />
+              </span>
               <span className="jp">{n.jp}</span>
-              <span className="en">{n.en}</span>
+              <span className="nav-en">
+                <span className="en">{n.en}</span>
+                <span className="nav-chev" aria-hidden="true">
+                  ›
+                </span>
+              </span>
             </a>
           ))}
         </nav>
