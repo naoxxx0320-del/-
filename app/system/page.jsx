@@ -1,10 +1,13 @@
 import SiteChrome from "../_components/SiteChrome";
 import { photoSrc } from "../_components/photo";
+import { abs } from "../_lib/site";
 
 export const metadata = {
-  title: "料金システム｜AROMA DAIAMOND 亀戸 メンズエステ",
+  title: "料金システム",
   description:
     "AROMA DAIAMOND（アロマ ダイアモンド）亀戸 メンズエステの料金システム・コース・オプション一覧。",
+  alternates: { canonical: abs("system/") },
+  openGraph: { url: abs("system/"), title: "料金システム｜AROMA DAIAMOND 亀戸" },
 };
 
 const yen = (n) => n.toLocaleString("ja-JP") + "円";

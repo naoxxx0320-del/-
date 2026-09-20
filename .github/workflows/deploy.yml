@@ -50,6 +50,10 @@ jobs:
         run: npm run build
         env:
           GITHUB_PAGES: "true"
+          # GA4 測定ID。Settings → Secrets and variables → Actions → Variables に
+          # NEXT_PUBLIC_GA_ID (例: G-XXXXXXXXXX) を登録すると計測が有効化される。
+          # 未登録のうちは空文字となり、解析タグは出力されない（無害）。
+          NEXT_PUBLIC_GA_ID: ${{ vars.NEXT_PUBLIC_GA_ID }}
 
       - name: Disable Jekyll (serve _next as-is)
         run: touch out/.nojekyll

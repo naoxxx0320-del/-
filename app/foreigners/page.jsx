@@ -1,9 +1,15 @@
 import SiteChrome from "../_components/SiteChrome";
+import { abs } from "../_lib/site";
 
 export const metadata = {
-  title: "外国人の方へ｜AROMA DAIAMOND 亀戸 メンズエステ",
+  title: "外国人の方へ / For Foreign Customers",
   description:
     "For foreign customers of AROMA DAIAMOND (Kameido). Reservation guide in English.",
+  alternates: { canonical: abs("foreigners/") },
+  openGraph: {
+    url: abs("foreigners/"),
+    title: "For Foreign Customers｜AROMA DAIAMOND Kameido",
+  },
 };
 
 const STEPS = [
