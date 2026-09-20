@@ -1213,9 +1213,12 @@ a.tcard-hit:active {
 .more {
   position: relative;
   z-index: 2;
-  margin: 14px 14px 24px;
+  display: block;
+  width: fit-content;
+  max-width: calc(100% - 28px);
+  margin: 28px auto 24px; /* 上に少し余白＋左右autoで中央寄せ */
   text-align: center;
-  padding: 14px;
+  padding: 14px 26px;
   border: 1px solid var(--gold-line);
   border-radius: 3px;
   background: linear-gradient(180deg, #fbf7ef, #f1e9d8);
