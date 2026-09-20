@@ -13,6 +13,7 @@ export default function sitemap() {
     ["schedule/", 0.9],
     ["therapist/", 0.9],
     ["system/", 0.8],
+    ["access/", 0.7],
     ["reserve/", 0.8],
     ["gallery/", 0.6],
     ["foreigners/", 0.5],

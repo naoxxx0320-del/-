@@ -11,7 +11,7 @@ import links from "../../data/links.json";
 
 const DRAWER = [
   { jp: "トップ", slug: "" },
-  { jp: "アクセス", slug: null },
+  { jp: "アクセス", slug: "access" },
   { jp: "出勤情報", slug: "schedule" },
   { jp: "外国人の方へ", slug: "foreigners" },
   { jp: "セラピスト", slug: "therapist" },
@@ -26,7 +26,7 @@ const FOOT = [
   { en: "Schedule", jp: "出勤情報", slug: "schedule" },
   { en: "Therapist", jp: "セラピスト", slug: "therapist" },
   { en: "System", jp: "料金システム", slug: "system" },
-  { en: "Access", jp: "アクセス", slug: null },
+  { en: "Access", jp: "アクセス", slug: "access" },
   { en: "Foreigner", jp: "外国人の方へ", slug: "foreigners" },
   { en: "Recruit", jp: "スタッフ求人", slug: null },
   { en: "Recruit", jp: "セラピスト求人", slug: null },
