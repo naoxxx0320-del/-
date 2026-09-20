@@ -5,13 +5,12 @@
 import { photoSrc } from "./photo";
 import FavoriteHeart from "./FavoriteHeart";
 
-// 表示するリボン（優先度：本日出勤 > 人気 > おすすめ > 新人）
+// 表示するリボン（優先度：本日出勤 > 人気 > おすすめ）。新人は名前横のNEWバッジで表示。
 export function ribbonOf(t) {
   const tags = t.tags || [];
   if (!t.absent) return { label: "本日出勤", cls: "today" };
   if (tags.includes("人気")) return { label: "人気", cls: "pop" };
   if (tags.includes("おすすめ")) return { label: "おすすめ", cls: "rec" };
-  if (t.isNew) return { label: "NEW", cls: "new" };
   return null;
 }
 
@@ -95,7 +94,10 @@ export default function StaffCard({
           <div className="staff-info">
             <FavoriteHeart id={t.id} />
 
-            <div className="staff-name">{t.name}</div>
+            <div className="staff-name">
+              {t.name}
+              {t.isNew && <span className="staff-new">NEW</span>}
+            </div>
 
             {t.age && (
               <div className="staff-age-row">

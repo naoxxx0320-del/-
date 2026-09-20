@@ -3972,6 +3972,23 @@ body.menu-open {
   padding-right: 40px;
   line-height: 1.2;
 }
+/* 名前の横のNEWバッジ */
+.staff-new {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #e8c877, #c39a52);
+  border: 1px solid #efd79b;
+  color: #5a0f1c;
+  font-family: var(--font-serif-en), serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  transform: translateY(-2px);
+}
 .staff-age-row {
   display: flex;
   align-items: center;
