@@ -3941,8 +3941,10 @@ body.menu-open {
 .staff-stats {
   margin-top: 8px;
   font-family: var(--font-serif-en), serif;
-  font-size: 12px;
-  letter-spacing: 0.02em;
+  /* 常に1行に収めて全カードの茶色パネルの高さを揃える（花恋＝1行に合わせる） */
+  white-space: nowrap;
+  font-size: 10px;
+  letter-spacing: -0.01em;
   color: #ecd9ad;
 }
 /* 出勤時間（出勤情報ページ） */
