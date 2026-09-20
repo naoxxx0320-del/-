@@ -3,6 +3,11 @@ import { SITE, SITE_URL, abs } from "./_lib/site";
 import StructuredData from "./_components/StructuredData";
 import Analytics from "./_components/Analytics";
 import AiChat from "./_components/AiChat";
+import ScrollReveal from "./_components/ScrollReveal";
+
+// スクロール演出の初期状態を最初の描画前に適用（＝チラつき防止）。
+// 動きを控える設定のユーザーには付与せず、初期化されなければ自動解除する。
+const REVEAL_BOOT = `(function(){try{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;var r=document.documentElement;r.classList.add('reveal-ready');setTimeout(function(){if(!window.__revealInit)r.classList.remove('reveal-ready');},2500);}catch(e){}})();`;
 
 const siteTitle = `${SITE.name}｜${SITE.nameJa}｜${SITE.area} メンズエステ`;
 
@@ -76,11 +81,17 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
         <StructuredData />
+        <script dangerouslySetInnerHTML={{ __html: REVEAL_BOOT }} />
+        {/* JS無効時は隠し状態を無効化して全内容を表示 */}
+        <noscript>
+          <style>{`.reveal-ready [class]{opacity:1!important;transform:none!important}`}</style>
+        </noscript>
       </head>
       <body>
         {children}
         <AiChat />
         <Analytics />
+        <ScrollReveal />
       </body>
     </html>
   );
