@@ -1,13 +1,13 @@
 // サイト共通の定数（SEO / OGP / 構造化データで使用）。
-// GitHub Pages ではサブパス配下（/-/）で公開されるため、
-// CI（GITHUB_PAGES=true）のときだけ basePath / 本番オリジンを付与する。
-// 独自ドメイン導入時は ORIGIN と BASE_PATH を書き換えれば全体に反映される。
+// 独自ドメイン aroma-daiamond.com をトップ階層で配信するため basePath は無し。
+// CI（GITHUB_PAGES=true）のときだけ本番オリジンを付与し、
+// ローカル開発（npm run dev）では localhost を使う。
 
 const isPages = process.env.GITHUB_PAGES === "true";
 
-export const BASE_PATH = isPages ? "/-" : "";
+export const BASE_PATH = "";
 export const ORIGIN = isPages
-  ? "https://naoxxx0320-del.github.io"
+  ? "https://aroma-daiamond.com"
   : "http://localhost:3000";
 
 // 正規URL（末尾スラッシュあり）。相対パス連結の起点にする。
