@@ -11,7 +11,7 @@ export function ribbonOf(t) {
   if (!t.absent) return { label: "本日出勤", cls: "today" };
   if (tags.includes("人気")) return { label: "人気", cls: "pop" };
   if (tags.includes("おすすめ")) return { label: "おすすめ", cls: "rec" };
-  if (t.isNew) return { label: "新人", cls: "new" };
+  if (t.isNew) return { label: "NEW", cls: "new" };
   return null;
 }
 
