@@ -46,6 +46,12 @@ jobs:
           THERAPISTS_CSV_URL: ${{ vars.THERAPISTS_CSV_URL }}
         run: node scripts/fetch-sheets.mjs
 
+      # 公開前にデータの健全性を検証。壊れたデータ（JSON構文エラー／必須配列が空
+      # など）の場合はここで停止し、直前の公開を維持する。警告は止めずに
+      # ジョブサマリーへ出力する（Actionsの実行画面で一目で確認できる）。
+      - name: Validate data (health check)
+        run: node scripts/validate-data.mjs
+
       - name: Build static export
         run: npm run build
         env:

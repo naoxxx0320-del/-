@@ -89,6 +89,22 @@ Google Analytics 4 のタグは `app/_components/Analytics.jsx` に実装済み�
    ローカル確認時は `NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX npm run dev` でも可。
 3. 再デプロイすると計測が始まります。
 
+## 運用・データ健全性（CI）
+
+デプロイ前に `scripts/validate-data.mjs` が `data/*.json` を検証します
+（GitHub Actions の「Validate data (health check)」ステップ）。
+
+- **致命的な問題**（JSON構文エラー／`roster`・`courses` が空／必須配列欠落など）は
+  ビルドを停止し、**直前の公開を維持**します（壊れたデータで上書き公開しない）。
+- **警告**（写真未設定・名簿にない名前・案内状況の日付が古い等）はデプロイを止めず、
+  Actions の**ジョブサマリー**に健全性レポートとして表示されます。
+
+ローカルでも確認できます:
+
+```bash
+npm run validate-data
+```
+
 ## 今後
 
 アクセスページ、実写真・実データの反映、
