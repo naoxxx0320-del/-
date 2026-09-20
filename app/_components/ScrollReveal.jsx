@@ -18,7 +18,6 @@ const SELECTOR = [
   ".campaign",
   ".therapists > *",
   ".staff-hero",
-  ".staff-grid > *",
   ".rsv-sec",
   ".rsv-steps",
   ".rsv-summary",
