@@ -297,22 +297,25 @@ img {
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* minmax(0,1fr) で4列を厳密に等幅にする（内容の長さで幅がずれないように）。
+     grid-auto-rows:1fr で2行の高さも揃え、全カードを完全に均等化する。
+     背景は付けず、後ろの大理石が透ける。 */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
   gap: 9px;
   padding: 16px 10px;
-  background:
-    radial-gradient(130px 90px at 14% 18%, rgba(203, 156, 82, 0.12), transparent 70%),
-    radial-gradient(150px 100px at 86% 82%, rgba(203, 156, 82, 0.1), transparent 70%),
-    linear-gradient(160deg, #240a0c 0%, #150406 55%, #240a0c 100%);
 }
 
 .nav-btn {
   position: relative;
+  min-width: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
   gap: 5px;
-  padding: 13px 5px 9px;
+  padding: 13px 4px 9px;
   background: linear-gradient(160deg, #3d161a 0%, #200a0c 100%);
   border: 1px solid #a9834e;
   border-radius: 8px;
@@ -330,29 +333,35 @@ img {
 }
 .nav-btn .jp {
   font-family: var(--font-serif-jp), serif;
-  font-size: 13px;
+  font-size: clamp(10.5px, 3vw, 13px);
   color: #f4e9d6;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
   text-align: center;
   white-space: nowrap;
+  margin-top: auto;
 }
 .nav-en {
   position: relative;
   width: 100%;
+  padding: 0 13px;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 1.2em;
 }
 .nav-btn .en {
   font-family: var(--font-serif-en), serif;
-  font-size: 11px;
-  letter-spacing: 0.03em;
+  font-size: clamp(9px, 2.5vw, 11px);
+  letter-spacing: 0.02em;
   color: #dcb877;
-  white-space: nowrap;
+  text-align: center;
+  line-height: 1.25;
 }
 .nav-chev {
   position: absolute;
   right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
   color: #dcb877;
   font-size: 14px;
   line-height: 1;
