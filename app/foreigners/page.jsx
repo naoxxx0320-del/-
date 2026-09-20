@@ -1,4 +1,5 @@
 import SiteChrome from "../_components/SiteChrome";
+import NavGrid from "../_components/NavGrid";
 import { abs } from "../_lib/site";
 import Breadcrumbs from "../_components/Breadcrumbs";
 
@@ -51,6 +52,8 @@ export default function Foreigners() {
           <div className="ph-en">For foreign customers</div>
           <div className="ph-jp">外国人の方へ</div>
         </div>
+
+        <NavGrid base="../" />
 
         <section className="fgn">
           <p className="fgn-lead">

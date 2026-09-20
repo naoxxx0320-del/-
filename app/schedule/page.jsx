@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import SiteChrome from "../_components/SiteChrome";
+import NavGrid from "../_components/NavGrid";
 import StaffCard from "../_components/StaffCard";
 import schedule from "../../data/schedule.json";
 import roster from "../../data/roster.json";
@@ -40,6 +41,8 @@ export default function Schedule() {
           <div className="ph-en">Schedule</div>
           <div className="ph-jp">出勤情報</div>
         </div>
+
+        <NavGrid base="../" />
 
         <div className="sch-tabs">
           {days.map((d, i) => (

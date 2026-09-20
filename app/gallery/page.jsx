@@ -1,4 +1,5 @@
 import SiteChrome from "../_components/SiteChrome";
+import NavGrid from "../_components/NavGrid";
 import { abs } from "../_lib/site";
 import GalleryClient from "./GalleryClient";
 import Breadcrumbs from "../_components/Breadcrumbs";
@@ -26,6 +27,8 @@ export default function Gallery() {
           <div className="ph-en">Gallery</div>
           <div className="ph-jp">フォトギャラリー</div>
         </div>
+
+        <NavGrid base="../" />
 
         <GalleryClient />
 

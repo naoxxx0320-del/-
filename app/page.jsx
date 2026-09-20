@@ -3,23 +3,12 @@
 import { useState } from "react";
 import SiteChrome from "./_components/SiteChrome";
 import StaffCard from "./_components/StaffCard";
-import NavIcon, { NavGoldDef } from "./_components/NavIcon";
+import NavGrid from "./_components/NavGrid";
 import guideData from "../data/guide.json";
 import rosterData from "../data/roster.json";
 import links from "../data/links.json";
 
 /* ---- data ---------------------------------------------------------- */
-
-const NAV = [
-  { jp: "トップ", en: "Top", href: "./", icon: "crown" },
-  { jp: "出勤情報", en: "Schedule", href: "schedule/", icon: "calendar" },
-  { jp: "セラピスト", en: "Therapist", href: "therapist/", icon: "therapist" },
-  { jp: "料金システム", en: "System", href: "system/", icon: "yen" },
-  { jp: "アクセス", en: "Access", href: "#", icon: "building" },
-  { jp: "外国人の方へ", en: "For foreigners", href: "foreigners/", icon: "globe" },
-  { jp: "スタッフ求人", en: "Careers", href: "#", icon: "group" },
-  { jp: "セラピスト求人", en: "Recruit", href: "#", icon: "envelope" },
-];
 
 // Hero slides — the small thumbnails below switch the big image.
 // `img` uses a real banner; slides without `img` render a styled placeholder.
@@ -75,23 +64,7 @@ export default function Home() {
         </header>
 
         {/* ---------- NAV GRID ---------- */}
-        <nav className="navgrid">
-          <NavGoldDef />
-          {NAV.map((n) => (
-            <a className="nav-btn" href={n.href} key={n.en}>
-              <span className="nav-ic">
-                <NavIcon name={n.icon} />
-              </span>
-              <span className="jp">{n.jp}</span>
-              <span className="nav-en">
-                <span className="en">{n.en}</span>
-                <span className="nav-chev" aria-hidden="true">
-                  ›
-                </span>
-              </span>
-            </a>
-          ))}
-        </nav>
+        <NavGrid base="" />
 
         {/* ---------- HERO MAIN (switchable) ---------- */}
         <section className="hero-main">
