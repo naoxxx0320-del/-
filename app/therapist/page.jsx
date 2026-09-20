@@ -1,10 +1,13 @@
 import SiteChrome from "../_components/SiteChrome";
 import { photoSrc } from "../_components/photo";
 import roster from "../../data/roster.json";
+import { abs } from "../_lib/site";
 
 export const metadata = {
-  title: "セラピスト｜AROMA DAIAMOND 亀戸 メンズエステ",
+  title: "セラピスト",
   description: "AROMA DAIAMOND（アロマ ダイアモンド）亀戸 在籍セラピスト一覧。",
+  alternates: { canonical: abs("therapist/") },
+  openGraph: { url: abs("therapist/"), title: "セラピスト｜AROMA DAIAMOND 亀戸" },
 };
 
 // 在籍セラピスト一覧（「本日の出勤」シートから紐づけ）

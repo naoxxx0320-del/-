@@ -53,7 +53,43 @@ GITHUB_PAGES=true npm run build   # ./out に生成
 npx serve out                     # 例: 簡易サーバーで確認
 ```
 
+## SEO・発見されやすさ（実装済み）
+
+検索・SNSからの流入を増やすための土台を実装しています。
+
+- **メタデータ**：`app/layout.jsx` に OGP（Open Graph）・Twitter カード・
+  canonical・robots・keywords を集約。各ページはタイトルテンプレートで
+  `ページ名｜AROMA DAIAMOND 亀戸` に統一。
+- **構造化データ（JSON-LD）**：`app/_components/StructuredData.jsx`。
+  店舗情報（`HealthAndBeautyBusiness`）＋サイト情報（`WebSite`）を出力。
+  営業時間・エリア（東京都江東区亀戸）・コース料金（`data/reserve-config.json`
+  から自動生成）を検索エンジンに認識させます。住所は方針によりエリアレベルまで。
+- **sitemap.xml / robots.txt**：`app/sitemap.js` / `app/robots.js` で自動生成。
+  `/secret` はクロール対象外。
+- **サイト定数**：`app/_lib/site.js` に集約。独自ドメイン導入時は
+  `ORIGIN` と `BASE_PATH` を書き換えれば全体（OGP・canonical・sitemap）に反映されます。
+
+> 【注意】GitHub のプロジェクトページ（`/-/` 配下）では `robots.txt` を
+> サイト直下に置けないため、検索エンジンには読まれません。生成物は
+> 独自ドメイン導入後に有効になります。それまでは **sitemap.xml を
+> Google Search Console から手動送信**してください
+> （URL: `https://naoxxx0320-del.github.io/-/sitemap.xml`）。
+
+## アクセス解析（GA4）
+
+Google Analytics 4 のタグは `app/_components/Analytics.jsx` に実装済みで、
+**測定ID が設定されているときだけ**出力されます（未設定時は無害）。
+
+有効化の手順：
+
+1. [Google アナリティクス](https://analytics.google.com/) でプロパティを作成し、
+   測定ID（`G-XXXXXXXXXX`）を取得。
+2. GitHub Actions のデプロイに環境変数として渡す
+   （`.github/workflows/deploy.yml` のビルドステップに `NEXT_PUBLIC_GA_ID` を追加）。
+   ローカル確認時は `NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX npm run dev` でも可。
+3. 再デプロイすると計測が始まります。
+
 ## 今後
 
-トップ以外のページ（出勤情報・セラピスト・料金システム・アクセス・外国人の方へ・各求人）、
-実写真・実データの反映は次フェーズで対応予定。
+アクセスページ、実写真・実データの反映、
+予約・顧客体験の強化（予約カレンダーUI 等）は次フェーズで対応予定。

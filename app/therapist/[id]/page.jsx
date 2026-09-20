@@ -3,6 +3,7 @@ import { SnsBadge } from "../../_components/TherapistCard";
 import { photoSrc } from "../../_components/photo";
 import roster from "../../../data/roster.json";
 import TherapistGallery from "./TherapistGallery";
+import { abs } from "../../_lib/site";
 
 const BASE = "../../"; // /therapist/[id]/ はルートから2階層下
 
@@ -18,9 +19,12 @@ function pick(id) {
 export function generateMetadata({ params }) {
   const t = pick(params.id);
   const nm = (t && (t.nameFull || t.name)) || "セラピスト";
+  const url = abs(`therapist/${params.id}/`);
   return {
-    title: `${nm}｜AROMA DAIAMOND 亀戸 メンズエステ`,
+    title: nm,
     description: `AROMA DAIAMOND（アロマ ダイアモンド）亀戸 セラピスト「${nm}」のプロフィール。`,
+    alternates: { canonical: url },
+    openGraph: { url, title: `${nm}｜AROMA DAIAMOND 亀戸` },
   };
 }
 

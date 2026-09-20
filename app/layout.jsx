@@ -1,9 +1,55 @@
 import "./globals.css";
+import { SITE, SITE_URL, abs } from "./_lib/site";
+import StructuredData from "./_components/StructuredData";
+import Analytics from "./_components/Analytics";
+
+const siteTitle = `${SITE.name}｜${SITE.nameJa}｜${SITE.area} メンズエステ`;
 
 export const metadata = {
-  title: "AROMA DAIAMOND｜アロマ ダイアモンド｜亀戸 メンズエステ",
-  description:
-    "宝石のように美しいセラピスト達。極上の癒しと刺激の空間 men's esthetic AROMA DAIAMOND（アロマ ダイアモンド）亀戸。",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: siteTitle,
+    template: `%s｜${SITE.name} ${SITE.area}`,
+  },
+  description: SITE.description,
+  keywords: [
+    "メンズエステ",
+    SITE.area,
+    "亀戸 メンズエステ",
+    "アロマ",
+    "リラクゼーション",
+    SITE.name,
+    SITE.nameJa,
+  ],
+  applicationName: SITE.name,
+  alternates: { canonical: SITE_URL },
+  openGraph: {
+    type: "website",
+    locale: SITE.locale,
+    siteName: SITE.name,
+    title: siteTitle,
+    description: SITE.description,
+    url: SITE_URL,
+    images: [
+      {
+        url: abs(SITE.ogImage),
+        width: 1200,
+        height: 630,
+        alt: `${SITE.name}（${SITE.nameJa}）${SITE.area}`,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteTitle,
+    description: SITE.description,
+    images: [abs(SITE.ogImage)],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+  },
 };
 
 export const viewport = {
@@ -28,8 +74,12 @@ export default function RootLayout({ children }) {
           href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Shippori+Mincho:wght@400;500;600;700;800&family=Zen+Old+Mincho:wght@400;500;600;700;900&display=swap"
           rel="stylesheet"
         />
+        <StructuredData />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
