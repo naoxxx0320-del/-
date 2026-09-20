@@ -3789,16 +3789,13 @@ body.menu-open {
   gap: 12px;
   padding: 6px 12px 16px;
 }
+/* 角丸ゴールドグラデーションの二重フレーム */
 .staff-card {
   position: relative;
-  display: block;
-  text-decoration: none;
-  color: inherit;
-  border: 1px solid #c9a24a;
-  border-radius: 12px;
-  overflow: hidden;
-  background: linear-gradient(180deg, #5a0f1c, #3d0a14);
-  box-shadow: 0 4px 14px rgba(60, 20, 30, 0.3);
+  padding: 3px; /* フレームの太さ */
+  border-radius: 16px;
+  background: linear-gradient(150deg, #f2dca0 0%, #bd8f45 42%, #f2dca0 68%, #a9793b 100%);
+  box-shadow: 0 5px 16px rgba(60, 20, 30, 0.34);
   transition: transform 0.14s ease, box-shadow 0.16s ease;
 }
 .staff-card:active {
@@ -3807,8 +3804,45 @@ body.menu-open {
 @media (hover: hover) {
   .staff-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 9px 24px rgba(60, 20, 30, 0.42);
+    box-shadow: 0 10px 26px rgba(60, 20, 30, 0.44);
   }
+}
+.staff-card-inner {
+  position: relative;
+  border-radius: 13px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #61101c, #420b14);
+}
+/* 内側の細い金線 */
+.staff-card-inner::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(230, 205, 140, 0.55);
+  border-radius: 10px;
+  pointer-events: none;
+  z-index: 3;
+}
+/* 上部コーナー装飾 */
+.staff-corner {
+  position: absolute;
+  top: 5px;
+  z-index: 4;
+  line-height: 0;
+  pointer-events: none;
+}
+.staff-corner.tl {
+  left: 5px;
+}
+.staff-corner.tr {
+  right: 5px;
+  transform: scaleX(-1);
+}
+
+.staff-hit {
+  display: block;
+  text-decoration: none;
+  color: inherit;
 }
 .staff-photo {
   position: relative;
@@ -3834,60 +3868,134 @@ body.menu-open {
 /* 斜めリボン */
 .staff-ribbon {
   position: absolute;
-  top: 15px;
-  left: -32px;
+  top: 20px;
+  left: -36px;
   transform: rotate(-45deg);
-  width: 130px;
+  width: 150px;
   text-align: center;
-  background: linear-gradient(180deg, #a5142a, #7a0f1f);
-  color: #f4d99c;
+  background: linear-gradient(180deg, #8f1223, #6a0e19);
+  color: #f3d99c;
   font-family: var(--font-serif-jp), serif;
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  padding: 4px 0;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  padding: 5px 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  border-top: 1px solid rgba(240, 214, 150, 0.4);
+  border-bottom: 1px solid rgba(240, 214, 150, 0.4);
+  z-index: 3;
 }
 /* 情報パネル */
 .staff-info {
   position: relative;
-  padding: 10px 12px 12px;
-  background: linear-gradient(180deg, #5a0f1c, #420b15);
+  padding: 12px 14px 14px;
+  background: radial-gradient(120% 90% at 50% 0%, #6a1120 0%, #4c0c15 75%);
 }
 .staff-heart {
   position: absolute;
-  top: 9px;
-  right: 10px;
-  width: 30px;
-  height: 30px;
+  top: 12px;
+  right: 12px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: radial-gradient(circle at 32% 28%, #edcd82, #b6884899);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  background: radial-gradient(circle at 32% 28%, #f0d693, #c39a54);
+  border: 1.5px solid #e7cd8b;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
 }
 .staff-heart svg {
-  fill: #5a0f1c;
+  fill: #f6e8bd;
 }
 .staff-name {
   font-family: var(--font-serif-jp), serif;
-  font-size: 17px;
+  font-size: 20px;
   color: #f6ece0;
-  letter-spacing: 0.04em;
-  padding-right: 36px;
+  letter-spacing: 0.05em;
+  padding-right: 40px;
+  line-height: 1.2;
 }
-.staff-dia {
-  color: #d8b877;
-  font-size: 10px;
-  margin: 0 3px 0 4px;
+.staff-age-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+}
+.staff-gem {
+  display: block;
 }
 .staff-age {
-  color: #d8b877;
-  font-size: 12px;
+  color: #d9b978;
+  font-size: 13px;
+  font-family: var(--font-serif-en), serif;
 }
 .staff-stats {
-  margin-top: 6px;
+  margin-top: 8px;
   font-family: var(--font-serif-en), serif;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.02em;
-  color: #e6d2a8;
+  color: #ecd9ad;
+}
+/* 出勤時間（出勤情報ページ） */
+.staff-sched {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid rgba(230, 205, 140, 0.22);
+  font-size: 13px;
+  color: #f0e2cb;
+  letter-spacing: 0.03em;
+}
+.staff-sched-clock {
+  font-size: 14px;
+}
+/* 空き状況バー（出勤情報ページ） */
+.staff-status {
+  text-align: center;
+  padding: 9px;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  color: #fff;
+}
+.staff-status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  margin-right: 7px;
+  vertical-align: middle;
+}
+.staff-status.ok {
+  background: linear-gradient(180deg, #2f9a63, #1f7a4c);
+}
+.staff-status.few {
+  background: linear-gradient(180deg, #d39a3a, #bb7c1e);
+}
+.staff-status.full {
+  background: linear-gradient(180deg, #6a5c54, #574a44);
+}
+/* 予約ボタン（出勤情報ページ） */
+.staff-reserve {
+  display: block;
+  text-align: center;
+  padding: 12px 10px;
+  background: linear-gradient(180deg, #d8b25a 0%, #b6862f 100%);
+  color: #3a2c0e;
+  font-family: var(--font-serif-jp), serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+}
+.staff-reserve:active {
+  filter: brightness(0.96);
+}
+.staff-reserve.disabled {
+  background: #ece7de;
+  color: #a79c8c;
+  font-weight: 600;
+  cursor: not-allowed;
 }
