@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import SiteChrome from "./_components/SiteChrome";
-import TherapistCard from "./_components/TherapistCard";
+import StaffCard from "./_components/StaffCard";
 import NavIcon, { NavGoldDef } from "./_components/NavIcon";
 import guideData from "../data/guide.json";
 import rosterData from "../data/roster.json";
@@ -201,14 +201,9 @@ export default function Home() {
         {/* ---------- THERAPIST GRID ---------- */}
         {THERAPISTS.length > 0 ? (
           <>
-            <section className="therapists">
+            <section className="staff-grid">
               {THERAPISTS.map((t, i) => (
-                <TherapistCard
-                  t={t}
-                  href={`therapist/${t.id ?? i + 1}/`}
-                  reserveHref={`reserve/?t=${encodeURIComponent(t.name)}`}
-                  key={i}
-                />
+                <StaffCard t={t} href={`therapist/${t.id ?? i + 1}/`} base="" key={i} />
               ))}
             </section>
 
