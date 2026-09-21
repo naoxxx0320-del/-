@@ -97,8 +97,8 @@ export default function Foreigners() {
             日本語が話せる方はお電話ください。日本人料金でご案内いたします。
           </p>
 
-          <a className="fgn-tel" href="tel:05054449830">
-            Tel : 050-5444-9830
+          <a className="fgn-tel" href="tel:08048855430">
+            Tel : 080-4885-5430
           </a>
         </section>
 

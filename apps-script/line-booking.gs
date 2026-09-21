@@ -29,7 +29,7 @@ const OWNER_EMAIL = SP.getProperty("OWNER_EMAIL") || "";
 const SCHEDULE_SHEET = "出勤情報"; // 日付/ラベル/エリア/名前/出勤時間/ステータス/出勤/区分
 const RESERVE_SHEET = "LINE予約"; // 予約の書き込み先（無ければ自動作成）
 const AREA = "亀戸";
-const TEL = "050-5444-9830";
+const TEL = "080-4885-5430";
 
 // コース（サイトの reserve-config.json と揃える）
 const COURSES = [

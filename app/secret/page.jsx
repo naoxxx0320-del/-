@@ -192,8 +192,8 @@ export default function Secret() {
             </section>
 
             <div className="sec-actions">
-              <a className="sec-tel" href="tel:05054449830">
-                この内容で予約する（050-5444-9830）
+              <a className="sec-tel" href="tel:08048855430">
+                この内容で予約する（080-4885-5430）
               </a>
               <a className="sec-back" href="../">
                 ＜ トップページへ戻る

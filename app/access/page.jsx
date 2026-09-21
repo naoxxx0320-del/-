@@ -26,7 +26,7 @@ const INFO = [
   ["最寄駅", "JR亀戸駅 北口 徒歩5分"],
   ["営業時間", "10:00〜翌5:00"],
   ["電話受付", "9:30〜翌4:00"],
-  ["電話番号", "050-5444-9830"],
+  ["電話番号", "080-4885-5430"],
   ["お支払い", "現金 / クレジットカード / PayPay"],
   ["定休日", "年中無休"],
 ];
@@ -121,9 +121,9 @@ export default function Access() {
 
           {/* ---- CTA ---- */}
           <div className="acc-cta">
-            <a className="acc-btn tel" href="tel:05054449830">
+            <a className="acc-btn tel" href="tel:08048855430">
               <span className="ab-ic" aria-hidden="true">📞</span>
-              <span className="ab-tx"><b>電話する</b><small>050-5444-9830</small></span>
+              <span className="ab-tx"><b>電話する</b><small>080-4885-5430</small></span>
             </a>
             <a className="acc-btn line" href={links.line} target="_blank" rel="noopener noreferrer">
               <span className="ab-ic" aria-hidden="true">

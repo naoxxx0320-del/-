@@ -260,7 +260,7 @@ export default function Home() {
             ご予約は、お電話・WEB予約・公式LINEにて承っております。
             ご予約の可否、ご予約可能な場合はご案内サロンとご利用料金をお伝えいたします。
           </p>
-          <a className="rz-tel" href="tel:05054449830">
+          <a className="rz-tel" href="tel:08048855430">
             <span className="rz-ic" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="40" height="40" fill="#edd39b">
                 <path d="M6.6 10.9c1.4 2.8 3.7 5.1 6.5 6.5l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.5.6.6 0 1 .5 1 1v3.5c0 .6-.4 1-1 1C10.4 21.6 2.4 13.6 2.4 3.6c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.5.1.3 0 .7-.2 1l-2.7 2.7z" />
@@ -268,7 +268,7 @@ export default function Home() {
             </span>
             <span className="rz-tel-txt">
               <b>お電話予約</b>
-              <span className="num">050-5444-9830</span>
+              <span className="num">080-4885-5430</span>
             </span>
           </a>
           <div className="rz-row">

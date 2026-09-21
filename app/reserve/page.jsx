@@ -248,7 +248,7 @@ export default function Reserve() {
         sending: false,
         done: false,
         error:
-          "予約送信の設定が完了していません。恐れ入りますが、お電話（050-5444-9830）でご連絡ください。",
+          "予約送信の設定が完了していません。恐れ入りますが、お電話（080-4885-5430）でご連絡ください。",
       });
       return;
     }
@@ -302,7 +302,7 @@ export default function Reserve() {
               ご入力のメールアドレス（<b>{form.email}</b>）宛に確認メールをお送りしました。
               メール内のリンクを開いてご予約を確定してください。
               数分たっても届かない場合は、迷惑メールフォルダのご確認、
-              またはお電話（050-5444-9830）をお願いいたします。
+              またはお電話（080-4885-5430）をお願いいたします。
             </p>
             <div className="rsv-done-box">
               <div className="rsv-done-box-h">仮予約の内容</div>
