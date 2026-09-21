@@ -119,24 +119,19 @@ export default function Access() {
             道に迷われた際は、遠慮なくお電話ください。
           </p>
 
-          {/* ---- CTA ---- */}
+          {/* ---- CTA（3つ横並び・統一デザイン） ---- */}
           <div className="acc-cta">
-            <a className="acc-btn tel" href="tel:08048855430">
-              <span className="ab-ic" aria-hidden="true">📞</span>
-              <span className="ab-tx"><b>電話する</b><small>080-4885-5430</small></span>
+            <a className="acc-btn" href="tel:08048855430">
+              <span className="ab-en">Tel</span>
+              <span className="ab-jp">電話する</span>
             </a>
-            <a className="acc-btn line" href={links.line} target="_blank" rel="noopener noreferrer">
-              <span className="ab-ic" aria-hidden="true">
-                <svg viewBox="0 0 32 32" width="22" height="22">
-                  <rect x="2" y="2" width="28" height="28" rx="8" fill="#06c755" />
-                  <path d="M16 8.2c-5 0-9 3.1-9 6.9 0 3.4 3.1 6.3 7.4 6.85.28.06.66.19.76.43.08.22.05.55.03.77l-.12.72c-.04.22-.18.86.77.47.95-.4 5.1-3 6.96-5.14C21.9 24.9 25 22.1 25 15.1c0-3.8-4-6.9-9-6.9z" fill="#fff" />
-                </svg>
-              </span>
-              <span className="ab-tx"><b>LINEで予約</b><small>道案内もこちら</small></span>
+            <a className="acc-btn" href={links.line} target="_blank" rel="noopener noreferrer">
+              <span className="ab-en">LINE</span>
+              <span className="ab-jp">LINE予約</span>
             </a>
-            <a className="acc-btn web" href="../reserve/">
-              <span className="ab-ic" aria-hidden="true">🗓</span>
-              <span className="ab-tx"><b>WEB予約</b><small>24時間受付</small></span>
+            <a className="acc-btn" href="../reserve/">
+              <span className="ab-en">Web</span>
+              <span className="ab-jp">WEB予約</span>
             </a>
           </div>
         </section>
