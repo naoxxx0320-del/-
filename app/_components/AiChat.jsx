@@ -50,7 +50,7 @@ export default function AiChat() {
         ...m,
         {
           role: "bot",
-          text: "申し訳ございません、応答に時間がかかっています。お手数ですがお電話（050-5444-9830）でもご案内できます。",
+          text: "申し訳ございません、応答に時間がかかっています。お手数ですがお電話（080-4885-5430）でもご案内できます。",
         },
       ]);
     }, 25000);
@@ -62,7 +62,7 @@ export default function AiChat() {
       const reply =
         data && typeof data.reply === "string" && data.reply.trim()
           ? data.reply.trim()
-          : "申し訳ございません、ただいまAI応答を準備中です。お電話（050-5444-9830）またはWEB予約をご利用ください。";
+          : "申し訳ございません、ただいまAI応答を準備中です。お電話（080-4885-5430）またはWEB予約をご利用ください。";
       setMsgs((m) => [...m, { role: "bot", text: reply }]);
     };
     script.onerror = () => {

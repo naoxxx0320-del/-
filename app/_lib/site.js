@@ -25,8 +25,8 @@ export const SITE = {
   addressRegion: "東京都",
   addressDistrict: "江東区",
   addressCountry: "JP",
-  telephone: "+81-50-5444-9830",
-  telephoneDisplay: "050-5444-9830",
+  telephone: "+81-80-4885-5430",
+  telephoneDisplay: "080-4885-5430",
   email: "naoxxx0320@gmail.com",
   // [営業時間]10:00〜翌5:00 [電話受付]9:30〜翌4:00
   openingHours: "Mo-Su 10:00-29:00",
