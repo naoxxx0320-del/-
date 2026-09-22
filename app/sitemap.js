@@ -17,6 +17,8 @@ export default function sitemap() {
     ["reserve/", 0.8],
     ["gallery/", 0.6],
     ["foreigners/", 0.5],
+    ["careers/", 0.5],
+    ["recruit/", 0.5],
   ];
 
   const staticEntries = pages.map(([path, priority]) => ({
