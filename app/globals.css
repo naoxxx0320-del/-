@@ -135,11 +135,11 @@ img {
   position: relative;
   z-index: 2;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap; /* 常に1行 */
   align-items: center;
   justify-content: center;
-  gap: 8px 18px;
-  padding: 10px 14px;
+  gap: clamp(8px, 3vw, 16px);
+  padding: 10px 10px;
   background: linear-gradient(180deg, #2a0a0d 0%, #230809 100%);
   border-top: 1px solid rgba(199, 173, 120, 0.55);
   border-bottom: 1px solid rgba(199, 173, 120, 0.55);
@@ -149,20 +149,22 @@ img {
 .hb-item {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: clamp(3px, 1.2vw, 6px);
   font-family: var(--font-serif-jp), serif;
   color: var(--gold-soft);
-  font-size: 13px;
-  letter-spacing: 0.04em;
+  font-size: clamp(10.5px, 3.2vw, 13px); /* 画面幅に合わせ1行を維持 */
+  letter-spacing: 0.02em;
   white-space: nowrap;
 }
 .hb-ico {
   color: var(--gold-2);
   flex: none;
+  width: clamp(12px, 3.6vw, 15px);
+  height: clamp(12px, 3.6vw, 15px);
 }
 .hb-label {
   color: var(--gold-2);
-  font-size: 12px;
+  font-size: 0.92em;
 }
 .hb-time {
   color: #f3e9d6;
@@ -178,15 +180,6 @@ img {
     rgba(199, 173, 120, 0.7) 50%,
     rgba(199, 173, 120, 0) 100%
   );
-}
-/* 狭い画面では区切りを隠して2行に */
-@media (max-width: 360px) {
-  .hb-sep {
-    display: none;
-  }
-  .hours-bar {
-    gap: 4px 14px;
-  }
 }
 /* fixed hamburger — pinned to the top-right of the device while scrolling */
 .hamburger-fixed {
