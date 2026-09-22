@@ -64,6 +64,11 @@ export default function System() {
       >
         <Breadcrumbs items={[{ name: "料金システム", path: "system/" }]} />
 
+        <div className="page-head">
+          <div className="ph-en">System</div>
+          <h1 className="ph-jp">料金システム</h1>
+        </div>
+
         <NavGrid base="../" />
 
         {/* ---- 料金表（画像） ---- */}

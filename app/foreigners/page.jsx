@@ -50,7 +50,7 @@ export default function Foreigners() {
         <Breadcrumbs items={[{ name: "外国人の方へ", path: "foreigners/" }]} />
         <div className="page-head">
           <div className="ph-en">For foreign customers</div>
-          <div className="ph-jp">外国人の方へ</div>
+          <h1 className="ph-jp">外国人の方へ</h1>
         </div>
 
         <NavGrid base="../" />

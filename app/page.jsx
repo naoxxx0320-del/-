@@ -57,6 +57,11 @@ export default function Home() {
             "#f4efe7 url(bg-marble.jpg) top center / 100% auto repeat",
         }}
       >
+        {/* SEO/アクセシビリティ用の見出し（視覚的には非表示） */}
+        <h1 className="sr-only">
+          AROMA DAIAMOND（アロマ ダイアモンド）｜亀戸のメンズエステ
+        </h1>
+
         {/* ---------- HEADER ---------- */}
         <header className="hero-header">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -161,7 +166,7 @@ export default function Home() {
         {/* ---------- SECTION HEAD + AREA BAND ---------- */}
         <div className="section-head">
           <div className="sh-en">Today&apos;s Therapist</div>
-          <div className="sh-jp">本日の出勤</div>
+          <h2 className="sh-jp">本日の出勤</h2>
         </div>
         <div className="area-band">
           <svg className="ab-dia" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
@@ -180,7 +185,7 @@ export default function Home() {
               ))}
             </section>
 
-            <a className="more" href="#">
+            <a className="more" href="therapist/">
               ＞ 出勤セラピストを全て見る ＜
             </a>
           </>
@@ -193,7 +198,7 @@ export default function Home() {
         {/* ---------- CONCEPT ---------- */}
         <div className="section-head">
           <div className="sh-en">Concept</div>
-          <div className="sh-jp">コンセプト</div>
+          <h2 className="sh-jp">コンセプト</h2>
         </div>
         <section className="concept">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -213,7 +218,7 @@ export default function Home() {
         {/* ---------- THERAPIST ---------- */}
         <div className="section-head">
           <div className="sh-en">Therapist</div>
-          <div className="sh-jp">セラピスト</div>
+          <h2 className="sh-jp">セラピスト</h2>
         </div>
         <section className="concept">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -231,7 +236,7 @@ export default function Home() {
         {/* ---------- ENVIRONMENT ---------- */}
         <div className="section-head">
           <div className="sh-en">Environment</div>
-          <div className="sh-jp">癒やしの環境</div>
+          <h2 className="sh-jp">癒やしの環境</h2>
         </div>
         <section className="concept">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -252,7 +257,7 @@ export default function Home() {
         {/* ---------- RESERVATION ---------- */}
         <div className="section-head">
           <div className="sh-en">Reservation</div>
-          <div className="sh-jp">ご予約</div>
+          <h2 className="sh-jp">ご予約</h2>
         </div>
         <section className="reserve">
           <p className="concept-p reserve-lead">
