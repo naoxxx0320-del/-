@@ -5,6 +5,7 @@ import SiteChrome from "./_components/SiteChrome";
 import StaffCard from "./_components/StaffCard";
 import NavGrid from "./_components/NavGrid";
 import { photoSrc } from "./_components/photo";
+import { SITE } from "./_lib/site";
 import guideData from "../data/guide.json";
 import rosterData from "../data/roster.json";
 import links from "../data/links.json";
@@ -111,6 +112,44 @@ export default function Home() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img className="hero-img" src={photoSrc("hero-banner.jpg")} alt="men's esthetic AROMA DAIAMOND アロマ ダイアモンド KAMEIDO / 亀戸" />
         </header>
+
+        {/* ---------- 営業時間・電話受付バー ---------- */}
+        <div className="hours-bar">
+          <span className="hb-item">
+            <svg
+              className="hb-ico"
+              viewBox="0 0 24 24"
+              width="15"
+              height="15"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.6" />
+              <path d="M12 7v5.2l3.4 2" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="hb-label">営業時間</span>
+            <span className="hb-time">{SITE.hoursBusiness}</span>
+          </span>
+          <span className="hb-sep" aria-hidden="true" />
+          <span className="hb-item">
+            <svg
+              className="hb-ico"
+              viewBox="0 0 24 24"
+              width="15"
+              height="15"
+              aria-hidden="true"
+            >
+              <path
+                d="M6.5 3.5c.6 0 1.1.4 1.3 1l.8 2.7c.2.6 0 1.2-.5 1.6l-1.2.9c1 2.1 2.7 3.8 4.8 4.8l.9-1.2c.4-.5 1-.7 1.6-.5l2.7.8c.6.2 1 .7 1 1.3v2.6c0 .8-.7 1.5-1.5 1.4C11.1 20.6 3.4 12.9 3.1 5.4 3 4.6 3.7 4 4.5 4z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <span className="hb-label">電話受付</span>
+            <span className="hb-time">{SITE.hoursPhone}</span>
+          </span>
+        </div>
 
         {/* ---------- NAV GRID ---------- */}
         <NavGrid base="" />
