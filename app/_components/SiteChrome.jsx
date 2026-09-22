@@ -15,9 +15,9 @@ const DRAWER = [
   { jp: "出勤情報", slug: "schedule" },
   { jp: "外国人の方へ", slug: "foreigners" },
   { jp: "セラピスト", slug: "therapist" },
-  { jp: "スタッフ求人", slug: null },
+  { jp: "スタッフ求人", slug: "careers" },
   { jp: "料金システム", slug: "system" },
-  { jp: "セラピスト求人", slug: null },
+  { jp: "セラピスト求人", slug: "recruit" },
   { jp: "フォトギャラリー", slug: "gallery", wide: true },
 ];
 
@@ -28,8 +28,8 @@ const FOOT = [
   { en: "System", jp: "料金システム", slug: "system" },
   { en: "Access", jp: "アクセス", slug: "access" },
   { en: "Foreigner", jp: "外国人の方へ", slug: "foreigners" },
-  { en: "Recruit", jp: "スタッフ求人", slug: null },
-  { en: "Recruit", jp: "セラピスト求人", slug: null },
+  { en: "Careers", jp: "スタッフ求人", slug: "careers" },
+  { en: "Recruit", jp: "セラピスト求人", slug: "recruit" },
   { en: "Flow", jp: "ご利用の流れ", slug: null },
   { en: "Q & A", jp: "よくある質問", slug: null },
   { en: "Column", jp: "メンズエステコラム", slug: null },
@@ -41,7 +41,7 @@ const FOOT = [
   { en: "Contact", jp: "お問い合わせ", slug: null },
 ];
 
-export default function SiteChrome({ base = "" }) {
+export default function SiteChrome({ base = "", hideFooterbar = false }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -104,7 +104,7 @@ export default function SiteChrome({ base = "" }) {
       >
         ⌃
       </button>
-      <div className="footerbar">
+      <div className="footerbar" style={hideFooterbar ? { display: "none" } : undefined}>
         <a className="fb-tel" href="tel:08048855430">
           Tel:080-4885-5430
         </a>
