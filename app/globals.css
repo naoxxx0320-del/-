@@ -3966,29 +3966,38 @@ body.menu-open {
   transform: scale(0.92);
 }
 .staff-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap; /* NEWバッジを名前の横に固定（下に回り込ませない） */
   font-family: var(--font-serif-jp), serif;
   font-size: 20px;
   color: #f6ece0;
-  letter-spacing: 0.05em;
-  padding-right: 40px;
+  letter-spacing: 0.04em;
+  padding-right: 42px; /* 右上のハートを避ける */
   line-height: 1.2;
+  min-width: 0;
+}
+/* 名前本体：1行に固定し、長い場合のみ省略（NEWを下に回り込ませない） */
+.staff-name-text {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 /* 名前の横のNEWバッジ */
 .staff-new {
-  display: inline-block;
-  vertical-align: middle;
-  margin-left: 8px;
-  padding: 2px 8px;
+  flex: none;
+  padding: 2px 7px;
   border-radius: 999px;
   background: linear-gradient(180deg, #e8c877, #c39a52);
   border: 1px solid #efd79b;
   color: #5a0f1c;
   font-family: var(--font-serif-en), serif;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  line-height: 1.4;
-  transform: translateY(-2px);
+  letter-spacing: 0.06em;
+  line-height: 1.5;
 }
 .staff-age-row {
   display: flex;

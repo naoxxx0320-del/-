@@ -95,7 +95,7 @@ export default function StaffCard({
             <FavoriteHeart id={t.id} />
 
             <div className="staff-name">
-              {t.name}
+              <span className="staff-name-text">{t.name}</span>
               {t.isNew && <span className="staff-new">NEW</span>}
             </div>
 
