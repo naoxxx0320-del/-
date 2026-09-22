@@ -491,7 +491,7 @@ img {
   margin: 14px 14px 0;
   border-radius: 4px;
   overflow: hidden;
-  aspect-ratio: 1424 / 736;
+  aspect-ratio: 3 / 2; /* 実バナー（3:2に正規化）に合わせて文字切れを防ぐ */
   background: #2a0a0d;
   box-shadow: var(--shadow-1);
 }
@@ -541,8 +541,8 @@ img {
 }
 .camp {
   flex: 0 0 auto;
-  width: 82px;
-  height: 46px;
+  width: 72px;
+  height: 48px; /* 3:2 のスライドに合わせる */
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 4px;
   display: flex;

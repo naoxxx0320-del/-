@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import SiteChrome from "./_components/SiteChrome";
 import StaffCard from "./_components/StaffCard";
 import NavGrid from "./_components/NavGrid";
+import { photoSrc } from "./_components/photo";
 import guideData from "../data/guide.json";
 import rosterData from "../data/roster.json";
 import links from "../data/links.json";
@@ -11,20 +12,38 @@ import links from "../data/links.json";
 /* ---- data ---------------------------------------------------------- */
 
 // Hero slides — the small thumbnails below switch the big image.
-// `img` uses a real banner; slides without `img` render a styled placeholder.
+// すべて実バナー（3:2に正規化済み。余白は各バナーの背景色に馴染ませて切れなし）。
 const SLIDES = [
   {
     t: "新規・新人\n特別割引",
-    img: "promo-2000off.jpg",
-    alt: "新規・新人特別割引 2000円OFF｜Aroma DIAMOND アロマダイヤモンド",
+    img: "slide-shinki.jpg",
+    alt: "新規・新人特別割引 2000円OFF｜Aroma DIAMOND アロマ ダイアモンド 亀戸",
   },
-  { t: "東京No.1\n美女軍団", bg: "linear-gradient(135deg,#7d1f38,#b83a5c)" },
-  { t: "AROMA\nDAIAMOND", bg: "linear-gradient(135deg,#8a6f3a,#c2a35e)" },
-  { t: "ご新規様\nご案内", bg: "linear-gradient(135deg,#4b3f3a,#6f5b48)" },
-  { t: "オール\nナイト割", bg: "linear-gradient(135deg,#8f4a52,#c06a72)" },
-  { t: "早割\n2000円OFF", bg: "linear-gradient(135deg,#6f5b48,#a2864f)" },
-  { t: "Confident\n自信", bg: "linear-gradient(135deg,#7d2b34,#b5555f)" },
-  { t: "32分\n無料", bg: "linear-gradient(135deg,#8a6f3a,#c2a35e)" },
+  {
+    t: "11月\nグランドオープン",
+    img: "slide-grandopen.jpg",
+    alt: "11月グランドオープン 完全個室・高級メンズエステ｜Aroma DIAMOND アロマ ダイアモンド 亀戸",
+  },
+  {
+    t: "オープン\n記念特典",
+    img: "slide-kinen.jpg",
+    alt: "11月限定 オープン記念特典 初回限定2,000円OFF｜Aroma DIAMOND アロマ ダイアモンド 亀戸",
+  },
+  {
+    t: "セラピスト\n大募集",
+    img: "slide-recruit.jpg",
+    alt: "セラピスト大募集 高収入・完全個室待機・安心のサポート体制｜Aroma DIAMOND アロマ ダイアモンド 亀戸",
+  },
+  {
+    t: "会員様\n限定特典",
+    img: "slide-member.jpg",
+    alt: "会員様限定特典 VIP会員様だけの特別なサービス｜Aroma DIAMOND アロマ ダイアモンド 亀戸",
+  },
+  {
+    t: "アクセス\n公開予定",
+    img: "slide-access.jpg",
+    alt: "11月上旬アクセス公開予定 駅近・好立地のプライベート空間｜Aroma DIAMOND アロマ ダイアモンド 亀戸",
+  },
 ];
 
 // 只今の案内状況・本日の出勤（data/*.json 由来。GitHub Actions が
@@ -47,6 +66,36 @@ const STATUS_CLASS = {
 
 export default function Home() {
   const [activeSlide, setActiveSlide] = useState(0);
+  const slideTimer = useRef(null);
+
+  // オートプレイ（約5秒ごと）。動きを控える設定の端末では自動再生しない。
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const reduce =
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce || SLIDES.length <= 1) return;
+    slideTimer.current = setInterval(() => {
+      setActiveSlide((i) => (i + 1) % SLIDES.length);
+    }, 5000);
+    return () => clearInterval(slideTimer.current);
+  }, []);
+
+  // サムネイル操作時は自動送りのタイマーを一度リセット（直後に切り替わらないように）
+  const selectSlide = (i) => {
+    setActiveSlide(i);
+    if (slideTimer.current) {
+      clearInterval(slideTimer.current);
+      const reduce =
+        window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (!reduce && SLIDES.length > 1) {
+        slideTimer.current = setInterval(() => {
+          setActiveSlide((n) => (n + 1) % SLIDES.length);
+        }, 5000);
+      }
+    }
+  };
 
   return (
     <div className="stage">
@@ -79,8 +128,9 @@ export default function Home() {
               <img
                 key={i}
                 className={`hm-slide ${i === activeSlide ? "on" : ""}`}
-                src={s.img}
+                src={photoSrc(s.img)}
                 alt={s.alt || s.t.replace("\n", " ")}
+                loading={i === 0 ? "eager" : "lazy"}
               />
             ) : (
               <div
@@ -105,13 +155,13 @@ export default function Home() {
               type="button"
               key={i}
               className={`camp ${i === activeSlide ? "active" : ""}`}
-              onClick={() => setActiveSlide(i)}
+              onClick={() => selectSlide(i)}
               aria-label={s.t.replace("\n", " ")}
               aria-pressed={i === activeSlide}
               style={
                 s.img
                   ? {
-                      backgroundImage: `url(${s.img})`,
+                      backgroundImage: `url(${photoSrc(s.img)})`,
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                     }
