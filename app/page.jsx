@@ -20,11 +20,6 @@ const SLIDES = [
     alt: "新規・新人特別割引 2000円OFF｜Aroma DIAMOND アロマ ダイアモンド 亀戸",
   },
   {
-    t: "11月\nグランドオープン",
-    img: "slide-grandopen.jpg",
-    alt: "11月グランドオープン 完全個室・高級メンズエステ｜Aroma DIAMOND アロマ ダイアモンド 亀戸",
-  },
-  {
     t: "オープン\n記念特典",
     img: "slide-kinen.jpg",
     alt: "11月限定 オープン記念特典 初回限定2,000円OFF｜Aroma DIAMOND アロマ ダイアモンド 亀戸",
