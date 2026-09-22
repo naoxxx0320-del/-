@@ -55,7 +55,7 @@ export default function Access() {
         <Breadcrumbs items={[{ name: "アクセス", path: "access/" }]} />
         <div className="page-head">
           <div className="ph-en">Access</div>
-          <div className="ph-jp">アクセス</div>
+          <h1 className="ph-jp">アクセス</h1>
         </div>
 
         <NavGrid base="../" />

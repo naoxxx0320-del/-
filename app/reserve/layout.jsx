@@ -15,6 +15,7 @@ export default function ReserveLayout({ children }) {
   return (
     <>
       <Breadcrumbs items={[{ name: "WEB予約", path: "reserve/" }]} />
+      <h1 className="sr-only">WEB予約｜AROMA DAIAMOND（アロマ ダイアモンド）亀戸</h1>
       {children}
     </>
   );
