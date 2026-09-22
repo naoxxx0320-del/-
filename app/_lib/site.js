@@ -30,6 +30,8 @@ export const SITE = {
   email: "naoxxx0320@gmail.com",
   // [営業時間]10:00〜翌5:00 [電話受付]9:30〜翌4:00
   openingHours: "Mo-Su 10:00-29:00",
+  hoursBusiness: "10:00〜翌5:00", // 表示用（営業時間）
+  hoursPhone: "9:30〜翌4:00", // 表示用（電話受付）
   priceRange: "¥15,000〜",
   description:
     "宝石のように美しいセラピスト達。極上の癒しと刺激の空間 men's esthetic AROMA DAIAMOND（アロマ ダイアモンド）亀戸。",
