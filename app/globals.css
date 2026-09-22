@@ -3968,13 +3968,13 @@ body.menu-open {
 .staff-name {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: nowrap; /* NEWバッジを名前の横に固定（下に回り込ませない） */
   font-family: var(--font-serif-jp), serif;
-  font-size: 20px;
+  font-size: 17px;
   color: #f6ece0;
-  letter-spacing: 0.04em;
-  padding-right: 42px; /* 右上のハートを避ける */
+  letter-spacing: 0.01em;
+  padding-right: 32px; /* 右上のハート(34px)を避ける最小限の余白 */
   line-height: 1.2;
   min-width: 0;
 }
@@ -3988,16 +3988,23 @@ body.menu-open {
 /* 名前の横のNEWバッジ */
 .staff-new {
   flex: none;
-  padding: 2px 7px;
+  padding: 2px 5px;
   border-radius: 999px;
   background: linear-gradient(180deg, #e8c877, #c39a52);
   border: 1px solid #efd79b;
   color: #5a0f1c;
   font-family: var(--font-serif-en), serif;
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   line-height: 1.5;
+}
+/* 極狭幅(旧機種など)では名前をさらに一段小さくして、NEW付きでも1行に収める */
+@media (max-width: 360px) {
+  .staff-name {
+    font-size: 15px;
+    padding-right: 30px;
+  }
 }
 .staff-age-row {
   display: flex;
