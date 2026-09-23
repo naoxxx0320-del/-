@@ -33,17 +33,11 @@ const TEL = "080-4885-5430";
 
 // コース（サイトの reserve-config.json と揃える）
 const COURSES = [
-  { label: "60分コース", price: 15000, honshimei: false },
-  { label: "70分オールあおむけコース", price: 19000, honshimei: false },
-  { label: "90分コース", price: 19000, honshimei: false },
-  { label: "120分コース", price: 24000, honshimei: false },
-  { label: "150分コース", price: 29000, honshimei: true },
-  { label: "180分コース", price: 34000, honshimei: true },
-  { label: "210分コース", price: 39000, honshimei: true },
-  { label: "240分コース", price: 44000, honshimei: true },
-  { label: "270分コース", price: 49000, honshimei: true },
-  { label: "300分コース", price: 54000, honshimei: true },
-  { label: "480分コース", price: 84000, honshimei: true },
+  { label: "60分コース", price: 13000, honshimei: false },
+  { label: "70分あおむけコース", price: 18000, honshimei: false },
+  { label: "90分コース", price: 18000, honshimei: false },
+  { label: "120分コース", price: 23000, honshimei: false },
+  { label: "150分コース", price: 28000, honshimei: true },
 ];
 
 const yen = (n) => "¥" + Number(n).toLocaleString("en-US");
