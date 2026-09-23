@@ -1,6 +1,6 @@
 {
   "_note": "求人ページの共通データ。募集条件は確定次第 value(v) を埋める。status: draft(準備中) / open(募集中) / closed(募集終了)。endpoint 未設定の間はフォーム送信は未接続（準備中表示）。",
-  "endpoint": "",
+  "endpoint": "https://script.google.com/macros/s/AKfycbz-4HSg_OsoM_IgffAKp1DpgAbbnBgDTWXDY99JGB_trCEq2PY5On--jEv4g8Iv-dHdIg/exec",
   "applyEmail": "naoxxx0320@gmail.com",
   "privacyUrl": "",
   "recruitLine": "",
