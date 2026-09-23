@@ -4998,3 +4998,16 @@ body:has(.rec-page) .aichat-fab {
 .rec-contact-tel:active {
   transform: translateY(1px);
 }
+
+/* ---- 求人：メールフォーム下の「LINE・電話でも受付」 ---- */
+.rec-orcontact {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(122, 16, 32, 0.25);
+}
+.rec-orcontact-h {
+  text-align: center;
+  font-size: 12px;
+  color: #8a7a66;
+  margin-bottom: 10px;
+}

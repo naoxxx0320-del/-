@@ -14,6 +14,7 @@ export default function RecruitForm({ role }) {
   const roleCfg = cfg.roles[role] || {};
   const accepting = roleCfg.status === "open";
   const hasEndpoint = !!cfg.endpoint;
+  const emailMode = !hasEndpoint && !!cfg.applyEmail; // メール(mailto)で受付
   const roleLabel = roleCfg.name || "求人";
   const methods = cfg.form.contactMethods || ["LINE", "電話", "メール"];
 
@@ -29,7 +30,12 @@ export default function RecruitForm({ role }) {
     agree: false,
   });
   const [confirming, setConfirming] = useState(false);
-  const [state, setState] = useState({ sending: false, done: false, error: "" });
+  const [state, setState] = useState({
+    sending: false,
+    done: false,
+    emailed: false,
+    error: "",
+  });
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const contactLabel =
@@ -105,39 +111,33 @@ export default function RecruitForm({ role }) {
     }
   };
 
-  /* ---------- 募集中だが送信先(GAS)が未接続：LINE・電話で受付 ---------- */
-  if (accepting && !hasEndpoint) {
-    return (
-      <div className="rec-apply">
-        <div className="rec-applyjob">
-          <span className="rec-applyjob-label">応募職種</span>
-          <span className="rec-applyjob-val">{roleLabel}</span>
-        </div>
-        <p className="rec-contact-lead">
-          ご応募・お問い合わせは、LINE または お電話でお気軽にどうぞ。
-          「{roleLabel}希望」とお伝えください。
-        </p>
-        <div className="rec-contact-btns">
-          {links.line && (
-            <a
-              className="rec-contact-line"
-              href={links.line}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              LINEで応募する
-            </a>
-          )}
-          <a className="rec-contact-tel" href={`tel:${SITE.telephone}`}>
-            電話で応募（{SITE.telephoneDisplay}）
-          </a>
-        </div>
-        <p className="rec-note-small">
-          ※ご応募をもって採用が決定するものではありません。内容を確認のうえ、担当よりご連絡いたします。
-        </p>
-      </div>
-    );
-  }
+  // メール(mailto)本文を組み立て
+  const mailtoHref = () => {
+    const subject = `【${roleLabel}応募】${form.name}`;
+    const body = [
+      `AROMA DAIAMOND ${roleLabel} への応募`,
+      "",
+      `応募職種：${roleLabel}`,
+      `お名前：${form.name}`,
+      `ご希望の連絡方法：${form.method}`,
+      `連絡先：${form.contact}`,
+      `希望勤務時間帯：${form.timePref || "－"}`,
+      `希望勤務日数：${form.daysPref || "－"}`,
+      `経験：${form.experience || "－"}`,
+      `勤務開始の希望：${form.startPref || "－"}`,
+      `ご質問・ご希望：${form.note || "－"}`,
+      "",
+      "※このメールをそのまま送信してください。",
+    ].join("\r\n");
+    return `mailto:${cfg.applyEmail}?subject=${encodeURIComponent(
+      subject
+    )}&body=${encodeURIComponent(body)}`;
+  };
+  const openMail = () => {
+    setState({ sending: false, done: true, emailed: true, error: "" });
+    if (typeof window !== "undefined")
+      window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   /* ---------- 受付完了 ---------- */
   if (state.done) {
@@ -145,11 +145,31 @@ export default function RecruitForm({ role }) {
       <div className="rec-apply">
         <div className="rsv-done">
           <div className="rsv-done-ic mail">✓</div>
-          <h2>応募を受け付けました</h2>
-          <p>
-            <b>{roleLabel}</b>へのご応募ありがとうございます。
-            内容を確認のうえ、ご希望の連絡方法（{form.method}）でご連絡いたします。
-          </p>
+          {state.emailed ? (
+            <>
+              <h2>メールアプリを開きました</h2>
+              <p>
+                <b>{roleLabel}</b>の応募メールを作成しました。
+                内容をご確認のうえ、そのまま<b>送信</b>してください。
+                送信をもって応募完了となります。
+              </p>
+              <p className="rec-note-small">
+                メールアプリが開かない場合は、下記までご連絡ください。
+                <br />
+                メール：{cfg.applyEmail}
+                <br />
+                LINE・お電話（{SITE.telephoneDisplay}）でも受け付けています。
+              </p>
+            </>
+          ) : (
+            <>
+              <h2>応募を受け付けました</h2>
+              <p>
+                <b>{roleLabel}</b>へのご応募ありがとうございます。
+                内容を確認のうえ、ご希望の連絡方法（{form.method}）でご連絡いたします。
+              </p>
+            </>
+          )}
           <div className="rsv-done-box">
             <div className="rsv-done-box-h">応募内容</div>
             <div>
@@ -202,9 +222,20 @@ export default function RecruitForm({ role }) {
           </tbody>
         </table>
         {state.error && <p className="rsv-err">{state.error}</p>}
-        <button className="rsv-submit" onClick={submit} disabled={state.sending}>
-          {state.sending ? "送信中…" : "この内容で応募する"}
-        </button>
+        {emailMode ? (
+          <>
+            <a className="rsv-submit" href={mailtoHref()} onClick={openMail}>
+              メールで応募する
+            </a>
+            <p className="rec-note-small">
+              ボタンを押すとメールアプリが開きます。本文はそのままで、送信してください。
+            </p>
+          </>
+        ) : (
+          <button className="rsv-submit" onClick={submit} disabled={state.sending}>
+            {state.sending ? "送信中…" : "この内容で応募する"}
+          </button>
+        )}
         <button
           className="rsv-edit"
           onClick={() => {
@@ -362,6 +393,27 @@ export default function RecruitForm({ role }) {
       <p className="rec-note-small">
         ※ご応募をもって採用が決定するものではありません。内容を確認のうえ、担当よりご連絡いたします。
       </p>
+
+      {accepting && (links.line || SITE.telephone) && (
+        <div className="rec-orcontact">
+          <div className="rec-orcontact-h">メールフォームのほか、こちらでも受付中</div>
+          <div className="rec-contact-btns">
+            {links.line && (
+              <a
+                className="rec-contact-line"
+                href={links.line}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                LINEで応募する
+              </a>
+            )}
+            <a className="rec-contact-tel" href={`tel:${SITE.telephone}`}>
+              電話で応募（{SITE.telephoneDisplay}）
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
