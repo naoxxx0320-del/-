@@ -7,10 +7,13 @@
    - endpoint 未設定のときは「送信は未接続」として、見た目だけの成功を作らない。 */
 import { useState } from "react";
 import cfg from "../../data/recruit-config.json";
+import links from "../../data/links.json";
+import { SITE } from "../_lib/site";
 
 export default function RecruitForm({ role }) {
   const roleCfg = cfg.roles[role] || {};
   const accepting = roleCfg.status === "open";
+  const hasEndpoint = !!cfg.endpoint;
   const roleLabel = roleCfg.name || "求人";
   const methods = cfg.form.contactMethods || ["LINE", "電話", "メール"];
 
@@ -101,6 +104,40 @@ export default function RecruitForm({ role }) {
       });
     }
   };
+
+  /* ---------- 募集中だが送信先(GAS)が未接続：LINE・電話で受付 ---------- */
+  if (accepting && !hasEndpoint) {
+    return (
+      <div className="rec-apply">
+        <div className="rec-applyjob">
+          <span className="rec-applyjob-label">応募職種</span>
+          <span className="rec-applyjob-val">{roleLabel}</span>
+        </div>
+        <p className="rec-contact-lead">
+          ご応募・お問い合わせは、LINE または お電話でお気軽にどうぞ。
+          「{roleLabel}希望」とお伝えください。
+        </p>
+        <div className="rec-contact-btns">
+          {links.line && (
+            <a
+              className="rec-contact-line"
+              href={links.line}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              LINEで応募する
+            </a>
+          )}
+          <a className="rec-contact-tel" href={`tel:${SITE.telephone}`}>
+            電話で応募（{SITE.telephoneDisplay}）
+          </a>
+        </div>
+        <p className="rec-note-small">
+          ※ご応募をもって採用が決定するものではありません。内容を確認のうえ、担当よりご連絡いたします。
+        </p>
+      </div>
+    );
+  }
 
   /* ---------- 受付完了 ---------- */
   if (state.done) {
