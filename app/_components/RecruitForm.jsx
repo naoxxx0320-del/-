@@ -68,8 +68,6 @@ export default function RecruitForm({ role }) {
     }
     setState((s) => ({ ...s, error: "" }));
     setConfirming(true);
-    if (typeof window !== "undefined")
-      window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const submit = async () => {
@@ -99,8 +97,6 @@ export default function RecruitForm({ role }) {
     try {
       await fetch(cfg.endpoint, { method: "POST", mode: "no-cors", body });
       setState({ sending: false, done: true, error: "" });
-      if (typeof window !== "undefined")
-        window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) {
       setState({
         sending: false,
@@ -135,8 +131,6 @@ export default function RecruitForm({ role }) {
   };
   const openMail = () => {
     setState({ sending: false, done: true, emailed: true, error: "" });
-    if (typeof window !== "undefined")
-      window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   /* ---------- 受付完了 ---------- */
