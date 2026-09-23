@@ -4959,3 +4959,42 @@ body:has(.rec-page) .aichat-fab {
   background: linear-gradient(180deg, #caa257, #b78f45) !important;
   opacity: 0.96;
 }
+
+/* ---- 求人：LINE・電話での応募ブロック（受付先GAS未接続時） ---- */
+.rec-contact-lead {
+  font-size: 13.5px;
+  line-height: 1.8;
+  color: #4a3f3a;
+  margin: 4px 0 14px;
+}
+.rec-contact-btns {
+  display: grid;
+  gap: 10px;
+}
+.rec-contact-line,
+.rec-contact-tel {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  font-family: var(--font-serif-jp), serif;
+  font-weight: 700;
+  font-size: 16px;
+  padding: 14px 16px;
+  border-radius: 999px;
+}
+.rec-contact-line {
+  color: #fff;
+  background: linear-gradient(180deg, #21c463, #06b74f);
+  border: 1px solid #17a94a;
+  box-shadow: 0 4px 12px rgba(6, 150, 60, 0.28);
+}
+.rec-contact-tel {
+  color: #4a0d18;
+  background: linear-gradient(180deg, #f0d288 0%, #d9b25f 60%, #caa257 100%);
+  border: 1px solid #f2dda6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
+}
+.rec-contact-line:active,
+.rec-contact-tel:active {
+  transform: translateY(1px);
+}
