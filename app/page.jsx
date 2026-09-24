@@ -16,6 +16,11 @@ import links from "../data/links.json";
 // すべて実バナー（3:2に正規化済み。余白は各バナーの背景色に馴染ませて切れなし）。
 const SLIDES = [
   {
+    t: "11月中旬\nOPEN",
+    img: "slide-open.jpg",
+    alt: "2026年11月中旬 亀戸にグランドオープン｜AROMA DAIAMOND アロマ ダイアモンド",
+  },
+  {
     t: "新規・新人\n特別割引",
     img: "slide-shinki.jpg",
     alt: "新規・新人特別割引 2000円OFF｜Aroma DIAMOND アロマ ダイアモンド 亀戸",
