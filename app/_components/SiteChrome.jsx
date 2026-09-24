@@ -30,7 +30,7 @@ const FOOT = [
   { en: "Foreigner", jp: "外国人の方へ", slug: "foreigners" },
   { en: "Careers", jp: "スタッフ求人", slug: "careers" },
   { en: "Recruit", jp: "セラピスト求人", slug: "recruit" },
-  { en: "Flow", jp: "ご利用の流れ", slug: null },
+  { en: "Flow", jp: "ご利用の流れ", slug: "flow" },
   { en: "Q & A", jp: "よくある質問", slug: null },
   { en: "Column", jp: "メンズエステコラム", slug: null },
   { en: "Terms", jp: "ご利用規約", slug: null },
