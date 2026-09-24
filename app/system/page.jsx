@@ -53,6 +53,26 @@ const COURSE_DETAILS = [
   },
 ];
 
+// 特定商取引法に基づく表示（法定表示）
+const TOKUSHO = [
+  ["事業者名", "アロマダイヤモンド"],
+  ["運営責任者", "馬渡 俊輔"],
+  ["所在地", "〒136-0071 東京都江東区亀戸5丁目15-13"],
+  ["電話番号", "080-4885-5430"],
+  ["メールアドレス", "naoxxx0320@gmail.com"],
+  ["販売価格", "本ページに記載の料金表をご参照ください"],
+  [
+    "サービスの引き渡し時期",
+    "お支払い確認後、24時間以内にお電話もしくはメールにてご案内",
+  ],
+  ["お支払い時期", "前払いのみ"],
+  ["お支払い方法", "現金、クレジットカード、PayPay"],
+  [
+    "返品規約",
+    "サービスの特性上、お支払いいただいた料金の返金には応じられません。",
+  ],
+];
+
 export default function System() {
   return (
     <div className="stage">
@@ -105,6 +125,27 @@ export default function System() {
               </div>
             </article>
           ))}
+        </section>
+
+        {/* ---- 特定商取引法に基づく表示 ---- */}
+        <section className="rec-sec tokusho" id="tokusho">
+          <div className="rec-sec-h">
+            <span className="rec-sec-en">Legal</span>
+            <h2 className="rec-sec-jp">特定商取引法に基づく表示</h2>
+          </div>
+          <table className="rec-table tokusho-table">
+            <tbody>
+              {TOKUSHO.map(([k, v]) => (
+                <tr key={k}>
+                  <th>{k}</th>
+                  <td>{v}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="tokusho-note">
+            その他、ご不明な点がございましたらお問い合わせください。
+          </p>
         </section>
 
         <SiteChrome base="../" />
