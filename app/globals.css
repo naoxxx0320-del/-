@@ -5025,3 +5025,156 @@ body:has(.rec-page) .aichat-fab {
   color: #8a7a66;
   margin: 12px 0 0;
 }
+
+/* =========================================================
+   ご利用の流れ（/flow/）
+   ========================================================= */
+.flow-intro {
+  position: relative;
+  z-index: 2;
+  margin: 14px 16px 0;
+  font-size: 13.5px;
+  line-height: 1.9;
+  color: #4a3f3a;
+  text-align: center;
+}
+.flow-steps {
+  position: relative;
+  z-index: 2;
+  margin: 16px 14px 0;
+  display: grid;
+  gap: 12px;
+}
+.flow-step {
+  background: #fdfbf6;
+  border: 1px solid rgba(122, 16, 32, 0.14);
+  border-radius: 6px;
+  padding: 14px 16px 16px;
+  box-shadow: var(--shadow-1);
+}
+.flow-step-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(199, 173, 120, 0.4);
+  margin-bottom: 12px;
+}
+.flow-step-n {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-family: var(--font-serif-en), serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #4a0d18;
+  background: linear-gradient(180deg, #e8c877, #c39a52);
+  border: 1px solid #efd79b;
+}
+.flow-step-t {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 17px;
+  color: #4c0c15;
+  margin: 0;
+  letter-spacing: 0.03em;
+}
+.flow-step-text {
+  font-size: 13.5px;
+  line-height: 1.9;
+  color: #4a3f3a;
+  margin: 0;
+}
+.flow-note {
+  font-size: 12px;
+  line-height: 1.75;
+  color: #8a7a66;
+  margin: 10px 0 0;
+  padding-left: 1em;
+  text-indent: -1em;
+}
+.flow-note::before {
+  content: "※";
+}
+/* 到着したら電話（最も目立たせる） */
+.flow-highlight {
+  margin: 12px 0;
+  padding: 14px;
+  border-radius: 6px;
+  color: #f6ece0;
+  background: radial-gradient(120% 100% at 50% 0%, #6a1120, #4c0c15);
+  border: 1px solid rgba(199, 173, 120, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(199, 173, 120, 0.25);
+}
+.flow-highlight-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gold-2);
+  font-family: var(--font-serif-jp), serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+.flow-highlight-text {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 15px;
+  line-height: 1.85;
+  color: #fff;
+  margin: 0;
+  font-weight: 600;
+}
+/* 電話ボタン */
+.flow-tel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  text-decoration: none;
+  border-radius: 999px;
+  color: #4a0d18;
+  background: linear-gradient(180deg, #f0d288 0%, #d9b25f 60%, #caa257 100%);
+  border: 1px solid #f2dda6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
+}
+.flow-tel:active {
+  transform: translateY(1px);
+}
+.flow-tel-ic {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: #4a0d18;
+  background: rgba(255, 255, 255, 0.35);
+}
+.flow-tel-tx {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  font-family: var(--font-serif-jp), serif;
+  font-weight: 700;
+  font-size: 15px;
+}
+.flow-tel-tx small {
+  font-family: var(--font-serif-en), serif;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.85;
+  letter-spacing: 0.04em;
+}
+.flow-outro {
+  position: relative;
+  z-index: 2;
+  margin: 18px 16px 0;
+  font-size: 13px;
+  line-height: 1.85;
+  color: #4a3f3a;
+  text-align: center;
+}
