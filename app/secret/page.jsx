@@ -185,8 +185,6 @@ export default function Secret() {
                 ))}
               </ul>
               <p className="price-note">
-                ※クレジット決済10%・PayPay決済5%のTAXをいただきます。
-                <br />
                 ※料金・項目は一例です（後ほど編集いただけます）。
               </p>
             </section>
