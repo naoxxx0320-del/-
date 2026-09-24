@@ -105,8 +105,8 @@ export default function SiteChrome({ base = "", hideFooterbar = false }) {
         ⌃
       </button>
       <div className="footerbar" style={hideFooterbar ? { display: "none" } : undefined}>
-        <a className="fb-tel" href="tel:08048855430">
-          Tel:080-4885-5430
+        <a className="fb-tel" href="tel:0000000000">
+          Tel:00-0000-0000
         </a>
         <a className="fb-btn" href={links.line} target="_blank" rel="noopener noreferrer">
           <span className="fb-ic" aria-hidden="true">
@@ -185,7 +185,7 @@ export default function SiteChrome({ base = "", hideFooterbar = false }) {
           </div>
 
           <div className="menu-tel">
-            <div className="mt-num">Tel:080-4885-5430</div>
+            <div className="mt-num">Tel:00-0000-0000</div>
             <div className="mt-hours">
               [営業時間]10:00〜翌5:00 [電話受付]9:30〜翌4:00
             </div>
