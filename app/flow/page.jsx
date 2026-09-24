@@ -1,7 +1,7 @@
 import SiteChrome from "../_components/SiteChrome";
 import NavGrid from "../_components/NavGrid";
 import Breadcrumbs from "../_components/Breadcrumbs";
-import { SITE, abs } from "../_lib/site";
+import { abs } from "../_lib/site";
 
 export const metadata = {
   title: "ご利用の流れ",
@@ -10,9 +10,6 @@ export const metadata = {
   alternates: { canonical: abs("flow/") },
   openGraph: { url: abs("flow/"), title: "ご利用の流れ｜AROMA DAIAMOND 亀戸" },
 };
-
-const TEL = SITE.telephone; // 実運用の予約番号（既存実装より）
-const TEL_DISP = SITE.telephoneDisplay;
 
 // 電話アイコン（ゴールド）
 function PhoneIcon() {
@@ -35,7 +32,6 @@ const STEPS = [
     t: "お電話でご予約",
     body: "お電話で、ご希望の日時・コース・オプションをお伝えください。担当者が空き状況を確認し、ご予約内容とご来店時の案内をお伝えします。",
     note: "ご希望を伺った段階では予約確定ではありません。当店から日時と内容を確認してご案内した時点で確定となります。",
-    phone: { label: "お電話でご予約する", aria: "電話をかけてご予約する" },
   },
   {
     n: "02",
@@ -44,10 +40,6 @@ const STEPS = [
     highlight:
       "セブン-イレブン亀戸十三間通り店に着きましたら、お電話ください。そこからお部屋までご案内いたします。",
     note: "ご予約時にご案内した時刻に合わせてお越しください。道に迷われた場合も、お電話でお知らせください。",
-    phone: {
-      label: "お店に電話する（到着のご連絡）",
-      aria: "到着をお知らせする電話をかける",
-    },
   },
   {
     n: "03",
@@ -107,18 +99,6 @@ export default function Flow() {
                     </span>
                     <p className="flow-highlight-text">{s.highlight}</p>
                   </div>
-                )}
-
-                {s.phone && (
-                  <a className="flow-tel" href={`tel:${TEL}`} aria-label={s.phone.aria}>
-                    <span className="flow-tel-ic">
-                      <PhoneIcon />
-                    </span>
-                    <span className="flow-tel-tx">
-                      {s.phone.label}
-                      <small>{TEL_DISP}</small>
-                    </span>
-                  </a>
                 )}
 
                 {s.note && <p className="flow-note">{s.note}</p>}
