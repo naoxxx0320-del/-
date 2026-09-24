@@ -5011,3 +5011,17 @@ body:has(.rec-page) .aichat-fab {
   color: #8a7a66;
   margin-bottom: 10px;
 }
+
+/* ---- 特定商取引法に基づく表示（料金ページ最下部） ---- */
+.tokusho {
+  margin-bottom: 6px;
+}
+.tokusho-table td {
+  word-break: break-word; /* メール・住所が長くてもはみ出さない */
+}
+.tokusho-note {
+  text-align: center;
+  font-size: 12px;
+  color: #8a7a66;
+  margin: 12px 0 0;
+}
