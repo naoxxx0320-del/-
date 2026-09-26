@@ -16,11 +16,6 @@ import links from "../data/links.json";
 // すべて実バナー（3:2に正規化済み。余白は各バナーの背景色に馴染ませて切れなし）。
 const SLIDES = [
   {
-    t: "10月限定\nLINE友だち追加特典",
-    img: "promo-line-3000off.jpg",
-    alt: "10月中のLINE友だち追加で3,000円OFF｜AROMA DAIAMOND 亀戸（友だち追加期限 2026年10月31日）",
-  },
-  {
     t: "11月中旬\nOPEN",
     img: "slide-open.jpg",
     alt: "2026年11月中旬 亀戸にグランドオープン｜AROMA DAIAMOND アロマ ダイアモンド",
