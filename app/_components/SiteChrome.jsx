@@ -33,7 +33,7 @@ const FOOT = [
   { en: "Flow", jp: "ご利用の流れ", slug: "flow" },
   { en: "Q & A", jp: "よくある質問", slug: null },
   { en: "Column", jp: "メンズエステコラム", slug: null },
-  { en: "Terms", jp: "ご利用規約", slug: null },
+  { en: "Terms", jp: "ご利用規約", slug: "terms" },
   { en: "Privacy", jp: "プライバシーポリシー", slug: null },
   { en: "Estate", jp: "賃貸物件情報募集", slug: null },
   { en: "Link", jp: "リンク集", slug: null },
