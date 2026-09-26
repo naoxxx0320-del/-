@@ -5190,6 +5190,22 @@ body:has(.rec-page) .aichat-fab {
   line-height: 1.9;
   color: #4a3f3a;
 }
+/* 金色ベタ塗りの帯見出し（先頭の「方針」ライン） */
+.terms-band {
+  position: relative;
+  z-index: 2;
+  margin: 18px 14px 6px;
+  padding: 16px 12px;
+  text-align: center;
+  font-family: var(--font-serif-jp), serif;
+  font-size: clamp(18px, 5.4vw, 23px);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: #fffdf6;
+  background: linear-gradient(180deg, #cbb46e 0%, #b89a4f 100%);
+  border-radius: 3px;
+  box-shadow: var(--shadow-1);
+}
 .terms-toc {
   position: relative;
   z-index: 2;
@@ -5224,22 +5240,28 @@ body:has(.rec-page) .aichat-fab {
 .terms-sec {
   position: relative;
   z-index: 2;
-  margin: 16px 14px 0;
-  background: #fdfbf6;
-  border: 1px solid rgba(122, 16, 32, 0.14);
-  border-radius: 6px;
-  padding: 16px 16px 18px;
-  box-shadow: var(--shadow-1);
+  margin: 18px 16px 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
   scroll-margin-top: 76px;
 }
+/* 金色の枠線で囲んだ番号付き見出しボックス */
 .terms-h {
   font-family: var(--font-serif-jp), serif;
-  font-size: 17px;
-  color: #4c0c15;
-  margin: 0 0 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(199, 173, 120, 0.45);
-  letter-spacing: 0.02em;
+  font-size: clamp(16px, 4.6vw, 19px);
+  font-weight: 600;
+  color: #a4863f;
+  text-align: center;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  margin: 0 0 14px;
+  padding: 14px 12px;
+  border: 1.5px solid #c7ad78;
+  border-radius: 4px;
+  background: rgba(255, 253, 248, 0.4);
 }
 .terms-p {
   font-size: 13.5px;
