@@ -5311,3 +5311,54 @@ body:has(.rec-page) .aichat-fab {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+
+/* =========================================================
+   リンク集（/links/）
+   ========================================================= */
+.links {
+  position: relative;
+  z-index: 2;
+  padding: 4px 14px 26px;
+}
+.links-lead {
+  font-size: 13px;
+  line-height: 1.85;
+  color: #6a5b45;
+  margin: 0 0 14px;
+}
+.links-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.link-item a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(255, 253, 248, 0.82);
+  border: 1px solid #e3d6bf;
+  border-radius: 10px;
+  padding: 12px 14px;
+  text-decoration: none;
+}
+.link-item a:hover {
+  border-color: #cdae62;
+}
+.link-banner {
+  display: block;
+  flex: 0 0 auto;
+  max-width: 100%;
+  height: auto;
+  background: #fff;
+  border: 1px solid #eadfca;
+  border-radius: 3px;
+}
+.link-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #3a2d1c;
+  letter-spacing: 0.02em;
+}

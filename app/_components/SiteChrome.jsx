@@ -36,7 +36,7 @@ const FOOT = [
   { en: "Terms", jp: "ご利用規約", slug: "terms" },
   { en: "Privacy", jp: "プライバシーポリシー", slug: null },
   { en: "Estate", jp: "賃貸物件情報募集", slug: null },
-  { en: "Link", jp: "リンク集", slug: null },
+  { en: "Link", jp: "リンク集", slug: "links" },
   { en: "Review", jp: "ご意見フォーム", slug: null },
   { en: "Contact", jp: "お問い合わせ", slug: null },
 ];

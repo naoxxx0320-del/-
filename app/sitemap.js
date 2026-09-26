@@ -19,6 +19,7 @@ export default function sitemap() {
     ["foreigners/", 0.5],
     ["flow/", 0.6],
     ["terms/", 0.4],
+    ["links/", 0.4],
     ["careers/", 0.5],
     ["recruit/", 0.5],
   ];
