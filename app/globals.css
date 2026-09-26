@@ -508,6 +508,11 @@ img {
 .hm-slide.on {
   opacity: 1;
 }
+/* 縦長ポスター用：全体を切らずに表示（左右は落ち着いた地色で埋める） */
+.hm-slide.hm-contain {
+  object-fit: contain;
+  background: radial-gradient(120% 120% at 50% 40%, #3a1216 0%, #1c0709 100%);
+}
 .hm-ph {
   display: flex;
   align-items: center;

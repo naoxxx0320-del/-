@@ -14,6 +14,12 @@ import links from "../data/links.json";
 // `img` uses a real banner; slides without `img` render a styled placeholder.
 const SLIDES = [
   {
+    t: "10月限定\nLINE友だち追加特典",
+    img: "promo-line-3000off.jpg",
+    alt: "10月中のLINE友だち追加で3,000円OFF｜AROMA DAIAMOND 亀戸（友だち追加期限 2026年10月31日）",
+    fit: "contain",
+  },
+  {
     t: "新規・新人\n特別割引",
     img: "promo-2000off.jpg",
     alt: "新規・新人特別割引 2000円OFF｜Aroma DIAMOND アロマダイヤモンド",
@@ -73,7 +79,7 @@ export default function Home() {
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 key={i}
-                className={`hm-slide ${i === activeSlide ? "on" : ""}`}
+                className={`hm-slide ${s.fit === "contain" ? "hm-contain" : ""} ${i === activeSlide ? "on" : ""}`}
                 src={s.img}
                 alt={s.alt || s.t.replace("\n", " ")}
               />
