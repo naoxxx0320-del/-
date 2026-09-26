@@ -39,7 +39,7 @@ export default function Schedule() {
       >
         <div className="page-head">
           <div className="ph-en">Schedule</div>
-          <div className="ph-jp">出勤情報</div>
+          <h1 className="ph-jp">出勤情報</h1>
         </div>
 
         <NavGrid base="../" />

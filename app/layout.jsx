@@ -70,13 +70,13 @@ export const metadata = {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
+  // ユーザーの拡大操作を許可（アクセシビリティ）。maximumScale で固定しない。
   themeColor: "#2a0a0d",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="ja">
+    <html lang="ja" suppressHydrationWarning>
       <head>
         {/* Google Tag Manager（なるべく head 上部） */}
         <script dangerouslySetInnerHTML={{ __html: GTM_HEAD }} />

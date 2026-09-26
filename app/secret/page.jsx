@@ -185,15 +185,13 @@ export default function Secret() {
                 ))}
               </ul>
               <p className="price-note">
-                ※クレジット決済10%・PayPay決済5%のTAXをいただきます。
-                <br />
                 ※料金・項目は一例です（後ほど編集いただけます）。
               </p>
             </section>
 
             <div className="sec-actions">
-              <a className="sec-tel" href="tel:08048855430">
-                この内容で予約する（080-4885-5430）
+              <a className="sec-tel" href="tel:0000000000">
+                この内容で予約する（00-0000-0000）
               </a>
               <a className="sec-back" href="../">
                 ＜ トップページへ戻る

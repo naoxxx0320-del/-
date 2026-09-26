@@ -15,9 +15,9 @@ const DRAWER = [
   { jp: "出勤情報", slug: "schedule" },
   { jp: "外国人の方へ", slug: "foreigners" },
   { jp: "セラピスト", slug: "therapist" },
-  { jp: "スタッフ求人", slug: null },
+  { jp: "スタッフ求人", slug: "careers" },
   { jp: "料金システム", slug: "system" },
-  { jp: "セラピスト求人", slug: null },
+  { jp: "セラピスト求人", slug: "recruit" },
   { jp: "フォトギャラリー", slug: "gallery", wide: true },
 ];
 
@@ -28,9 +28,9 @@ const FOOT = [
   { en: "System", jp: "料金システム", slug: "system" },
   { en: "Access", jp: "アクセス", slug: "access" },
   { en: "Foreigner", jp: "外国人の方へ", slug: "foreigners" },
-  { en: "Recruit", jp: "スタッフ求人", slug: null },
-  { en: "Recruit", jp: "セラピスト求人", slug: null },
-  { en: "Flow", jp: "ご利用の流れ", slug: null },
+  { en: "Careers", jp: "スタッフ求人", slug: "careers" },
+  { en: "Recruit", jp: "セラピスト求人", slug: "recruit" },
+  { en: "Flow", jp: "ご利用の流れ", slug: "flow" },
   { en: "Q & A", jp: "よくある質問", slug: null },
   { en: "Column", jp: "メンズエステコラム", slug: null },
   { en: "Terms", jp: "ご利用規約", slug: null },
@@ -41,7 +41,7 @@ const FOOT = [
   { en: "Contact", jp: "お問い合わせ", slug: null },
 ];
 
-export default function SiteChrome({ base = "" }) {
+export default function SiteChrome({ base = "", hideFooterbar = false }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -104,9 +104,9 @@ export default function SiteChrome({ base = "" }) {
       >
         ⌃
       </button>
-      <div className="footerbar">
-        <a className="fb-tel" href="tel:08048855430">
-          Tel:080-4885-5430
+      <div className="footerbar" style={hideFooterbar ? { display: "none" } : undefined}>
+        <a className="fb-tel" href="tel:0000000000">
+          Tel:00-0000-0000
         </a>
         <a className="fb-btn" href={links.line} target="_blank" rel="noopener noreferrer">
           <span className="fb-ic" aria-hidden="true">
@@ -185,7 +185,7 @@ export default function SiteChrome({ base = "" }) {
           </div>
 
           <div className="menu-tel">
-            <div className="mt-num">Tel:080-4885-5430</div>
+            <div className="mt-num">Tel:00-0000-0000</div>
             <div className="mt-hours">
               [営業時間]10:00〜翌5:00 [電話受付]9:30〜翌4:00
             </div>

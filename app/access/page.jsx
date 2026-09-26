@@ -26,7 +26,7 @@ const INFO = [
   ["最寄駅", "JR亀戸駅 北口 徒歩5分"],
   ["営業時間", "10:00〜翌5:00"],
   ["電話受付", "9:30〜翌4:00"],
-  ["電話番号", "080-4885-5430"],
+  ["電話番号", "00-0000-0000"],
   ["お支払い", "現金 / クレジットカード / PayPay"],
   ["定休日", "年中無休"],
 ];
@@ -55,7 +55,7 @@ export default function Access() {
         <Breadcrumbs items={[{ name: "アクセス", path: "access/" }]} />
         <div className="page-head">
           <div className="ph-en">Access</div>
-          <div className="ph-jp">アクセス</div>
+          <h1 className="ph-jp">アクセス</h1>
         </div>
 
         <NavGrid base="../" />
@@ -121,7 +121,7 @@ export default function Access() {
 
           {/* ---- CTA（3つ横並び・統一デザイン） ---- */}
           <div className="acc-cta">
-            <a className="acc-btn" href="tel:08048855430">
+            <a className="acc-btn" href="tel:0000000000">
               <span className="ab-en">Tel</span>
               <span className="ab-jp">電話する</span>
             </a>

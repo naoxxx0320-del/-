@@ -25,7 +25,7 @@ export default function Gallery() {
         <Breadcrumbs items={[{ name: "フォトギャラリー", path: "gallery/" }]} />
         <div className="page-head">
           <div className="ph-en">Gallery</div>
-          <div className="ph-jp">フォトギャラリー</div>
+          <h1 className="ph-jp">フォトギャラリー</h1>
         </div>
 
         <NavGrid base="../" />

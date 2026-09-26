@@ -50,7 +50,7 @@ export default function Foreigners() {
         <Breadcrumbs items={[{ name: "外国人の方へ", path: "foreigners/" }]} />
         <div className="page-head">
           <div className="ph-en">For foreign customers</div>
-          <div className="ph-jp">外国人の方へ</div>
+          <h1 className="ph-jp">外国人の方へ</h1>
         </div>
 
         <NavGrid base="../" />
@@ -97,8 +97,8 @@ export default function Foreigners() {
             日本語が話せる方はお電話ください。日本人料金でご案内いたします。
           </p>
 
-          <a className="fgn-tel" href="tel:08048855430">
-            Tel : 080-4885-5430
+          <a className="fgn-tel" href="tel:0000000000">
+            Tel : 00-0000-0000
           </a>
         </section>
 

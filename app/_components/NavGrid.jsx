@@ -13,8 +13,8 @@ const NAV = [
   { jp: "料金システム", en: "System", slug: "system", icon: "yen" },
   { jp: "アクセス", en: "Access", slug: "access", icon: "building" },
   { jp: "外国人の方へ", en: "Foreigner", slug: "foreigners", icon: "globe" },
-  { jp: "スタッフ求人", en: "Careers", slug: null, icon: "group" },
-  { jp: "セラピスト求人", en: "Recruit", slug: null, icon: "envelope" },
+  { jp: "スタッフ求人", en: "Careers", slug: "careers", icon: "group" },
+  { jp: "セラピスト求人", en: "Recruit", slug: "recruit", icon: "envelope" },
 ];
 
 export default function NavGrid({ base = "" }) {
