@@ -15,14 +15,6 @@ export const metadata = {
   },
 };
 
-const TOC = [
-  ["law", "1. 個人情報の保護に関する法律の遵守"],
-  ["collect", "2. 個人情報の収集に関して"],
-  ["third", "3. 個人情報の第三者への提供に関して"],
-  ["disclose", "4. 個人情報の開示・訂正・利用停止について"],
-  ["contact", "5. お問い合わせ"],
-];
-
 export default function Privacy() {
   return (
     <div className="stage">
@@ -46,17 +38,7 @@ export default function Privacy() {
           個人情報に対する取り扱いにあたり、以下の事項のプライバシーポリシー（個人情報保護方針）を公表いたします。
         </p>
 
-        {/* 目次 */}
-        <nav className="terms-toc" aria-label="目次">
-          <div className="terms-toc-h">目次</div>
-          <ol>
-            {TOC.map(([id, label]) => (
-              <li key={id}>
-                <a href={`#${id}`}>{label}</a>
-              </li>
-            ))}
-          </ol>
-        </nav>
+        <div className="terms-band">個人情報保護の方針</div>
 
         {/* 1 法律の遵守 */}
         <section className="terms-sec" id="law">

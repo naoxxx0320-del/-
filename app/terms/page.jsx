@@ -11,14 +11,6 @@ export const metadata = {
   openGraph: { url: abs("terms/"), title: "ご利用規約｜AROMA DAIAMOND 亀戸" },
 };
 
-const TOC = [
-  ["service", "1. 当店のサービスについて"],
-  ["reserve", "2. ご予約・ご案内について"],
-  ["safety", "3. 体調・安全について"],
-  ["prohibited", "4. 禁止事項"],
-  ["cancel", "5. キャンセル・遅刻について"],
-];
-
 const PROHIBITED = [
   "18歳未満の方、および高校生の方のご利用",
   "性的サービスの要求、セラピストの身体に触れる行為",
@@ -54,17 +46,7 @@ export default function Terms() {
           以下のご利用規約を設けています。ご予約前にご確認ください。
         </p>
 
-        {/* 目次 */}
-        <nav className="terms-toc" aria-label="目次">
-          <div className="terms-toc-h">目次</div>
-          <ol>
-            {TOC.map(([id, label]) => (
-              <li key={id}>
-                <a href={`#${id}`}>{label}</a>
-              </li>
-            ))}
-          </ol>
-        </nav>
+        <div className="terms-band">ご利用にあたって</div>
 
         {/* 1 サービス */}
         <section className="terms-sec" id="service">
