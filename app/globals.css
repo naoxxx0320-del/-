@@ -5362,3 +5362,38 @@ body:has(.rec-page) .aichat-fab {
   color: #3a2d1c;
   letter-spacing: 0.02em;
 }
+
+/* =========================================================
+   プライバシーポリシー（/privacy/）お問い合わせ
+   ========================================================= */
+.pp-contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+.pp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 16px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid #d8b877;
+  background: linear-gradient(180deg, #fffdf8, #f5ecdb);
+  color: #5a4a2c;
+}
+.pp-btn:hover { border-color: #c8a659; }
+.pp-btn.line { background: linear-gradient(180deg, #0f7a3d, #075c2c); border-color: #0a5a2a; color: #f2fbf5; }
+.pp-btn-ic { display: inline-flex; align-items: center; font-size: 16px; }
+.pp-meta {
+  position: relative;
+  z-index: 2;
+  margin: 22px 14px 4px;
+  font-size: 12px;
+  line-height: 1.9;
+  color: #8a7350;
+  text-align: right;
+}
