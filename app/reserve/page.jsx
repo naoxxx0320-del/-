@@ -362,6 +362,13 @@ export default function Reserve() {
               ))}
             </tbody>
           </table>
+          <p className="rsv-terms-note">
+            ご予約の前に
+            <a href="../terms/" target="_blank" rel="noopener noreferrer">
+              ご利用規約・キャンセル条件
+            </a>
+            をご確認ください。
+          </p>
           {state.error && <p className="rsv-err">{state.error}</p>}
           <button className="rsv-submit" onClick={submit} disabled={state.sending}>
             {state.sending ? "送信中…" : "この内容で予約する"}
