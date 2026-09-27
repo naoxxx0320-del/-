@@ -392,6 +392,25 @@ export default function Home() {
           </div>
         </section>
 
+        {/* ---------- リンクバナー（週刊エステ求人） ---------- */}
+        <section className="home-links">
+          <a
+            href="https://www.fues.jp/job/kanto/ippan/top.html"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://www.fues.jp/upload/banners/job_200.gif"
+              alt="週刊エステ求人"
+              width="200"
+              height="40"
+              loading="lazy"
+            />
+            <span className="home-links-label">週刊エステ求人</span>
+          </a>
+        </section>
+
         {/* ---------- SHARED CHROME (footer + drawer + hamburger) ---------- */}
         <SiteChrome base="" />
       </div>
