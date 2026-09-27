@@ -135,6 +135,13 @@ export default function FirstVisit() {
               ご予約当日の約1時間前に、店舗より確認のショートメール（SMS）をお送りします。
               内容をご確認の上、<span className="em">必ずSMSにてご返信をお願いいたします。</span>
             </p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              className="fv-step-img"
+              src={photoSrc("first-step3.jpg", "../")}
+              alt="STEP.3 確認メールへのご返信｜ご予約当日の約1時間前に確認のSMSをお送りします。必ずSMSにてご返信ください"
+              loading="lazy"
+            />
           </div>
 
           <div className="fv-step">
