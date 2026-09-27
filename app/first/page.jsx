@@ -1,6 +1,7 @@
 import SiteChrome from "../_components/SiteChrome";
 import NavGrid from "../_components/NavGrid";
 import Breadcrumbs from "../_components/Breadcrumbs";
+import { photoSrc } from "../_components/photo";
 import { SITE, abs } from "../_lib/site";
 import links from "../../data/links.json";
 
@@ -102,11 +103,14 @@ export default function FirstVisit() {
               <br />
               「誰を選べばいいか分からない」という場合は、
               <b>「フリー（指名なし）」</b>でのご案内も可能です。当店おすすめのセラピストをご紹介いたします。
-              <br />
-              <span className="muted">
-                ※セラピストにより待機ルームが異なる場合がございますので、事前にプロフィール等でご確認ください。
-              </span>
             </p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              className="fv-step-img"
+              src={photoSrc("first-step1.jpg", "../")}
+              alt="STEP.1 セラピストの選択｜お好みのセラピスト、またはフリー（指名なし）をお選びいただけます"
+              loading="lazy"
+            />
           </div>
 
           <div className="fv-step">
