@@ -153,6 +153,13 @@ export default function FirstVisit() {
               指定の場所より店舗へお電話またはSMSにてご連絡ください。
               詳細な入室方法をご案内いたします。
             </p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              className="fv-step-img"
+              src={photoSrc("first-step4.jpg", "../")}
+              alt="STEP.4 ご到着前の連絡｜ご予約時間の10分前（ルームにより5分前）に、指定の場所からお電話またはSMSでご連絡ください"
+              loading="lazy"
+            />
           </div>
 
           <div className="fv-step">
