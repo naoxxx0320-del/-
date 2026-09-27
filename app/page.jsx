@@ -392,6 +392,22 @@ export default function Home() {
           </div>
         </section>
 
+        {/* ---------- BOTTOM BANNER（LINE友だち追加で3,000円OFF） ---------- */}
+        <a
+          className="home-bottom-banner"
+          href={links.line}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="10月中のLINE友だち追加で3,000円OFF"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={photoSrc("slide-line3000.jpg")}
+            alt="10月中のLINE友だち追加で3,000円OFF｜AROMA DAIAMOND 亀戸"
+            loading="lazy"
+          />
+        </a>
+
         {/* ---------- SHARED CHROME (footer + drawer + hamburger) ---------- */}
         <SiteChrome base="" />
       </div>
