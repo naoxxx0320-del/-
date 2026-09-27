@@ -123,9 +123,31 @@ export default function SiteChrome({ base = "", hideFooterbar = false }) {
         </a>
         <a className="fb-btn" href={links.line} target="_blank" rel="noopener noreferrer">
           <span className="fb-ic" aria-hidden="true">
-            <svg viewBox="0 0 32 32" width="26" height="26">
-              <rect x="2" y="2" width="28" height="28" rx="8" fill="#06c755" />
-              <path d="M16 8.2c-5 0-9 3.1-9 6.9 0 3.4 3.1 6.3 7.4 6.85.28.06.66.19.76.43.08.22.05.55.03.77l-.12.72c-.04.22-.18.86.77.47.95-.4 5.1-3 6.96-5.14C21.9 24.9 25 22.1 25 15.1c0-3.8-4-6.9-9-6.9z" fill="#fff" />
+            <svg viewBox="0 0 48 40" width="30" height="25">
+              <defs>
+                <linearGradient id="lineGold" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stopColor="#efd79a" />
+                  <stop offset="1" stopColor="#d4b168" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M8 3 H40 a5 5 0 0 1 5 5 V22 a5 5 0 0 1 -5 5 H19 l-7 7 V27 H8 a5 5 0 0 1 -5 -5 V8 a5 5 0 0 1 5 -5 Z"
+                fill="url(#lineGold)"
+                stroke="#c39a4c"
+                strokeWidth="1"
+              />
+              <text
+                x="24"
+                y="19.5"
+                textAnchor="middle"
+                fontFamily="'Helvetica Neue', Arial, sans-serif"
+                fontSize="13"
+                fontWeight="800"
+                letterSpacing="0.4"
+                fill="#06c755"
+              >
+                LINE
+              </text>
             </svg>
           </span>
           <span className="fb-txt">
