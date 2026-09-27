@@ -179,7 +179,7 @@ export default function FirstVisit() {
             />
           </div>
 
-          <a className="fv-btn-green" href="../">
+          <a className="fv-btn-top" href="../">
             トップへ戻る
           </a>
         </section>
