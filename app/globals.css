@@ -5724,20 +5724,3 @@ body:has(.rec-page) .aichat-fab {
 .fv-btn-top:hover {
   background: linear-gradient(180deg, #962143, #7d1a33);
 }
-
-/* トップページ最下部のバナー */
-.home-bottom-banner {
-  position: relative;
-  z-index: 2;
-  display: block;
-  margin: 22px 14px 6px;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid var(--gold-line, #d8c39c);
-  box-shadow: 0 3px 12px rgba(90, 16, 26, 0.14);
-}
-.home-bottom-banner img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
