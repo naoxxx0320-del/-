@@ -170,6 +170,13 @@ export default function FirstVisit() {
               ご予約のお時間ちょうどになりましたら、ルームのインターホン（チャイム）を鳴らしてご入室ください。
               セラピストとの素敵な癒やしの時間をお楽しみください。
             </p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              className="fv-step-img"
+              src={photoSrc("first-step5.jpg", "../")}
+              alt="STEP.5 ご入室・施術開始｜インターホン（チャイム）を鳴らしてご入室、セラピストとの素敵な癒やしの時間をお楽しみください"
+              loading="lazy"
+            />
           </div>
 
           <a className="fv-btn-green" href="../">
