@@ -112,7 +112,11 @@ export default function SiteChrome({ base = "", hideFooterbar = false }) {
       </button>
       <div className="footerbar" style={hideFooterbar ? { display: "none" } : undefined}>
         <a className="fb-btn" href="tel:0000000000" aria-label="電話する">
-          <span className="fb-ic fb-emoji" aria-hidden="true">📞</span>
+          <span className="fb-ic" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#edd39b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+            </svg>
+          </span>
           <span className="fb-txt">
             <b>電話</b>
           </span>
@@ -131,9 +135,9 @@ export default function SiteChrome({ base = "", hideFooterbar = false }) {
         </a>
         <a className="fb-btn" href={`${base}reserve/`}>
           <span className="fb-ic" aria-hidden="true">
-            <svg viewBox="0 0 32 32" width="26" height="26" fill="none" stroke="#edd39b" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round">
-              <rect x="3.5" y="6" width="25" height="16" rx="2" />
-              <path d="M12 26 H20 M16 22 V26" />
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#edd39b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4.5" width="18" height="17" rx="2" />
+              <path d="M8 2.5v4 M16 2.5v4 M3 9.5h18" />
             </svg>
           </span>
           <span className="fb-txt">
@@ -148,7 +152,11 @@ export default function SiteChrome({ base = "", hideFooterbar = false }) {
             onClick={() => window.dispatchEvent(new Event("aichat:open"))}
             aria-label="AIチャットを開く"
           >
-            <span className="fb-ic fb-emoji" aria-hidden="true">💬</span>
+            <span className="fb-ic" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#edd39b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7a8.5 8.5 0 0 1-.9-3.8A8.38 8.38 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z" />
+              </svg>
+            </span>
             <span className="fb-txt">
               <b>AI</b>
               <small>チャット</small>
