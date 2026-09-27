@@ -5705,3 +5705,22 @@ body:has(.rec-page) .aichat-fab {
   border: 1px solid #e3d6bf;
   box-shadow: 0 2px 8px rgba(80, 60, 40, 0.18);
 }
+/* トップへ戻る（サイト標準のワイン×ゴールド） */
+.fv-btn-top {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 17px;
+  letter-spacing: 0.12em;
+  color: #edd39b;
+  background: linear-gradient(180deg, #a8274d, #911f3f);
+  border: 1px solid #d8b877;
+  border-radius: 10px;
+  padding: 15px;
+  margin: 20px 0 4px;
+  box-shadow: 0 3px 10px rgba(60, 20, 30, 0.25);
+}
+.fv-btn-top:hover {
+  background: linear-gradient(180deg, #962143, #7d1a33);
+}
