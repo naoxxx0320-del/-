@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import links from "../../data/links.json";
+import chatCfg from "../../data/chat-config.json";
 
 /* Shared site chrome: fixed hamburger, full footer (sitemap + copyright +
    secret entry), scroll-top and the drawer menu.
@@ -96,6 +97,12 @@ export default function SiteChrome({ base = "", hideFooterbar = false }) {
       </div>
 
       {/* ---------- FIXED FOOTER ---------- */}
+      {!hideFooterbar && (
+        <a className="first-tab" href={`${base}first/`}>
+          <span className="ft-sub">ご予約・お問い合わせ</span>
+          <span className="ft-main">はじめての方</span>
+        </a>
+      )}
       <button
         className="scrolltop"
         aria-label="ページ上部へ"
@@ -104,8 +111,11 @@ export default function SiteChrome({ base = "", hideFooterbar = false }) {
         ⌃
       </button>
       <div className="footerbar" style={hideFooterbar ? { display: "none" } : undefined}>
-        <a className="fb-tel" href="tel:0000000000">
-          Tel:00-0000-0000
+        <a className="fb-btn" href="tel:0000000000" aria-label="電話する">
+          <span className="fb-ic fb-emoji" aria-hidden="true">📞</span>
+          <span className="fb-txt">
+            <b>電話</b>
+          </span>
         </a>
         <a className="fb-btn" href={links.line} target="_blank" rel="noopener noreferrer">
           <span className="fb-ic" aria-hidden="true">
@@ -131,6 +141,20 @@ export default function SiteChrome({ base = "", hideFooterbar = false }) {
             <small>予約</small>
           </span>
         </a>
+        {chatCfg.enabled && (
+          <button
+            type="button"
+            className="fb-btn fb-chat"
+            onClick={() => window.dispatchEvent(new Event("aichat:open"))}
+            aria-label="AIチャットを開く"
+          >
+            <span className="fb-ic fb-emoji" aria-hidden="true">💬</span>
+            <span className="fb-txt">
+              <b>AI</b>
+              <small>チャット</small>
+            </span>
+          </button>
+        )}
       </div>
 
       {/* ---------- HAMBURGER MENU ---------- */}

@@ -18,6 +18,13 @@ export default function AiChat() {
     if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
   }, [msgs, open, sending]);
 
+  // フッターバーの「AIチャット」ボタンから開く（カスタムイベント）
+  useEffect(() => {
+    const openChat = () => setOpen(true);
+    window.addEventListener("aichat:open", openChat);
+    return () => window.removeEventListener("aichat:open", openChat);
+  }, []);
+
   if (!cfg.enabled) return null;
 
   const send = () => {
@@ -96,17 +103,6 @@ export default function AiChat() {
 
   return (
     <>
-      {!open && (
-        <button
-          className="aichat-fab"
-          onClick={() => setOpen(true)}
-          aria-label="AIチャットを開く"
-        >
-          <span className="aichat-fab-ic">💬</span>
-          <span className="aichat-fab-tx">AIチャット</span>
-        </button>
-      )}
-
       {open && (
         <div className="aichat-panel" role="dialog" aria-label="AIチャット">
           <div className="aichat-head">
