@@ -118,6 +118,13 @@ export default function FirstVisit() {
               <span className="no">STEP.2</span> ご予約
             </div>
             <p>お電話、または24時間対応のWEB予約フォームよりご予約ください。</p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              className="fv-step-img"
+              src={photoSrc("first-step2.jpg", "../")}
+              alt="STEP.2 ご予約｜お電話、または24時間対応のWEB予約フォームよりご予約ください"
+              loading="lazy"
+            />
           </div>
 
           <div className="fv-step">
