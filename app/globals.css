@@ -5696,3 +5696,12 @@ body:has(.rec-page) .aichat-fab {
   font-weight: 700;
   border-bottom: 2px solid rgba(192, 57, 43, 0.4);
 }
+.fv-step-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 12px 0 0;
+  border-radius: 10px;
+  border: 1px solid #e3d6bf;
+  box-shadow: 0 2px 8px rgba(80, 60, 40, 0.18);
+}
