@@ -5724,3 +5724,34 @@ body:has(.rec-page) .aichat-fab {
 .fv-btn-top:hover {
   background: linear-gradient(180deg, #962143, #7d1a33);
 }
+
+/* トップページ下部のリンクバナー（週刊エステ求人） */
+.home-links {
+  position: relative;
+  z-index: 2;
+  padding: 20px 14px 8px;
+  text-align: center;
+}
+.home-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  background: rgba(255, 253, 248, 0.82);
+  border: 1px solid #e3d6bf;
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+.home-links a:hover { border-color: #cdae62; }
+.home-links img {
+  display: block;
+  background: #fff;
+  border: 1px solid #eadfca;
+  border-radius: 3px;
+}
+.home-links-label {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 14px;
+  color: #3a2d1c;
+  letter-spacing: 0.02em;
+}
