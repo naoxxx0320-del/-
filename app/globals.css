@@ -5525,3 +5525,174 @@ body:has(.rec-page) .aichat-fab {
   line-height: 1.7;
   color: #6a5b45;
 }
+
+/* =========================================================
+   はじめての方へ（/first/）— 参考デザイン準拠
+   ========================================================= */
+.fv-title {
+  text-align: center;
+  font-family: var(--font-serif-jp), serif;
+  font-size: clamp(20px, 5.6vw, 26px);
+  font-weight: 700;
+  color: #3a2d1c;
+  margin: 6px 0 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #b08a4e;
+}
+.fv-lead {
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.9;
+  color: #4a3f3a;
+  margin: 16px 0 14px;
+}
+/* 茶色の塗りボタン（電話・WEB予約） */
+.fv-btn-brown {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  color: #fff;
+  background: linear-gradient(180deg, #a58a63, #8f7550);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 12px 0;
+  box-shadow: 0 2px 6px rgba(80, 60, 40, 0.25);
+}
+.fv-btn-brown small {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  opacity: 0.92;
+  margin-bottom: 3px;
+}
+.fv-btn-brown b {
+  display: block;
+  font-family: var(--font-serif-en), serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+/* 新規割引（ピンク破線ボックス） */
+.fv-campaign {
+  margin: 18px 0;
+  border: 1.5px dashed #e2a5b0;
+  border-radius: 12px;
+  background: #fdf1f3;
+  overflow: hidden;
+}
+.fv-campaign-h {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 15px;
+  color: #b03a4a;
+  background: #fbe6ea;
+}
+.fv-campaign-body {
+  padding: 13px 16px 15px;
+  font-size: 12.5px;
+  line-height: 1.95;
+  color: #5a4f47;
+}
+.fv-campaign-body b {
+  color: #3a2d1c;
+}
+.fv-campaign-body .muted {
+  color: #9a8f86;
+}
+.fv-campaign-body .note {
+  color: #c0392b;
+  font-weight: 700;
+}
+/* 緑のLINEボタン */
+.fv-btn-green {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  color: #fff;
+  font-weight: 700;
+  font-size: 17px;
+  background: linear-gradient(180deg, #2bc65a, #06b64a);
+  border-radius: 10px;
+  padding: 14px;
+  margin: 14px 0;
+  box-shadow: 0 2px 6px rgba(6, 150, 60, 0.3);
+}
+/* キャンセルポリシー */
+.fv-cancel {
+  text-align: center;
+  margin: 22px 0;
+}
+.fv-cancel h3 {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 17px;
+  color: #3a2d1c;
+  margin: 0 0 6px;
+}
+.fv-cancel p {
+  font-size: 13px;
+  color: #4a3f3a;
+  margin: 0 0 12px;
+}
+.fv-btn-outline {
+  display: inline-block;
+  text-decoration: none;
+  font-size: 14px;
+  color: #8a6f4a;
+  background: rgba(255, 253, 248, 0.6);
+  border: 1px solid #c7ad78;
+  border-radius: 999px;
+  padding: 11px 26px;
+}
+/* 「ご利用の流れ」茶色帯 */
+.fv-band {
+  text-align: center;
+  font-family: var(--font-serif-jp), serif;
+  font-size: clamp(19px, 5.4vw, 23px);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: #fff;
+  background: linear-gradient(180deg, #a58a63, #8f7550);
+  padding: 16px;
+  border-radius: 4px;
+  margin: 24px 0 18px;
+}
+/* STEP */
+.fv-step {
+  margin: 0 0 22px;
+}
+.fv-step-h {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: #3a2d1c;
+  margin: 0 0 9px;
+}
+.fv-step-h .no {
+  font-family: var(--font-serif-en), serif;
+  color: #a4863f;
+  letter-spacing: 0.04em;
+  margin-right: 6px;
+}
+.fv-step p {
+  font-size: 13.5px;
+  line-height: 1.95;
+  color: #4a3f3a;
+  margin: 0;
+}
+.fv-step p b {
+  color: #3a2d1c;
+}
+.fv-step p .muted {
+  color: #9a8f86;
+  font-size: 12.5px;
+}
+.fv-step p .em {
+  color: #c0392b;
+  font-weight: 700;
+  border-bottom: 2px solid rgba(192, 57, 43, 0.4);
+}
