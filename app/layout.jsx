@@ -35,8 +35,13 @@ export const metadata = {
   alternates: { canonical: SITE_URL },
   manifest: abs("manifest.webmanifest"),
   icons: {
-    icon: [{ url: abs("icon.svg"), type: "image/svg+xml" }],
-    apple: [{ url: abs("icon.svg") }],
+    icon: [
+      { url: abs("favicon.ico"), sizes: "any" },
+      { url: abs("icon-192.png"), type: "image/png", sizes: "192x192" },
+      { url: abs("icon-512.png"), type: "image/png", sizes: "512x512" },
+    ],
+    apple: [{ url: abs("apple-touch-icon.png"), sizes: "180x180" }],
+    shortcut: [{ url: abs("favicon.ico") }],
   },
   openGraph: {
     type: "website",
