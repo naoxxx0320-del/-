@@ -10,9 +10,15 @@
   "lang": "ja",
   "icons": [
     {
-      "src": "https://aroma-daiamond.com/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "https://aroma-daiamond.com/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://aroma-daiamond.com/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any"
     }
   ]
