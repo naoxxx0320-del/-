@@ -19,7 +19,10 @@ export default function StructuredData() {
     image: abs(SITE.ogImage),
     priceRange: SITE.priceRange,
     currenciesAccepted: "JPY",
-    paymentAccepted: (reserveConfig?.pays || ["現金", "クレジットカード", "PayPay"]).join(", "),
+    // 準備中の支払い方法は「受付可能」として構造化データに含めない。
+    paymentAccepted: (reserveConfig?.pays || ["現金", "クレジットカード"])
+      .filter((p) => !p.includes("準備中"))
+      .join(", "),
     address: {
       "@type": "PostalAddress",
       addressCountry: SITE.addressCountry,
