@@ -5730,7 +5730,10 @@ body:has(.rec-page) .aichat-fab {
   position: relative;
   z-index: 2;
   padding: 20px 14px 8px;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
 .home-links a {
   display: inline-flex;

@@ -22,6 +22,20 @@ const LINKS = [
     h: 40,
     label: "週刊エステ求人",
   },
+  {
+    href: "https://m-sns.net",
+    banner: "https://m-sns.net/uploads/banners/02_200.jpg",
+    w: 200,
+    h: 40,
+    label: "メンズエステ専門SNS 02",
+  },
+  {
+    href: "https://m-sns.net/recruit/",
+    banner: "https://m-sns.net/uploads/banners/02_recruit.gif",
+    w: 200,
+    h: 40,
+    label: "メンズエステ求人SNS 02",
+  },
 ];
 
 export default function Links() {
