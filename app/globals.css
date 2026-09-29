@@ -1594,6 +1594,22 @@ a.tcard-hit:active {
 .menu-pay .pay .ic {
   font-size: 20px;
 }
+/* 準備中の支払い方法（PayPay）は淡く見せ、バッジで案内する */
+.menu-pay .pay.pay-soon {
+  position: relative;
+  background: linear-gradient(180deg, #c9c2b2, #aca592);
+  opacity: 0.9;
+}
+.menu-pay .pay.pay-soon .pay-badge {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  background: rgba(0, 0, 0, 0.28);
+  color: #fff;
+  border-radius: 20px;
+  padding: 2px 9px;
+  margin-left: 2px;
+}
 
 .menu-social {
   display: grid;
@@ -3149,6 +3165,14 @@ body.menu-open {
   accent-color: #2f6bb0;
   width: 17px;
   height: 17px;
+}
+/* 準備中の支払い方法は選択不可（淡色表示） */
+.rsv-radio-soon {
+  color: #9a968d;
+  cursor: not-allowed;
+}
+.rsv-radio-soon input {
+  cursor: not-allowed;
 }
 
 /* きっかけ */

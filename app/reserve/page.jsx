@@ -622,17 +622,26 @@ export default function Reserve() {
           </label>
           <div className="rsv-pay">
             <span className="rsv-label">お支払い方法</span>
-            {cfg.pays.map((p) => (
-              <label className="rsv-radio" key={p}>
-                <input
-                  type="radio"
-                  name="pay"
-                  checked={form.pay === p}
-                  onChange={() => setForm((f) => ({ ...f, pay: p }))}
-                />
-                {p}
-              </label>
-            ))}
+            {cfg.pays.map((p) => {
+              const soon = p.includes("準備中");
+              return (
+                <label
+                  className={`rsv-radio${soon ? " rsv-radio-soon" : ""}`}
+                  key={p}
+                >
+                  <input
+                    type="radio"
+                    name="pay"
+                    checked={form.pay === p}
+                    disabled={soon}
+                    onChange={() =>
+                      !soon && setForm((f) => ({ ...f, pay: p }))
+                    }
+                  />
+                  {p}
+                </label>
+              );
+            })}
           </div>
         </section>
 
