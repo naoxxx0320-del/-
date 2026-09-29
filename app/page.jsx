@@ -392,7 +392,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ---------- リンクバナー（週刊エステ求人） ---------- */}
+        {/* ---------- リンクバナー（求人・提携サイト） ---------- */}
         <section className="home-links">
           <a
             href="https://www.fues.jp/job/kanto/ippan/top.html"
@@ -408,6 +408,32 @@ export default function Home() {
               loading="lazy"
             />
             <span className="home-links-label">週刊エステ求人</span>
+          </a>
+          <a href="https://m-sns.net" target="_blank" rel="noopener noreferrer">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://m-sns.net/uploads/banners/02_200.jpg"
+              alt="メンズエステ専門SNS 02"
+              width="200"
+              height="40"
+              loading="lazy"
+            />
+            <span className="home-links-label">メンズエステ専門SNS 02</span>
+          </a>
+          <a
+            href="https://m-sns.net/recruit/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://m-sns.net/uploads/banners/02_recruit.gif"
+              alt="メンズエステ求人SNS 02"
+              width="200"
+              height="40"
+              loading="lazy"
+            />
+            <span className="home-links-label">メンズエステ求人SNS 02</span>
           </a>
         </section>
 
