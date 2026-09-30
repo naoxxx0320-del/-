@@ -97,8 +97,8 @@ export default function Foreigners() {
             日本語が話せる方はお電話ください。日本人料金でご案内いたします。
           </p>
 
-          <a className="fgn-tel" href="tel:0000000000">
-            Tel : 00-0000-0000
+          <a className="fgn-tel" href="tel:09043918013">
+            Tel : 090-4391-8013
           </a>
         </section>
 
