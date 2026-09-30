@@ -199,8 +199,8 @@ export default function Reserve() {
   // 進捗ステッパー用：各ステップの完了状態
   const steps = [
     { label: "セラピスト", done: !!therapist },
-    { label: "時間", done: !!time },
     { label: "コース", done: courseI >= 0 },
+    { label: "時間", done: !!time },
     {
       label: "お客様情報",
       done: !!(form.name.trim() && form.email.trim() && form.tel.trim()),
@@ -496,10 +496,35 @@ export default function Reserve() {
           </button>
         </section>
 
-        {/* 2 時間 */}
+        {/* 2 コース */}
         <section className="rsv-sec">
           <h2 className="rsv-h">
-            <span className="rsv-n">2</span>予約時間を選んでください
+            <span className="rsv-n">2</span>コースを選んでください
+          </h2>
+          <p className="rsv-note">{cfg.courseNote}</p>
+          <div className="rsv-courses">
+            {cfg.courses.map((c, i) => (
+              <label className={`rsv-course ${courseI === i ? "on" : ""}`} key={i}>
+                <input
+                  type="radio"
+                  name="course"
+                  checked={courseI === i}
+                  onChange={() => setCourseI(i)}
+                />
+                <span className="rsv-cname">
+                  {c.label}
+                  {c.honshimei && <span className="rsv-honshimei">本指名</span>}
+                </span>
+                <span className="rsv-cprice">{yen(c.price)}</span>
+              </label>
+            ))}
+          </div>
+        </section>
+
+        {/* 3 時間 */}
+        <section className="rsv-sec">
+          <h2 className="rsv-h">
+            <span className="rsv-n">3</span>予約時間を選んでください
           </h2>
           {therapist ? (
             slotGroups.length > 0 ? (
@@ -558,31 +583,6 @@ export default function Reserve() {
           ) : (
             <p className="rsv-hint">先にセラピストを選んでください。</p>
           )}
-        </section>
-
-        {/* 3 コース */}
-        <section className="rsv-sec">
-          <h2 className="rsv-h">
-            <span className="rsv-n">3</span>コースを選んでください
-          </h2>
-          <p className="rsv-note">{cfg.courseNote}</p>
-          <div className="rsv-courses">
-            {cfg.courses.map((c, i) => (
-              <label className={`rsv-course ${courseI === i ? "on" : ""}`} key={i}>
-                <input
-                  type="radio"
-                  name="course"
-                  checked={courseI === i}
-                  onChange={() => setCourseI(i)}
-                />
-                <span className="rsv-cname">
-                  {c.label}
-                  {c.honshimei && <span className="rsv-honshimei">本指名</span>}
-                </span>
-                <span className="rsv-cprice">{yen(c.price)}</span>
-              </label>
-            ))}
-          </div>
         </section>
 
         {/* 4 お客様情報 */}
