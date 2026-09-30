@@ -17,6 +17,8 @@ export default function RecruitForm({ role }) {
   const emailMode = !hasEndpoint && !!cfg.applyEmail; // メール(mailto)で受付
   const roleLabel = roleCfg.name || "求人";
   const methods = cfg.form.contactMethods || ["LINE", "電話", "メール"];
+  // 求人専用LINE（未設定なら店舗LINEにフォールバック）
+  const recruitLine = cfg.recruitLine || links.line;
 
   const [form, setForm] = useState({
     name: "",
@@ -388,14 +390,14 @@ export default function RecruitForm({ role }) {
         ※ご応募をもって採用が決定するものではありません。内容を確認のうえ、担当よりご連絡いたします。
       </p>
 
-      {accepting && (links.line || SITE.telephone) && (
+      {accepting && (recruitLine || SITE.telephone) && (
         <div className="rec-orcontact">
           <div className="rec-orcontact-h">メールフォームのほか、こちらでも受付中</div>
           <div className="rec-contact-btns">
-            {links.line && (
+            {recruitLine && (
               <a
                 className="rec-contact-line"
-                href={links.line}
+                href={recruitLine}
                 target="_blank"
                 rel="noopener noreferrer"
               >
