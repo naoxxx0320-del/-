@@ -6,6 +6,7 @@ import SiteChrome from "./SiteChrome";
 import NavGrid from "./NavGrid";
 import Breadcrumbs from "./Breadcrumbs";
 import RecruitForm from "./RecruitForm";
+import { photoSrc } from "./photo";
 import cfg from "../../data/recruit-config.json";
 
 const BASE = "../"; // /careers/ ・ /recruit/ はルートから1階層下
@@ -55,6 +56,7 @@ const CONTENT = {
     h1: "セラピスト求人",
     heroTitle: "オープニングセラピスト募集。",
     jobLabel: "セラピスト募集（オープニング）",
+    banner: "recruit-therapist-hero.jpg",
     catch: "✨11月亀戸OPEN！歩合60〜75％＆指名・OP料全額バック✨",
     intro:
       "2026年11月中旬、亀戸にオープン予定の AROMA DAIAMOND。アロマオイルを使ったトリートメントと、お客様へのご案内・接客をお願いします。お店のスタートを一緒に盛り上げてくださるオープニングセラピストを募集します。未経験の方も、デビュー前に施術と接客を丁寧にお伝えします。",
@@ -250,12 +252,23 @@ export default function RecruitPage({ role }) {
 
         <NavGrid base={BASE} />
 
+        {/* 求人バナー */}
+        {c.banner && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            className="rec-banner"
+            src={photoSrc(c.banner, BASE)}
+            alt={`${c.h1}｜${c.catch || c.heroTitle}`}
+            width="1200"
+            height="800"
+          />
+        )}
+
         {/* ヒーロー */}
         <section className="rec-hero">
           <span className={`rec-status ${status}`}>{statusLabel}</span>
           <h2 className="rec-hero-title">{c.heroTitle}</h2>
           <div className="rec-hero-job">{c.jobLabel}</div>
-          {c.catch && <div className="rec-hero-catch">{c.catch}</div>}
           <p className="rec-hero-intro">{c.intro}</p>
           {c.chips && (
             <div className="rec-chips">

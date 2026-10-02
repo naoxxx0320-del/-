@@ -4422,6 +4422,14 @@ body.menu-open {
   padding: 5px 0;
   margin-bottom: 12px;
 }
+.rec-banner {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  margin: 2px 0 16px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+}
 .rec-hero-catch {
   display: inline-block;
   font-family: var(--font-serif-jp), serif;
