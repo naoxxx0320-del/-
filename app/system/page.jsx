@@ -1,13 +1,13 @@
 import SiteChrome from "../_components/SiteChrome";
 import NavGrid from "../_components/NavGrid";
 import { photoSrc } from "../_components/photo";
-import { abs } from "../_lib/site";
+import { abs, SITE } from "../_lib/site";
 import Breadcrumbs from "../_components/Breadcrumbs";
 
 export const metadata = {
   title: "料金システム",
   description:
-    "AROMA DAIAMOND（アロマ ダイアモンド）亀戸 メンズエステの料金システム・コース・オプション一覧。",
+    "AROMA DAIAMOND（アロマダイヤモンド）亀戸 メンズエステの料金システム・コース・オプション一覧。",
   alternates: { canonical: abs("system/") },
   openGraph: { url: abs("system/"), title: "料金システム｜AROMA DAIAMOND 亀戸" },
 };
@@ -58,7 +58,7 @@ const TOKUSHO = [
   ["事業者名", "アロマダイヤモンド"],
   ["運営責任者", "馬渡 俊輔"],
   ["所在地", "〒136-0071 東京都江東区亀戸5丁目15-13"],
-  ["電話番号", "090-4391-8013"],
+  ["電話番号", SITE.telephoneDisplay],
   ["メールアドレス", "aromadiamond00@gmail.com"],
   ["販売価格", "本ページに記載の料金表をご参照ください"],
   [

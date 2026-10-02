@@ -4,7 +4,7 @@ import { abs } from "../_lib/site";
 export const metadata = {
   title: "セラピスト求人",
   description:
-    "AROMA DAIAMOND（アロマ ダイアモンド）亀戸 のセラピスト求人。施術・接客のお仕事です。報酬の仕組みや勤務条件をご確認のうえご応募ください。",
+    "AROMA DAIAMOND（アロマダイヤモンド）亀戸 のセラピスト求人。施術・接客のお仕事です。報酬の仕組みや勤務条件をご確認のうえご応募ください。",
   alternates: { canonical: abs("recruit/") },
   openGraph: {
     url: abs("recruit/"),

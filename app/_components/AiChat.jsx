@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import cfg from "../../data/chat-config.json";
+import { SITE } from "../_lib/site";
 
 /* サイト全ページに表示するAI接客チャット。
    送信は Google Apps Script 経由（?action=chat）で Claude に問い合わせ、
@@ -57,7 +58,7 @@ export default function AiChat() {
         ...m,
         {
           role: "bot",
-          text: "申し訳ございません、応答に時間がかかっています。お手数ですがお電話（090-4391-8013）でもご案内できます。",
+          text: `申し訳ございません、応答に時間がかかっています。お手数ですがお電話（${SITE.telephoneDisplay}）でもご案内できます。`,
         },
       ]);
     }, 25000);
@@ -69,7 +70,7 @@ export default function AiChat() {
       const reply =
         data && typeof data.reply === "string" && data.reply.trim()
           ? data.reply.trim()
-          : "申し訳ございません、ただいまAI応答を準備中です。お電話（090-4391-8013）またはWEB予約をご利用ください。";
+          : `申し訳ございません、ただいまAI応答を準備中です。お電話（${SITE.telephoneDisplay}）またはWEB予約をご利用ください。`;
       setMsgs((m) => [...m, { role: "bot", text: reply }]);
     };
     script.onerror = () => {

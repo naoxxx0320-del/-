@@ -6,7 +6,7 @@ import { abs } from "../_lib/site";
 export const metadata = {
   title: "ご利用規約",
   description:
-    "AROMA DAIAMOND（アロマ ダイアモンド）亀戸 のご利用規約。サービス内容・ご予約・体調と安全・禁止事項・キャンセル/遅刻についてご案内します。",
+    "AROMA DAIAMOND（アロマダイヤモンド）亀戸 のご利用規約。サービス内容・ご予約・体調と安全・禁止事項・キャンセル/遅刻についてご案内します。",
   alternates: { canonical: abs("terms/") },
   openGraph: { url: abs("terms/"), title: "ご利用規約｜AROMA DAIAMOND 亀戸" },
 };
