@@ -3914,6 +3914,137 @@ body.menu-open {
     box-shadow: 0 10px 26px rgba(60, 20, 30, 0.44);
   }
 }
+/* ===== 豪華フレーム版カード（トップ「本日の出勤」専用・staff-deluxe） =====
+   フレーム画像(public/therapist-frame.jpg, 比率780:1170)を背景にし、
+   写真と文字を%指定で重ねる。位置は微調整可能。 */
+.staff-deluxe {
+  padding: 0;
+  border-radius: 12px;
+  height: auto;
+  aspect-ratio: 780 / 1170;
+  align-self: start;
+  overflow: hidden;
+  background: #110d09 url(/therapist-frame.jpg) center / 100% 100% no-repeat;
+  box-shadow: 0 6px 18px rgba(40, 15, 20, 0.42);
+}
+.sd-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+.sd-photo {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: 6%;
+  height: 59.5%;
+  border-radius: 12px;
+  overflow: hidden;
+  z-index: 1;
+  background: linear-gradient(160deg, #241a12, #120d09);
+}
+.sd-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sd-ph-dia {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d9b978;
+  font-size: 40px;
+}
+.sd-ribbon {
+  position: absolute;
+  left: 23%;
+  top: 21%;
+  transform: translate(-50%, -50%) rotate(-42deg);
+  color: #f6e8c6;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  z-index: 3;
+  pointer-events: none;
+}
+.sd-new {
+  position: absolute;
+  left: 44%;
+  top: 76%;
+  transform: translate(-50%, -50%);
+  color: #5a3b12;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  z-index: 3;
+  pointer-events: none;
+}
+.sd-heart {
+  position: absolute;
+  left: 79%;
+  top: 76.5%;
+  width: 13%;
+  height: 9%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  z-index: 5;
+}
+/* 丸い黒バッジの中に収まるよう、ハートは背景なし・中央寄せに上書き */
+.sd-heart .staff-heart {
+  position: static;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+.sd-heart .staff-heart svg {
+  width: 56%;
+  height: auto;
+}
+.sd-heart .staff-heart.on {
+  box-shadow: none;
+}
+.sd-name {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 85%;
+  text-align: center;
+  color: #f0dca8;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+  z-index: 3;
+  pointer-events: none;
+}
+.sd-stats {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 89.5%;
+  text-align: center;
+  color: #c7b48a;
+  font-size: 9.5px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 3;
+  pointer-events: none;
+}
+
 .staff-card-inner {
   position: relative;
   height: 100%;

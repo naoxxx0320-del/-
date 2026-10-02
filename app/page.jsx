@@ -275,7 +275,7 @@ export default function Home() {
           <>
             <section className="staff-grid">
               {THERAPISTS.map((t, i) => (
-                <StaffCard t={t} href={`therapist/${t.id ?? i + 1}/`} base="" key={i} />
+                <StaffCard t={t} href={`therapist/${t.id ?? i + 1}/`} base="" variant="deluxe" key={i} />
               ))}
             </section>
 

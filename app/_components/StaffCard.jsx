@@ -60,6 +60,7 @@ export default function StaffCard({
   sched,
   status,
   reserveHref,
+  variant,
 }) {
   const src = photoSrc(t.photo, base);
   const rb = ribbonOf(t);
@@ -69,6 +70,39 @@ export default function StaffCard({
     .join(" / ");
   const scls = statusClass(status);
   const isFull = scls === "full";
+
+  // 豪華フレーム版（トップ「本日の出勤」専用）。他ページのカードには影響しない。
+  if (variant === "deluxe") {
+    return (
+      <article className="staff-card staff-deluxe">
+        <a className="sd-hit" href={href} aria-label={`${t.name} の詳細`} />
+        <div className="sd-photo">
+          {src ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img className="sd-photo-img" src={src} alt={t.name} loading="lazy" />
+          ) : (
+            <span className="sd-ph-dia" aria-hidden="true">◆</span>
+          )}
+        </div>
+        {/* 左上の赤リボン＝本日出勤（本セクションは出勤者のみ） */}
+        <span className="sd-ribbon">本日出勤</span>
+        {/* 金色ピル＝NEW（新人のみ表示） */}
+        {t.isNew && <span className="sd-new">NEW</span>}
+        {/* 丸バッジ＝お気に入り */}
+        <span className="sd-heart">
+          <FavoriteHeart id={t.id} />
+        </span>
+        <div className="sd-name">{t.name}</div>
+        {(t.age || stats) && (
+          <div className="sd-stats">
+            {t.age ? `(${t.age})` : ""}
+            {t.age && stats ? "　" : ""}
+            {stats}
+          </div>
+        )}
+      </article>
+    );
+  }
 
   return (
     <article className="staff-card">
