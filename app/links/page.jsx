@@ -6,7 +6,7 @@ import { abs } from "../_lib/site";
 export const metadata = {
   title: "リンク集",
   description:
-    "AROMA DAIAMOND（アロマ ダイアモンド）亀戸 のリンク集。求人・メンズエステ関連サイトのご紹介。",
+    "AROMA DAIAMOND（アロマダイヤモンド）亀戸 のリンク集。求人・メンズエステ関連サイトのご紹介。",
   alternates: { canonical: abs("links/") },
   openGraph: { url: abs("links/"), title: "リンク集｜AROMA DAIAMOND 亀戸" },
 };

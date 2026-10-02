@@ -1,6 +1,6 @@
 import SiteChrome from "../_components/SiteChrome";
 import NavGrid from "../_components/NavGrid";
-import { abs } from "../_lib/site";
+import { abs, SITE, telHref } from "../_lib/site";
 import Breadcrumbs from "../_components/Breadcrumbs";
 
 export const metadata = {
@@ -97,8 +97,8 @@ export default function Foreigners() {
             日本語が話せる方はお電話ください。日本人料金でご案内いたします。
           </p>
 
-          <a className="fgn-tel" href="tel:09043918013">
-            Tel : 090-4391-8013
+          <a className="fgn-tel" href={telHref()}>
+            Tel : {SITE.telephoneDisplay}
           </a>
         </section>
 

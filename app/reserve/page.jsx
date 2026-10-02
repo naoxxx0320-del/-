@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { photoSrc } from "../_components/photo";
+import { SITE } from "../_lib/site";
 import schedule from "../../data/schedule.json";
 import roster from "../../data/roster.json";
 import cfg from "../../data/reserve-config.json";
@@ -151,6 +152,16 @@ export default function Reserve() {
   }, [day, therapist]);
   const slots = useMemo(() => genSlots(parseShift(shiftStr)), [shiftStr]);
 
+  // 選択コース（所要分の算出に使用）と、勤務時間レンジ。
+  // コース未選択のうちは最短コースの所要分を仮に用い、選択後に即再計算する。
+  const course = courseI >= 0 ? cfg.courses[courseI] : null;
+  const shiftRange = useMemo(() => parseShift(shiftStr), [shiftStr]);
+  const effCourseMin = useMemo(() => {
+    if (course) return courseMinOf(course.label);
+    const ms = (cfg.courses || []).map((c) => courseMinOf(c.label));
+    return ms.length ? Math.min(...ms) : 60;
+  }, [course]);
+
   // 選択中セラピスト・日付で「埋まっている時間帯」（コース所要時間を考慮）
   const occupied = useMemo(
     () =>
@@ -163,9 +174,17 @@ export default function Reserve() {
         .filter(Boolean),
     [booked, therapist, day]
   );
-  const isTaken = (slot) => {
+  // 予約枠が選択不可かを判定する。
+  //  overlap: 新規区間[開始, 開始+コース所要] が既存予約区間と一部でも重なる
+  //           （一般的な区間重複判定: 新規開始 < 既存終了 && 新規終了 > 既存開始）
+  //  exceed : コース終了時刻が、そのセラピストの勤務終了時刻を超える
+  const slotBlock = (slot) => {
     const m = labelToMin(slot);
-    return m != null && occupied.some((r) => m >= r.s && m < r.e);
+    if (m == null) return { overlap: false, exceed: false, disabled: false };
+    const end = m + effCourseMin;
+    const overlap = occupied.some((r) => m < r.e && end > r.s);
+    const exceed = !!shiftRange && end > shiftRange.end;
+    return { overlap, exceed, disabled: overlap || exceed };
   };
 
   // 予約可能スロットを「時間帯（〜時台）」ごとにまとめる。
@@ -182,19 +201,30 @@ export default function Reserve() {
         cur = { h, label, slots: [] };
         groups.push(cur);
       }
-      const taken = occupied.some((r) => min >= r.s && min < r.e);
-      cur.slots.push({ label: s, taken });
+      const end = min + effCourseMin;
+      const overlap = occupied.some((r) => min < r.e && end > r.s);
+      const exceed = !!shiftRange && end > shiftRange.end;
+      cur.slots.push({
+        label: s,
+        taken: overlap, // 取り消し線（予約済み）
+        exceed, // 勤務終了超過（淡色）
+        disabled: overlap || exceed,
+      });
     }
     return groups;
-  }, [slots, occupied]);
+  }, [slots, occupied, effCourseMin, shiftRange]);
 
   // 空きスロット総数（サマリー表示用）
   const availCount = useMemo(
-    () => slotGroups.reduce((n, g) => n + g.slots.filter((s) => !s.taken).length, 0),
+    () => slotGroups.reduce((n, g) => n + g.slots.filter((s) => !s.disabled).length, 0),
     [slotGroups]
   );
 
-  const course = courseI >= 0 ? cfg.courses[courseI] : null;
+  // コース変更などで、選択中の時間が選べなくなったら解除する（即再計算）。
+  useEffect(() => {
+    if (time && slotBlock(time).disabled) setTime("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effCourseMin, shiftStr, occupied]);
 
   // 進捗ステッパー用：各ステップの完了状態
   const steps = [
@@ -215,10 +245,13 @@ export default function Reserve() {
 
   const validate = () => {
     if (!therapist) return "セラピストを選んでください。";
-    if (!time) return "予約時間を選んでください。";
-    if (isTaken(time))
-      return "申し訳ございません。その時間は予約が入りました。別の時間をお選びください。";
     if (courseI < 0) return "コースを選んでください。";
+    if (!time) return "予約時間を選んでください。";
+    const blk = slotBlock(time);
+    if (blk.exceed)
+      return "選択中のコースでは、その開始時間だと勤務終了時間を超えてしまいます。開始時間またはコースをご変更ください。";
+    if (blk.overlap)
+      return "申し訳ございません。その時間は予約が入りました。別の時間をお選びください。";
     if (course?.honshimei && therapist === "おまかせ（指名なし）")
       return "150分以上のコースは本指名（セラピストご指名）でのみご予約いただけます。";
     if (!form.name.trim()) return "お名前を入力してください。";
@@ -247,8 +280,7 @@ export default function Reserve() {
       setState({
         sending: false,
         done: false,
-        error:
-          "予約送信の設定が完了していません。恐れ入りますが、お電話（090-4391-8013）でご連絡ください。",
+        error: `予約送信の設定が完了していません。恐れ入りますが、お電話（${SITE.telephoneDisplay}）でご連絡ください。`,
       });
       return;
     }
@@ -293,16 +325,17 @@ export default function Reserve() {
           </div>
           <div className="rsv-done">
             <div className="rsv-done-ic mail">✉</div>
-            <h2>確認メールをお送りしました</h2>
+            <h2>ご予約リクエストを送信しました</h2>
             <div className="rsv-pending">
-              まだご予約は完了していません。メールに記載の
+              まだご予約は完了していません。追ってお送りする確認メールの
               「予約を確定する」リンクを開くと、ご予約が確定します。
             </div>
             <p>
-              ご入力のメールアドレス（<b>{form.email}</b>）宛に確認メールをお送りしました。
+              ご入力のメールアドレス（<b>{form.email}</b>）宛に確認メールをお送りします。
               メール内のリンクを開いてご予約を確定してください。
-              数分たっても届かない場合は、迷惑メールフォルダのご確認、
-              またはお電話（090-4391-8013）をお願いいたします。
+              <b>数分たっても確認メールが届かない場合は、送信が正しく完了していない可能性があります。</b>
+              迷惑メールフォルダをご確認のうえ、届かないときはお手数ですが
+              お電話（{SITE.telephoneDisplay}）でご予約内容をお知らせください。
             </p>
             <div className="rsv-done-box">
               <div className="rsv-done-box-h">仮予約の内容</div>
@@ -536,7 +569,7 @@ export default function Reserve() {
                 </p>
                 <div className="rsv-timegroups">
                   {slotGroups.map((g) => {
-                    const gAvail = g.slots.filter((s) => !s.taken).length;
+                    const gAvail = g.slots.filter((s) => !s.disabled).length;
                     return (
                       <div className="rsv-timegroup" key={g.h}>
                         <div className="rsv-timegroup-h">
@@ -554,11 +587,11 @@ export default function Reserve() {
                             <button
                               key={s.label}
                               type="button"
-                              disabled={s.taken}
+                              disabled={s.disabled}
                               className={`rsv-time ${time === s.label ? "on" : ""} ${
                                 s.taken ? "taken" : ""
-                              }`}
-                              onClick={() => !s.taken && setTime(s.label)}
+                              } ${s.exceed ? "exceed" : ""}`}
+                              onClick={() => !s.disabled && setTime(s.label)}
                             >
                               {s.label}
                             </button>
@@ -568,9 +601,10 @@ export default function Reserve() {
                     );
                   })}
                 </div>
-                {occupied.length > 0 && (
+                {(occupied.length > 0 ||
+                  slotGroups.some((g) => g.slots.some((s) => s.exceed))) && (
                   <p className="rsv-legend">
-                    取り消し線の時間は予約済みで選べません。
+                    取り消し線＝ご予約済み／うすい時間＝選択中のコースだと勤務終了時間を超えるため選べません。
                   </p>
                 )}
               </>

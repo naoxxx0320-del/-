@@ -24,7 +24,7 @@ export function generateMetadata({ params }) {
   const url = abs(`therapist/${params.id}/`);
   return {
     title: nm,
-    description: `AROMA DAIAMOND（アロマ ダイアモンド）亀戸 セラピスト「${nm}」のプロフィール。`,
+    description: `AROMA DAIAMOND（アロマダイヤモンド）亀戸 セラピスト「${nm}」のプロフィール。`,
     alternates: { canonical: url },
     openGraph: { url, title: `${nm}｜AROMA DAIAMOND 亀戸` },
   };

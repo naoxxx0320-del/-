@@ -2887,6 +2887,16 @@ body.menu-open {
   text-decoration: line-through;
   cursor: not-allowed;
 }
+/* コース終了が勤務終了を超えて選べない枠（取り消し線は付けず淡色で表現） */
+.rsv-time.exceed {
+  color: #c2c8ce;
+  background: #f7f8f9;
+  border-color: #eceef0;
+  cursor: not-allowed;
+}
+.rsv-time:disabled {
+  cursor: not-allowed;
+}
 .rsv-legend {
   font-size: 12px;
   color: #8a7c64;

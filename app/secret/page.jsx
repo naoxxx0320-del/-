@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { SITE, telHref } from "../_lib/site";
 
 /* ---- data (プレースホルダー：後で自由に編集できます) ------------------ */
 
@@ -190,8 +191,8 @@ export default function Secret() {
             </section>
 
             <div className="sec-actions">
-              <a className="sec-tel" href="tel:09043918013">
-                この内容で予約する（090-4391-8013）
+              <a className="sec-tel" href={telHref()}>
+                この内容で予約する（{SITE.telephoneDisplay}）
               </a>
               <a className="sec-back" href="../">
                 ＜ トップページへ戻る

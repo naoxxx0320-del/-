@@ -1,13 +1,13 @@
 import SiteChrome from "../_components/SiteChrome";
 import NavGrid from "../_components/NavGrid";
-import { abs } from "../_lib/site";
+import { abs, SITE, telHref } from "../_lib/site";
 import Breadcrumbs from "../_components/Breadcrumbs";
 import links from "../../data/links.json";
 
 export const metadata = {
   title: "アクセス",
   description:
-    "AROMA DAIAMOND（アロマ ダイアモンド）亀戸 へのアクセス。JR亀戸駅から徒歩圏内。詳しい所在地はご予約確定後にご案内します。",
+    "AROMA DAIAMOND（アロマダイヤモンド）亀戸 へのアクセス。JR亀戸駅から徒歩圏内。詳しい所在地はご予約確定後にご案内します。",
   alternates: { canonical: abs("access/") },
   openGraph: { url: abs("access/"), title: "アクセス｜AROMA DAIAMOND 亀戸" },
 };
@@ -21,12 +21,12 @@ const STEPS = [
 ];
 
 const INFO = [
-  ["店名", "AROMA DAIAMOND（アロマ ダイアモンド）"],
+  ["店名", "AROMA DAIAMOND（アロマダイヤモンド）"],
   ["エリア", "東京都 江東区 亀戸"],
   ["最寄駅", "JR亀戸駅 北口 徒歩5分"],
   ["営業時間", "10:00〜翌5:00"],
   ["電話受付", "9:30〜翌4:00"],
-  ["電話番号", "090-4391-8013"],
+  ["電話番号", SITE.telephoneDisplay],
   ["お支払い", "現金 / クレジットカード ／ PayPay（準備中）"],
   ["定休日", "年中無休"],
 ];
@@ -121,7 +121,7 @@ export default function Access() {
 
           {/* ---- CTA（3つ横並び・統一デザイン） ---- */}
           <div className="acc-cta">
-            <a className="acc-btn" href="tel:09043918013">
+            <a className="acc-btn" href={telHref()}>
               <span className="ab-en">Tel</span>
               <span className="ab-jp">電話する</span>
             </a>

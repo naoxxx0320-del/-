@@ -18,8 +18,8 @@ export const abs = (path = "") => `${SITE_URL}${String(path).replace(/^\/+/, "")
 
 export const SITE = {
   name: "AROMA DAIAMOND",
-  nameJa: "アロマ ダイアモンド",
-  legalName: "AROMA DAIAMOND（アロマ ダイアモンド）",
+  nameJa: "アロマダイヤモンド",
+  legalName: "AROMA DAIAMOND（アロマダイヤモンド）",
   area: "亀戸",
   addressLocality: "亀戸",
   addressRegion: "東京都",
@@ -34,11 +34,21 @@ export const SITE = {
   hoursPhone: "9:30〜翌4:00", // 表示用（電話受付）
   priceRange: "¥13,000〜",
   description:
-    "宝石のように美しいセラピスト達。極上の癒しと刺激の空間 men's esthetic AROMA DAIAMOND（アロマ ダイアモンド）亀戸。",
+    "宝石のように美しいセラピスト達。極上の癒しと刺激の空間 men's esthetic AROMA DAIAMOND（アロマダイヤモンド）亀戸。",
   ogImage: "hero-banner.jpg",
   locale: "ja_JP",
 };
 
-// GA4 測定ID（例: G-XXXXXXXXXX）。未設定のうちは解析タグは出力されない。
-// 取得後に環境変数 NEXT_PUBLIC_GA_ID をセットすれば有効になる。
+// 電話番号ユーティリティ（表示とtelリンクを一元管理）。
+//   表示：SITE.telephoneDisplay（例 090-4391-8013）
+//   リンク：telHref()（例 tel:09043918013）ハイフン等を除去した安全な文字列
+export const telDigits = (s = SITE.telephone) => String(s).replace(/\D/g, "");
+export const telHref = (s = SITE.telephone) => `tel:${telDigits(s)}`;
+
+// Google Tag Manager コンテナID（アクセス解析はGTMに一本化）。
+export const GTM_ID = "GTM-M4CPNNDT";
+
+// GA4 測定ID（例: G-XXXXXXXXXX）。
+// 原則アクセス解析はGTM経由に一本化するため、GTMが有効なときは
+// この独立GA4タグは出力しない（二重計測防止・Analytics.jsx を参照）。
 export const GA_ID = process.env.NEXT_PUBLIC_GA_ID || "";
