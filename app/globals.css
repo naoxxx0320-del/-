@@ -4422,6 +4422,20 @@ body.menu-open {
   padding: 5px 0;
   margin-bottom: 12px;
 }
+.rec-hero-catch {
+  display: inline-block;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.6;
+  color: #3a2d1c;
+  background: linear-gradient(180deg, #f3e2b4, #e4c879);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin: 0 auto 16px;
+  max-width: 28em;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
+}
 .rec-hero-intro {
   font-size: 13.5px;
   line-height: 1.85;
@@ -4977,6 +4991,15 @@ body:has(.rec-page) .aichat-fab {
   line-height: 1.9;
   color: #4a3f3a;
   margin: 0;
+}
+.rec-message p {
+  font-size: 13.5px;
+  line-height: 1.95;
+  color: #4a3f3a;
+  margin: 0 0 12px;
+}
+.rec-message p:last-child {
+  margin-bottom: 0;
 }
 /* 応募固定バー：準備中の見た目 */
 .rec-applybar-off {
