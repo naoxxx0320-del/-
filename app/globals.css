@@ -3933,22 +3933,6 @@ body.menu-open {
   pointer-events: none;
   z-index: 3;
 }
-/* 上部コーナー装飾 */
-.staff-corner {
-  position: absolute;
-  top: 5px;
-  z-index: 4;
-  line-height: 0;
-  pointer-events: none;
-}
-.staff-corner.tl {
-  left: 5px;
-}
-.staff-corner.tr {
-  right: 5px;
-  transform: scaleX(-1);
-}
-
 /* 写真＋情報をまとめる領域（ここにカード全体リンクをかぶせる） */
 .staff-main {
   position: relative;

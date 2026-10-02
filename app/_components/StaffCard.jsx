@@ -23,36 +23,6 @@ function statusClass(status) {
   return "ok";
 }
 
-// 上部コーナーのゴールド装飾
-function Corner({ pos }) {
-  return (
-    <span className={`staff-corner ${pos}`} aria-hidden="true">
-      <svg viewBox="0 0 46 46" width="34" height="34">
-        <path
-          d="M3 44 L3 17 Q3 3 17 3 L44 3"
-          fill="none"
-          stroke="#e6cd8c"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        <path
-          d="M10 44 L10 19 Q10 10 19 10 L44 10"
-          fill="none"
-          stroke="#caa25a"
-          strokeWidth="1"
-          strokeLinecap="round"
-        />
-        <path
-          d="M3 17 L10 10"
-          fill="none"
-          stroke="#e6cd8c"
-          strokeWidth="1"
-        />
-      </svg>
-    </span>
-  );
-}
-
 export default function StaffCard({
   t,
   href,
@@ -74,8 +44,6 @@ export default function StaffCard({
     <article className="staff-card">
       <div className="staff-card-inner">
         <div className="staff-main">
-          <Corner pos="tl" />
-          <Corner pos="tr" />
           {/* カード全体を覆うリンク（ハートと入れ子にならないストレッチリンク方式） */}
           <a className="staff-hit" href={href} aria-label={`${t.name} の詳細`} />
 
