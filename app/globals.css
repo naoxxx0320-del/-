@@ -5490,26 +5490,60 @@ body:has(.rec-page) .aichat-fab {
    ========================================================= */
 .pp-contact {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 6px;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin: 16px auto 2px;
+  max-width: 360px;
 }
 .pp-btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 11px 16px;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 54px;
+  padding: 15px 18px;
   border-radius: 10px;
   text-decoration: none;
-  font-size: 14px;
-  font-weight: 600;
-  border: 1px solid #d8b877;
-  background: linear-gradient(180deg, #fffdf8, #f5ecdb);
-  color: #5a4a2c;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #fff;
+  border: 1px solid transparent;
+  box-shadow: 0 3px 10px rgba(60, 40, 30, 0.25);
+  transition: transform 0.14s ease, box-shadow 0.16s ease, filter 0.16s ease;
 }
-.pp-btn:hover { border-color: #c8a659; }
-.pp-btn.line { background: linear-gradient(180deg, #0f7a3d, #075c2c); border-color: #0a5a2a; color: #f2fbf5; }
-.pp-btn-ic { display: inline-flex; align-items: center; font-size: 16px; }
+.pp-btn.line {
+  background: linear-gradient(180deg, #2bc65a, #06b64a);
+  border-color: #0a9a44;
+  box-shadow: 0 3px 10px rgba(6, 150, 60, 0.3);
+}
+.pp-btn.mail {
+  background: linear-gradient(180deg, #b79256, #8f7238);
+  border-color: #e6cd8c;
+  color: #fff8e9;
+}
+@media (hover: hover) {
+  .pp-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(60, 40, 30, 0.32);
+    filter: brightness(1.05);
+  }
+}
+.pp-btn:active {
+  transform: scale(0.99);
+}
+.pp-btn:focus-visible {
+  outline: 3px solid #cdae62;
+  outline-offset: 2px;
+}
+.pp-btn-ic {
+  display: inline-flex;
+  align-items: center;
+  font-size: 18px;
+}
 .pp-meta {
   position: relative;
   z-index: 2;
