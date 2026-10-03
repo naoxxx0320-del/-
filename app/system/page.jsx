@@ -127,6 +127,20 @@ export default function System() {
           ))}
         </section>
 
+        {/* ---- お支払いについて（クレジット決済バナー） ---- */}
+        <section className="sys-pay">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            className="sys-pay-img"
+            src={photoSrc("payment-credit.jpg", "../")}
+            alt="クレジット決済可能（VISA／Mastercard／JCB／AMERICAN EXPRESS／Diners Club／Clickで決済）。決済前は必ずお電話にて金額をお確かめください｜AROMA DAIAMOND 亀戸"
+          />
+          <p className="sys-pay-note">
+            <span className="sys-pay-badge">PayPay（準備中）</span>
+            PayPayは現在準備中です。現金・各種クレジットカードがご利用いただけます。
+          </p>
+        </section>
+
         {/* ---- 特定商取引法に基づく表示 ---- */}
         <section className="rec-sec tokusho" id="tokusho">
           <div className="rec-sec-h">

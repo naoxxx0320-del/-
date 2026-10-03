@@ -2450,6 +2450,40 @@ a.tp-card:hover {
   width: 100%;
   height: auto;
 }
+/* お支払い（クレジット決済バナー＋PayPay準備中） */
+.sys-pay {
+  position: relative;
+  z-index: 2;
+  padding: 10px 14px 6px;
+}
+.sys-pay-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(40, 30, 20, 0.22);
+}
+.sys-pay-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 2px 0;
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: #5a4a2c;
+}
+.sys-pay-badge {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid #c9c2b2;
+  background: linear-gradient(180deg, #efe9db, #e2dac6);
+  color: #6b5d3f;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
 /* コース詳細見出し */
 .sys-detail-head {
   position: relative;
