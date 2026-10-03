@@ -80,27 +80,74 @@ export default function Reserve() {
   const [confirming, setConfirming] = useState(false);
   const [state, setState] = useState({ sending: false, done: false, error: "" });
   const [booked, setBooked] = useState([]); // 既存予約（スプレッドシートから取得）
+  // 指定担当者の出勤が今日以降に無い等の案内（通常フォームは引き続き利用可）
+  const [notice, setNotice] = useState("");
 
   const day = days[dayIdx] || { list: [], label: "" };
 
-  // 出勤情報ページからの遷移（?t=セラピスト名&d=日付）を初期選択に反映する。
-  // 例: /reserve/?t=みお&d=2026/9/16
+  // URL(?t=担当者名&d=日付) から初期選択する（初回マウント時のみ・以後の選択は上書きしない）。
+  //  ・有効な d があればその日付を優先（出勤情報ページ→予約の既存動作を維持）。
+  //  ・t だけ指定なら、日本時間で今日以降に その担当者が出勤する最も近い日を選ぶ。
+  //  ・過去日は自動選択しない。URLの値は実際の出勤データに存在するか確認して使う（HTMLとして挿入しない）。
+  //  ・今日以降の出勤が無い場合は別担当者で進めず、案内を表示する。
   useEffect(() => {
     if (typeof window === "undefined") return;
     const q = new URLSearchParams(window.location.search);
     const t = q.get("t");
     const d = q.get("d");
-    let idx = dayIdx;
+    if (!t && !d) return;
+
+    const worksOn = (dayObj, name) =>
+      !!name && (dayObj?.list || []).some((e) => e.name === name);
+    const dayKeyOf = (dateStr) => {
+      const m = String(dateStr || "").match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+      return m ? +m[1] * 10000 + +m[2] * 100 + +m[3] : null;
+    };
+    // 日本時間(JST)の「今日 0:00」を YYYYMMDD の数値キーに（利用者の端末TZに依存しない）
+    const now = new Date();
+    const jst = new Date(now.getTime() + (now.getTimezoneOffset() + 540) * 60000);
+    const todayKey =
+      jst.getFullYear() * 10000 + (jst.getMonth() + 1) * 100 + jst.getDate();
+
+    // d が出勤データに存在するか（存在すればそのインデックス）
+    let dIdx = -1;
     if (d) {
       const i = days.findIndex((x) => x.date === d || x.label === d);
-      if (i >= 0) {
-        idx = i;
-        setDayIdx(i);
-      }
+      if (i >= 0) dIdx = i;
     }
+    // 担当者が出勤データ全体に1回でも登場するか（存在しない名前なら通常フォーム）
+    const tExists = t ? days.some((x) => worksOn(x, t)) : false;
+
+    // 1) 有効な日付指定があれば優先。担当者がその日に居れば選択。
+    if (dIdx >= 0) {
+      setDayIdx(dIdx);
+      if (worksOn(days[dIdx], t)) setTherapist(t);
+      return;
+    }
+
+    // 2) 担当者だけ指定：今日以降で その担当者が出勤する最も近い日を選ぶ。
     if (t) {
-      const inList = (days[idx]?.list || []).some((e) => e.name === t);
-      if (inList) setTherapist(t);
+      let bestIdx = -1;
+      let bestKey = Infinity;
+      for (let i = 0; i < days.length; i++) {
+        if (!worksOn(days[i], t)) continue;
+        const k = dayKeyOf(days[i].date);
+        if (k == null || k < todayKey) continue; // 過去日は自動選択しない
+        if (k < bestKey) {
+          bestKey = k;
+          bestIdx = i;
+        }
+      }
+      if (bestIdx >= 0) {
+        setDayIdx(bestIdx);
+        setTherapist(t);
+      } else if (tExists) {
+        // 出勤データに居るが今日以降の掲載が無い（過去のみ）→ 別担当者で進めず案内
+        setNotice(
+          `${t}さんの出勤予定は現在掲載されていません。出勤情報をご確認いただくか、店舗へお問い合わせください。`
+        );
+      }
+      // tExists=false（存在しない担当者名）は何もしない＝通常の予約フォームとして利用可
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -442,6 +489,12 @@ export default function Reserve() {
             </li>
           ))}
         </ol>
+
+        {notice && (
+          <p className="rsv-notice" role="status">
+            {notice}
+          </p>
+        )}
 
         {/* 1 セラピスト */}
         <section className="rsv-sec">
