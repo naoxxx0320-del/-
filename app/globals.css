@@ -2379,10 +2379,50 @@ a.tp-card:hover {
 .tdc-p:last-child {
   margin-bottom: 0;
 }
+/* 指名予約ボタン（個別プロフィール）：ボルドー地＋金の縁。スマホでも押しやすい高さ。 */
+.td-reserve {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 54px;
+  margin-top: 16px;
+  padding: 15px 18px;
+  border-radius: 10px;
+  border: 1px solid #e6cd8c;
+  background: linear-gradient(180deg, #7a1226 0%, #5a0e1b 100%);
+  color: #f6e8c0;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(60, 20, 30, 0.3);
+  transition: transform 0.14s ease, box-shadow 0.16s ease, filter 0.16s ease;
+}
+.td-reserve .td-reserve-ic {
+  color: #e6cd8c;
+  font-size: 13px;
+}
+@media (hover: hover) {
+  .td-reserve:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(60, 20, 30, 0.4);
+    filter: brightness(1.06);
+  }
+}
+.td-reserve:active {
+  transform: scale(0.99);
+}
+.td-reserve:focus-visible {
+  outline: 3px solid #cdae62;
+  outline-offset: 2px;
+}
+
 .td-back {
   display: block;
   text-align: center;
-  margin-top: 6px;
+  margin-top: 10px;
   padding: 11px 0;
   border: 1px solid #cdae62;
   border-radius: 6px;
@@ -2391,6 +2431,17 @@ a.tp-card:hover {
   color: #8a6a25;
   background: #fffdf8;
   text-decoration: none;
+}
+/* 予約フォーム上部の案内（指定担当者の出勤が今日以降に無い等） */
+.rsv-notice {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #e0b4bc;
+  background: #fdf1f3;
+  color: #7a2233;
+  font-size: 13px;
+  line-height: 1.75;
 }
 
 /* ---- System / 料金システム ---- */

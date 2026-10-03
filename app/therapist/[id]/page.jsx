@@ -172,6 +172,16 @@ export default function TherapistDetail({ params }) {
             </div>
           )}
 
+          {/* 指名予約：このセラピストを指定してWEB予約へ。
+              表示名は nameFull||name、URL には出勤データ照合用の t.name を渡す。 */}
+          <a
+            className="td-reserve"
+            href={`../../reserve/?t=${encodeURIComponent(t.name)}`}
+          >
+            <span className="td-reserve-ic" aria-hidden="true">◆</span>
+            {(t.nameFull || t.name)}さんでWEB予約する
+          </a>
+
           <a className="td-back" href="../">
             ← セラピスト一覧へ戻る
           </a>
