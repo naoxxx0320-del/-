@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <base target="_top" />
+  <style>
+    :root { --wine:#6e1324; --wine2:#8a1a30; --gold:#c9a24a; --ink:#2a2420; --line:#e4dccb; --bg:#f6f2ea; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif; color:var(--ink); background:var(--bg); font-size:14px; }
+    header { position:sticky; top:0; z-index:10; background:linear-gradient(180deg,var(--wine2),var(--wine)); color:#fff; padding:10px 12px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    header h1 { font-size:15px; margin:0; letter-spacing:.04em; }
+    header .me { margin-left:auto; font-size:11px; opacity:.85; }
+    .bar { background:#fff; border-bottom:1px solid var(--line); padding:8px 10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .bar label { font-size:11px; color:#6b5d44; display:flex; flex-direction:column; gap:2px; }
+    input, select, textarea { font-size:14px; padding:8px; border:1px solid #cfc6b3; border-radius:8px; background:#fff; color:var(--ink); }
+    button { font-size:14px; padding:9px 12px; border-radius:8px; border:1px solid var(--gold); background:#fff; color:var(--wine); font-weight:700; cursor:pointer; }
+    button.primary { background:linear-gradient(180deg,var(--wine2),var(--wine)); color:#fff; border-color:var(--wine); }
+    button.ghost { border-color:#cfc6b3; color:#6b5d44; }
+    button.danger { border-color:#b53a2b; color:#b53a2b; }
+    button:focus-visible { outline:3px solid var(--gold); outline-offset:2px; }
+    main { padding:10px; max-width:860px; margin:0 auto; }
+    .summary { font-size:12px; color:#6b5d44; margin:4px 2px 10px; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px; box-shadow:0 1px 3px rgba(60,40,30,.07); }
+    .card .top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .time { font-weight:700; font-size:15px; }
+    .pill { font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; border:1px solid transparent; }
+    .st-tentative { background:#fff6e2; color:#9a6a00; border-color:#e8cf8f; }
+    .st-confirmed { background:#e7f6ec; color:#1b7a3d; border-color:#a9dcb9; }
+    .st-cancelled { background:#f1f1f1; color:#777; border-color:#ddd; text-decoration:line-through; }
+    .st-expired { background:#fbeceb; color:#a23; border-color:#eac3bf; }
+    .src { font-size:11px; color:#6b5d44; border:1px solid #d9cfb8; border-radius:6px; padding:1px 6px; }
+    .meta { font-size:12px; color:#52473a; margin-top:4px; line-height:1.7; }
+    .row-actions { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+    .row-actions button { padding:6px 10px; font-size:12.5px; }
+    .empty, .err { text-align:center; color:#8a7c64; padding:24px; }
+    .err { color:#b53a2b; }
+    /* モーダル */
+    .modal-bg { position:fixed; inset:0; background:rgba(30,20,20,.5); display:none; align-items:flex-start; justify-content:center; z-index:50; padding:16px; overflow:auto; }
+    .modal-bg.on { display:flex; }
+    .modal { background:#fff; border-radius:12px; max-width:460px; width:100%; padding:16px; margin-top:24px; }
+    .modal h2 { font-size:16px; margin:0 0 10px; color:var(--wine); }
+    .field { display:flex; flex-direction:column; gap:3px; margin-bottom:10px; }
+    .field label { font-size:12px; color:#6b5d44; }
+    .field .two { display:flex; gap:8px; }
+    .field .two > * { flex:1; }
+    .modal-actions { display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; margin-top:6px; }
+    .note { font-size:11.5px; color:#8a7c64; }
+    .toast { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); background:#2a2420; color:#fff; padding:10px 16px; border-radius:24px; font-size:13px; z-index:80; opacity:0; transition:opacity .2s; pointer-events:none; }
+    .toast.on { opacity:.96; }
+    .loading { text-align:center; color:#8a7c64; padding:20px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>予約管理 ｜ AROMA DAIAMOND</h1>
+    <span class="me" id="me"></span>
+  </header>
+
+  <div class="bar">
+    <label>日付<input type="date" id="f-date" /></label>
+    <label>担当者
+      <select id="f-ther"><option value="">すべて</option></select>
+    </label>
+    <label>状態
+      <select id="f-status">
+        <option value="">すべて</option>
+        <option value="tentative">仮予約</option>
+        <option value="confirmed">確定</option>
+        <option value="cancelled">キャンセル</option>
+        <option value="expired">期限切れ</option>
+      </select>
+    </label>
+    <label>経路
+      <select id="f-source">
+        <option value="">すべて</option>
+        <option value="WEB">WEB</option>
+        <option value="LINE">LINE</option>
+        <option value="電話">電話</option>
+      </select>
+    </label>
+    <button class="ghost" id="btn-reload">更新</button>
+    <button class="primary" id="btn-new">＋ 手動登録</button>
+  </div>
+
+  <main>
+    <div class="summary" id="summary"></div>
+    <div id="list"><div class="loading">読み込み中…</div></div>
+  </main>
+
+  <!-- 登録/編集モーダル -->
+  <div class="modal-bg" id="modal-bg">
+    <div class="modal">
+      <h2 id="m-title">予約の登録</h2>
+      <input type="hidden" id="m-id" />
+      <div class="field"><label>担当者</label><select id="m-ther"></select></div>
+      <div class="field"><label>日付・開始時刻（翌は「翌2:00」の形式）</label>
+        <div class="two"><input type="date" id="m-date" /><input type="text" id="m-time" placeholder="14:00 / 翌2:00" /></div>
+      </div>
+      <div class="field"><label>コース</label><select id="m-course"></select></div>
+      <div class="field"><label>料金（円・任意）</label><input type="number" id="m-price" /></div>
+      <div class="field"><label>お客様名</label><input type="text" id="m-name" /></div>
+      <div class="field"><label>連絡先</label>
+        <div class="two"><input type="tel" id="m-tel" placeholder="電話（任意）" /><input type="email" id="m-email" placeholder="メール（任意）" /></div>
+      </div>
+      <div class="field"><label>経路</label>
+        <select id="m-source"><option value="電話">電話</option><option value="LINE">LINE</option><option value="WEB">WEB</option></select>
+      </div>
+      <div class="field" id="m-confirm-wrap"><label><input type="checkbox" id="m-confirm" checked /> 確認済みとして「確定」で登録する</label></div>
+      <p class="note">※ 同じ担当者で時間が重なる予約、出勤時間を超える予約は登録できません。</p>
+      <div class="modal-actions">
+        <button class="ghost" id="m-cancel">閉じる</button>
+        <button class="primary" id="m-save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 詳細モーダル -->
+  <div class="modal-bg" id="detail-bg">
+    <div class="modal">
+      <h2>予約の詳細</h2>
+      <div id="d-body" class="meta"></div>
+      <div class="field" style="margin-top:10px"><label>スタッフメモ</label><textarea id="d-memo" rows="2"></textarea></div>
+      <div class="modal-actions">
+        <button class="ghost" id="d-close">閉じる</button>
+        <button class="ghost" id="d-memo-save">メモ保存</button>
+        <button class="primary" id="d-edit">変更</button>
+        <button class="primary" id="d-confirm">確定</button>
+        <button class="danger" id="d-cancel">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // コース一覧（サイトの data/reserve-config.json と揃える）
+    var COURSES = [
+      { label: "60分コース", price: 13000 },
+      { label: "70分あおむけコース", price: 18000 },
+      { label: "90分コース", price: 18000 },
+      { label: "120分コース", price: 23000 },
+      { label: "150分コース", price: 28000 },
+      { label: "延長30分", price: 6000 },
+    ];
+    var STAFF_EMAIL = "<?= staffEmail ?>";
+    var therapists = [];
+    var current = {}; // id -> row
+
+    function $(id){ return document.getElementById(id); }
+    function toast(msg){ var t=$("toast"); t.textContent=msg; t.classList.add("on"); setTimeout(function(){t.classList.remove("on");},2200); }
+    function todayStr(){ var d=new Date(); var p=function(n){return String(n).padStart(2,"0");}; return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate()); }
+    function dateInputToSlash(v){ return v ? v.replace(/-/g,"/").replace(/\/0/g,"/").replace(/^(\d+)\/(\d+)\/(\d+)/,function(_,y,m,d){return y+"/"+(+m)+"/"+(+d);}) : ""; }
+    function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+    $("me").textContent = STAFF_EMAIL || "";
+
+    // 初期化
+    $("f-date").value = todayStr();
+    COURSES.forEach(function(c){
+      var o=document.createElement("option"); o.value=c.label; o.textContent=c.label+"（¥"+c.price.toLocaleString()+"）"; $("m-course").appendChild(o);
+    });
+    $("m-course").addEventListener("change", function(){
+      var c=COURSES.filter(function(x){return x.label===this.value;}.bind(this))[0]; if(c) $("m-price").value=c.price;
+    });
+
+    google.script.run.withSuccessHandler(function(r){
+      therapists = (r&&r.therapists)||[];
+      var opts = '<option value="">すべて</option>';
+      var mopts = "";
+      therapists.forEach(function(t){
+        opts += '<option value="'+esc(t.id)+'">'+esc(t.name)+'</option>';
+        mopts += '<option value="'+esc(t.id)+'">'+esc(t.name)+'</option>';
+      });
+      $("f-ther").innerHTML = opts;
+      $("m-ther").innerHTML = mopts;
+      load();
+    }).withFailureHandler(function(e){ fail(e); }).adminTherapists();
+
+    function fail(e){ $("list").innerHTML='<div class="err">'+esc(e&&e.message?e.message:e)+'</div>'; }
+
+    function load(){
+      $("list").innerHTML='<div class="loading">読み込み中…</div>';
+      var params = { dateStr: dateInputToSlash($("f-date").value), therapistId:$("f-ther").value, status:$("f-status").value, source:$("f-source").value };
+      google.script.run.withSuccessHandler(render).withFailureHandler(fail).adminList(params);
+    }
+
+    function render(res){
+      if(!res||!res.ok){ fail((res&&res.reason)||"取得に失敗しました"); return; }
+      var rows=res.rows||[]; current={};
+      $("summary").textContent = rows.length+" 件（確定 "+rows.filter(function(r){return r.status==="confirmed";}).length+" / 仮予約 "+rows.filter(function(r){return r.status==="tentative";}).length+"）";
+      if(!rows.length){ $("list").innerHTML='<div class="empty">この条件の予約はありません。</div>'; return; }
+      var html="";
+      rows.forEach(function(r){
+        current[r.id]=r;
+        var t = r.start.split(" ")[1]+"〜"+r.end.split(" ")[1];
+        html += '<div class="card">'
+          + '<div class="top"><span class="time">'+esc(t)+'</span>'
+          + '<span class="pill st-'+esc(r.status)+'">'+esc(r.statusLabel)+'</span>'
+          + '<span class="src">'+esc(r.source)+'</span>'
+          + '<span style="margin-left:auto;font-weight:700">'+esc(r.therapistName)+'</span></div>'
+          + '<div class="meta">'+esc(r.customerName||"（名前なし）")+'　'+esc(r.course||"")+'　'+(r.price?("¥"+Number(r.price).toLocaleString()):"")
+          + (r.tel?'　☎ '+esc(r.tel):'')+(r.email?'　✉ '+esc(r.email):'')
+          + (r.staffMemo?'<br>📝 '+esc(r.staffMemo):'')+'</div>'
+          + '<div class="row-actions"><button class="ghost" onclick="openDetail(\''+esc(r.id)+'\')">詳細</button></div>'
+          + '</div>';
+      });
+      $("list").innerHTML=html;
+    }
+
+    // ---- 詳細 ----
+    window.openDetail=function(id){
+      var r=current[id]; if(!r) return;
+      $("d-body").innerHTML =
+        "<b>"+esc(r.therapistName)+"</b>　<span class='pill st-"+esc(r.status)+"'>"+esc(r.statusLabel)+"</span>　<span class='src'>"+esc(r.source)+"</span><br>"
+        +"開始 "+esc(r.start)+"<br>終了 "+esc(r.end)+"（"+esc(r.durationMin)+"分）<br>"
+        +"コース "+esc(r.course||"")+"　料金 "+(r.price?("¥"+Number(r.price).toLocaleString()):"-")+"<br>"
+        +"お客様 "+esc(r.customerName||"-")+"<br>連絡先 "+esc(r.tel||"-")+" / "+esc(r.email||"-")+(r.lineUserId?(" / LINE:"+esc(r.lineUserId)):"")+"<br>"
+        +"最終更新 "+esc(r.updatedAt||"")+"（"+esc(r.updatedBy||"")+"）<br>ID "+esc(r.id);
+      $("d-memo").value=r.staffMemo||"";
+      $("d-confirm").style.display = (r.status==="tentative")?"inline-block":"none";
+      $("d-edit").style.display = (r.status==="cancelled"||r.status==="expired")?"none":"inline-block";
+      $("d-cancel").style.display = (r.status==="cancelled")?"none":"inline-block";
+      $("detail-bg").dataset.id=id;
+      $("detail-bg").classList.add("on");
+    };
+    $("d-close").onclick=function(){ $("detail-bg").classList.remove("on"); };
+    $("d-memo-save").onclick=function(){
+      var id=$("detail-bg").dataset.id;
+      runOp(function(cb,fb){ google.script.run.withSuccessHandler(cb).withFailureHandler(fb).adminMemo(id,$("d-memo").value); },"メモを保存しました");
+    };
+    $("d-confirm").onclick=function(){
+      var id=$("detail-bg").dataset.id;
+      runOp(function(cb,fb){ google.script.run.withSuccessHandler(cb).withFailureHandler(fb).adminConfirm(id); },"確定しました");
+    };
+    $("d-cancel").onclick=function(){
+      var id=$("detail-bg").dataset.id;
+      if(!confirm("この予約をキャンセルします。よろしいですか？（履歴には残ります）")) return;
+      var reason=prompt("キャンセル理由（任意）","")||"";
+      runOp(function(cb,fb){ google.script.run.withSuccessHandler(cb).withFailureHandler(fb).adminCancel(id,reason); },"キャンセルしました");
+    };
+    $("d-edit").onclick=function(){ var id=$("detail-bg").dataset.id; $("detail-bg").classList.remove("on"); openEdit(id); };
+
+    function runOp(fn, okMsg){
+      fn(function(res){
+        if(res&&res.ok){ toast(okMsg); $("detail-bg").classList.remove("on"); $("modal-bg").classList.remove("on"); load(); }
+        else { alert("できませんでした：" + ((res&&res.reason)||"不明")); }
+      }, function(e){ alert("エラー：" + (e&&e.message?e.message:e)); });
+    }
+
+    // ---- 登録/編集 ----
+    $("btn-new").onclick=function(){ openEdit(null); };
+    function openEdit(id){
+      var r = id?current[id]:null;
+      $("m-title").textContent = id?"予約の変更":"予約の登録";
+      $("m-id").value = id||"";
+      $("m-ther").value = r?r.therapistId:(therapists[0]&&therapists[0].id)||"";
+      if(r){ var parts=r.start.split(" "); $("m-date").value=parts[0].replace(/\//g,"-").replace(/-(\d)(?=-|$)/g,"-0$1"); $("m-time").value=parts[1]; }
+      else { $("m-date").value=$("f-date").value; $("m-time").value=""; }
+      $("m-course").value=r?r.course:COURSES[0].label;
+      $("m-price").value=r?r.price:COURSES[0].price;
+      $("m-name").value=r?r.customerName:"";
+      $("m-tel").value=r?r.tel:"";
+      $("m-email").value=r?r.email:"";
+      $("m-source").value=r?r.source:"電話";
+      $("m-confirm-wrap").style.display = id?"none":"block"; // 変更時は確定チェック非表示
+      $("modal-bg").classList.add("on");
+    }
+    $("m-cancel").onclick=function(){ $("modal-bg").classList.remove("on"); };
+    $("m-save").onclick=function(){
+      var id=$("m-id").value;
+      var therName = (therapists.filter(function(t){return t.id===$("m-ther").value;})[0]||{}).name || $("m-ther").value;
+      var payload = {
+        therapistId:$("m-ther").value, therapistName:therName,
+        dateStr: dateInputToSlash($("m-date").value), timeLabel:$("m-time").value.trim(),
+        course:$("m-course").value, price:$("m-price").value?Number($("m-price").value):"",
+        customerName:$("m-name").value.trim(), tel:$("m-tel").value.trim(), email:$("m-email").value.trim(),
+      };
+      if(!payload.timeLabel){ alert("開始時刻を入力してください（例 14:00 / 翌2:00）"); return; }
+      if(id){
+        runOp(function(cb,fb){ google.script.run.withSuccessHandler(cb).withFailureHandler(fb).adminUpdate(id,payload); },"変更しました");
+      } else {
+        payload.source=$("m-source").value;
+        payload.asConfirmed=$("m-confirm").checked;
+        runOp(function(cb,fb){ google.script.run.withSuccessHandler(cb).withFailureHandler(fb).adminCreate(payload); },"登録しました");
+      }
+    };
+
+    $("btn-reload").onclick=load;
+    ["f-date","f-ther","f-status","f-source"].forEach(function(idv){ $(idv).addEventListener("change",load); });
+  </script>
+</body>
+</html>
