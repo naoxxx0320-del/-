@@ -5,17 +5,27 @@
  * Webhook を受け取り、トーク上で自動応答・予約受付を行い、予約内容を
  * Googleスプレッドシート（出勤情報と同じブック）に書き込みます。
  *
+ * ■ 構成（予約管理システムと連携）
+ *   LINE → Cloudflare Worker（X-Line-Signature を検証）→ このボット（会話）
+ *        → 予約管理API（apps-script/booking の Code.gs）line_event → 共有台帳
+ *   ・GASのdoPostでは署名ヘッダを直接取得できないため、署名検証はWorkerで行う。
+ *   ・このボットはWorker経由（proxySecret一致）の正規リクエストのみ受理する。
+ *   ・予約は独自シートではなく「共有台帳」に一本化（WEB/LINE/電話を同一台帳で管理）。
+ *
  * ■ 設定（スクリプトのプロパティに登録：プロジェクトの設定 → スクリプト プロパティ）
  *   LINE_CHANNEL_ACCESS_TOKEN … Messaging API チャネルの長期アクセストークン
- *   LINE_CHANNEL_SECRET        … チャネルシークレット（署名検証に使用）
- *   SHEET_ID                   … 出勤情報などが入ったスプレッドシートのID
+ *   LINE_CHANNEL_SECRET        … チャネルシークレット（※署名検証はWorker側で使用）
+ *   SHEET_ID                   … 出勤情報が入ったスプレッドシートのID（出勤読取に使用）
  *   OWNER_EMAIL                … 予約通知メールの送り先（任意）
+ *   PROXY_SHARED_SECRET        … Worker／予約管理APIと共有する秘密文字列（必須）
+ *   BOOKING_API_URL            … 予約管理API（公開デプロイ）の /exec URL（必須）
  *
  * ■ デプロイ：デプロイ → 新しいデプロイ → 種類「ウェブアプリ」
  *   実行するユーザー = 自分 / アクセスできるユーザー = 全員
- *   発行された /exec URL を LINE の Webhook URL に設定し「Webhookの利用」をON。
+ *   発行された /exec URL を Cloudflare Worker の GAS_EXEC_URL に設定し、
+ *   LINE の Webhook URL は「Worker の URL」に設定する（直接このURLを登録しない）。
  *
- * 詳しい手順は apps-script/README.md を参照。
+ * 詳しい手順は apps-script/README.md / apps-script/booking/README.md を参照。
  * =====================================================================
  */
 
@@ -27,7 +37,7 @@ const SHEET_ID = SP.getProperty("SHEET_ID");
 const OWNER_EMAIL = SP.getProperty("OWNER_EMAIL") || "";
 
 const SCHEDULE_SHEET = "出勤情報"; // 日付/ラベル/エリア/名前/出勤時間/ステータス/出勤/区分
-const RESERVE_SHEET = "LINE予約"; // 予約の書き込み先（無ければ自動作成）
+// 予約は独自シートではなく共有台帳（予約管理API）へ一本化（旧 "LINE予約" シートは廃止）。
 const AREA = "亀戸";
 const TEL = "080-4885-5430";
 
@@ -47,18 +57,36 @@ const yen = (n) => "¥" + Number(n).toLocaleString("en-US");
    ========================================================= */
 function doPost(e) {
   try {
-    // 署名検証（なりすまし防止）
-    if (CHANNEL_SECRET) {
-      const sig = e.parameter && e.parameter["X-Line-Signature"]; // GASでは取得できない場合あり
-      // 署名ヘッダはGASのdoPostで直接取れないため、簡易運用では省略可。
-      // 厳格運用したい場合はCloud Functions等を推奨。
+    let body = {};
+    try {
+      body = JSON.parse(e.postData.contents);
+    } catch (_) {
+      body = (e && e.parameter) || {};
     }
-    const body = JSON.parse(e.postData.contents);
-    (body.events || []).forEach(handleEvent);
+
+    // Cloudflare Worker で X-Line-Signature を検証済みの正規Webhookのみ受理する。
+    // Worker は {action:"line_webhook", proxySecret, lineBody(生のLINE JSON文字列)} を転送する。
+    // （GASのdoPostでは署名ヘッダを直接取得できないため、検証はWorker側で実施）
+    const proxySecret = SP.getProperty("PROXY_SHARED_SECRET") || "";
+    if (body.action === "line_webhook") {
+      if (!proxySecret || body.proxySecret !== proxySecret) {
+        return ContentService.createTextOutput("unauthorized");
+      }
+      let line = {};
+      try {
+        line = JSON.parse(body.lineBody || "{}");
+      } catch (_) {}
+      (line.events || []).forEach(handleEvent);
+      return ContentService.createTextOutput("OK");
+    }
+
+    // プロキシ未経由（署名検証不可）の直接Webhookは受理しない＝なりすまし防止。
+    // LINEのWebhook URLには必ず Worker のURLを設定してください。
+    return ContentService.createTextOutput("forbidden");
   } catch (err) {
     console.error("doPost error: " + err);
+    return ContentService.createTextOutput("OK"); // LINEへは200で応答（再送ループ回避）
   }
-  return ContentService.createTextOutput("OK");
 }
 
 function handleEvent(ev) {
@@ -212,27 +240,36 @@ function finalizeBooking(uid, replyToken) {
     clearState(uid);
     return reply(replyToken, [textMsg("入力が不完全でした。もう一度「予約」と送ってください。")]);
   }
-  // 重複チェック
-  if (isTaken(st.therapist, st.date, st.time)) {
+  const name = getDisplayName(uid);
+
+  // 共有台帳（予約管理API Code.gs）へ line_event として登録する。
+  // ・重複／出勤外／満席の判定はバックエンド（LockService＋区間重複）で行う。
+  // ・冪等キーで Webhook 再送・確定ボタン二度押しの二重作成を防ぐ。
+  const res = createOnLedger_({
+    therapistId: st.therapist,
+    therapistName: st.therapist,
+    dateStr: st.date,
+    timeLabel: st.time,
+    course: st.course,
+    price: st.price,
+    customerName: st.name,
+    lineUserId: uid,
+    idempotencyKey: ["LINE", uid, st.date, st.time, st.course].join("|"),
+  });
+
+  // バックエンド結果を確認してから完了を案内（＝未登録を完了と誤表示しない）。
+  if (!res || !res.ok) {
     st.step = "time";
     setState(uid, st);
     return reply(replyToken, [
-      textMsg("申し訳ございません。その時間はすでに予約が入りました。別の時間をお選びください。"),
+      textMsg(
+        (res && res.reason) ||
+          "申し訳ございません。その枠はご予約いただけませんでした。別の時間をお選びください。"
+      ),
       timeMessage(st.date, st.therapist),
     ]);
   }
-  // 書き込み
-  const name = getDisplayName(uid);
-  writeReservation({
-    userId: uid,
-    lineName: name,
-    inputName: st.name,
-    date: st.label || st.date,
-    time: st.time,
-    therapist: st.therapist,
-    course: st.course,
-    price: st.price,
-  });
+
   // オーナー通知（任意）
   if (OWNER_EMAIL) {
     try {
@@ -245,6 +282,7 @@ function finalizeBooking(uid, replyToken) {
           "セラピスト: " + st.therapist,
           "コース: " + st.course + "（" + yen(st.price) + "）",
           "お名前: " + st.name + "（LINE表示名: " + name + "）",
+          "予約ID: " + (res.id || ""),
         ].join("\n")
       );
     } catch (e) {}
@@ -265,6 +303,37 @@ function finalizeBooking(uid, replyToken) {
       ].join("\n")
     ),
   ]);
+}
+
+/* 共有台帳API（予約管理 Code.gs の公開デプロイ）へ line_event をPOSTして登録する。
+   戻り値は {ok:true,id,status,confirmToken} もしくは {ok:false,reason}。
+   サーバ間通信（CORS無関係）。proxySecret で正規ルートであることを示す。 */
+function createOnLedger_(payload) {
+  const url = SP.getProperty("BOOKING_API_URL") || "";
+  const secret = SP.getProperty("PROXY_SHARED_SECRET") || "";
+  if (!url || !secret) {
+    return {
+      ok: false,
+      reason: "ただ今オンライン予約の受付準備中です。お手数ですがお電話（" + TEL + "）でご予約ください。",
+    };
+  }
+  const body = Object.assign({ action: "line_event", proxySecret: secret }, payload);
+  try {
+    const r = UrlFetchApp.fetch(url, {
+      method: "post",
+      contentType: "application/json",
+      payload: JSON.stringify(body),
+      muteHttpExceptions: true,
+      followRedirects: true,
+    });
+    try {
+      return JSON.parse(r.getContentText());
+    } catch (_) {
+      return { ok: false, reason: "予約連携の応答が不正でした。お手数ですがお電話（" + TEL + "）でご予約ください。" };
+    }
+  } catch (e) {
+    return { ok: false, reason: "予約連携に失敗しました。お手数ですがお電話（" + TEL + "）でご予約ください。" };
+  }
 }
 
 /* =========================================================
@@ -347,41 +416,9 @@ function getShiftOf(date, name) {
   return r ? r.time : "";
 }
 
-// 予約書き込み（ヘッダが無ければ作成）
-function writeReservation(o) {
-  const book = ss();
-  let sh = book.getSheetByName(RESERVE_SHEET);
-  if (!sh) {
-    sh = book.insertSheet(RESERVE_SHEET);
-    sh.appendRow([
-      "受付日時", "経路", "LINE_userId", "LINE表示名", "お名前",
-      "希望日", "時間", "セラピスト", "コース", "料金", "状態",
-    ]);
-  }
-  sh.appendRow([
-    new Date(), "LINE", o.userId, o.lineName, o.inputName,
-    o.date, o.time, o.therapist, o.course, o.price, "新規",
-  ]);
-}
-
-// 同一セラピスト・日付・時間が既に予約済みか（LINE予約シート内）
-function isTaken(therapist, date, time) {
-  const sh = ss().getSheetByName(RESERVE_SHEET);
-  if (!sh) return false;
-  const v = sh.getDataRange().getValues();
-  for (let i = 1; i < v.length; i++) {
-    // 列: 0受付,1経路,...5希望日,6時間,7セラピスト,...10状態
-    if (
-      String(v[i][7]).trim() === therapist &&
-      normalizeDate(String(v[i][5])) === normalizeDate(date) &&
-      String(v[i][6]).trim() === time &&
-      String(v[i][10]).trim() !== "キャンセル"
-    ) {
-      return true;
-    }
-  }
-  return false;
-}
+// ※ 予約の書き込み・重複チェックは共有台帳（予約管理API Code.gs）に一本化したため、
+//    旧 writeReservation / isTaken（独自 "LINE予約" シート）は廃止しました。
+//    登録は createOnLedger_()、重複/出勤外/満席の判定はバックエンド側で行います。
 
 /* =========================================================
    メッセージ（テキスト＆クイックリプライ）

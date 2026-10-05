@@ -1,8 +1,17 @@
 # LINE 自動応答＋自動予約 bot 設定手順
 
+> ⚠️ **更新（予約管理システムとの統合）**：`line-booking.gs` は現在、予約を独自
+> 「LINE予約」タブではなく**共有台帳（予約管理システム `apps-script/booking`）に
+> 一本化**し、署名検証を **Cloudflare Worker** で行う構成に変更されています
+> （WEB・LINE・電話を同一台帳で管理）。最新のデータフロー・必要なスクリプト
+> プロパティ（`PROXY_SHARED_SECRET` / `BOOKING_API_URL`）・デプロイ手順は
+> **`apps-script/booking/README.md` の「6-2. LINE予約」** を参照してください。
+> 本ファイル以下の「LINE予約タブに記録」「Webhook URLにGASを直接設定」等の記述は
+> 旧スタンドアロン運用のもので、統合構成では置き換わります。
+
 `line-booking.gs` を Google Apps Script に貼り付けて、LINE のトーク上で
-**自動応答・自動予約**（予約は既存の出勤スプレッドシートと同じブックに記録）を
-動かすための手順です。サイト（GitHub Pages）とは独立して動作します。
+**自動応答・自動予約**を動かすための手順です。サイト（GitHub Pages）とは独立して
+動作します（予約の記録先は上記のとおり共有台帳に統合済み）。
 
 ## 全体像
 

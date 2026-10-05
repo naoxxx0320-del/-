@@ -150,17 +150,36 @@ GitHub Pages だけでは認証付きの安全な予約更新は実現できな�
 > `apiV2` を本番URLに設定してください。切替直後は旧 `endpoint` の送信は止まり、
 > 予約は新台帳に入ります（＝二重運用を避ける）。確定メール送信は 6-3 で有効化します。
 
-### 6-2. LINE予約（署名検証 → 同じ台帳）
+### 6-2. LINE予約（署名検証 → 同じ台帳）✅ 実装済み（要デプロイ＆設定）
+
+**データフロー**（2プロジェクトをHTTPで連結）:
+```
+LINE → Cloudflare Worker（X-Line-Signature検証）→ LINEボット(line-booking.gs・会話)
+     → 予約管理API(booking/Code.gs) の line_event → 共有台帳「予約台帳」
+```
+※ GASのdoPostは署名ヘッダを取得できないため、署名検証はWorkerで実施。
+※ LINEボットと予約管理APIは**別プロジェクト**（doPost競合と定数衝突を避けるため）。
+   `line_event` エンドポイントを再利用して**同一台帳**に一本化。
+
+**手順**:
 1. `proxy/line-verify-worker.js` を Cloudflare Worker としてデプロイ
-   - 環境変数：`LINE_CHANNEL_SECRET` / `GAS_EXEC_URL`(公開API) / `PROXY_SHARED_SECRET`
-2. LINE Developers の **Webhook URL を Worker の URL** に変更（検証も通ります）
-3. 既存 `line-booking.gs` を**同じGASプロジェクト**に置き、次の2点を変更：
-   - `doPost` の先頭で、`JSON.parse(e.postData.contents).proxySecret` が
-     `PROXY_SHARED_SECRET` と一致することを確認（不一致は拒否）。生のLINEイベントは
-     `JSON.parse(body.lineBody).events` から取得。
-   - 予約確定（`finalizeBooking`）で独自シート書き込みの代わりに
-     **`createBooking({source:"LINE", ...})`** を呼び、**同じ台帳**へ記録。
-   （この2点の具体パッチはPhase 2で提供します。Worker自体は今回同梱済み）
+   - 環境変数：`LINE_CHANNEL_SECRET` / `GAS_EXEC_URL`（＝**LINEボット**の /exec）/ `PROXY_SHARED_SECRET`
+2. LINE Developers の **Webhook URL を Worker の URL** に変更（検証も通る。LINEのURLを直接登録しない）
+3. `line-booking.gs`（LINEボット・別プロジェクト）のスクリプトプロパティ：
+   - `PROXY_SHARED_SECRET`（Worker・予約管理APIと同じ値）
+   - `BOOKING_API_URL`（＝**予約管理API**の公開 /exec URL）
+   - 既存の `LINE_CHANNEL_ACCESS_TOKEN` / `SHEET_ID`（出勤読取）/ `OWNER_EMAIL`(任意)
+4. 予約管理API（booking/Code.gs）側のスクリプトプロパティにも同じ
+   `PROXY_SHARED_SECRET` を設定（`line_event` の正規性確認に使用）。
+
+**実装済みの変更点**（コード同梱）:
+- `doPost`：`action:"line_webhook"` かつ `proxySecret` 一致のみ受理。生イベントは
+  `JSON.parse(lineBody).events` から取得。**プロキシ未経由の直接Webhookは拒否**（なりすまし防止）。
+- `finalizeBooking`：独自シート書き込みを廃止し、`createOnLedger_()` が
+  **`line_event` を予約管理APIへPOST**。結果 `{ok}` を確認してから完了を案内し、
+  重複/出勤外/満席（`ok:false`）は時間を選び直してもらう。
+- 冪等キー（`LINE|userId|日付|時刻|コース`）で **Webhook再送・確定二度押しの二重作成を防止**。
+- 旧 `writeReservation` / `isTaken` / 独自 `"LINE予約"` シートは**廃止**（台帳を一本化）。
 
 ---
 
@@ -208,7 +227,7 @@ GitHub Pages だけでは認証付きの安全な予約更新は実現できな�
 ## 10. 本番運用までに残っている作業（Phase 2 予定）
 
 1. ~~**サイト側WEB予約の切替**：`app/reserve/page.jsx` を新APIへ（JSON結果確認・no-cors廃止）＋空き状況の失敗を空き扱いしない実装~~ ✅ 実装済み（`reserve-config.json` の `apiV2` にデプロイ後のURLを設定すると有効化。6-1 参照）
-2. **LINE連携の確定**：`line-booking.gs` の `doPost` 署名/シークレット確認＋`finalizeBooking`→`createBooking` 統一（具体パッチ提供）
+2. ~~**LINE連携の確定**：`line-booking.gs` の `doPost` 署名/シークレット確認＋`finalizeBooking`→`createBooking` 統一~~ ✅ 実装済み（Worker→ボット→`line_event`→共有台帳。6-2 参照。デプロイ＆プロパティ設定が必要）
 3. ~~**管理画面のタイムテーブル表示**：担当者×時間のグリッド（チョイスリザーブ風）~~ ✅ 実装済み（下記「タイムテーブル」参照）
 4. **メール文面の統一**（確定/期限切れ/キャンセル）と TEST_MODE→本番の切替確認
 5. **安定した担当者ID**：出勤/名簿シートに明示的なID列を設ける運用（現状は名前をキー）
