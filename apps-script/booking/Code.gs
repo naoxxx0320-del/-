@@ -102,6 +102,16 @@ function colIndex_() {
 }
 
 /* 台帳の全行をオブジェクト配列で返す（ヘッダ行を除く）。rowNum も保持。 */
+/* セル値を文字列へ。日付型(Date)はJST文字列に（google.script.run はDateを含む
+   戻り値をnull化することがあるため、画面に返す値は必ずプリミティブにする）。 */
+function cellStr_(v) {
+  if (v == null) return "";
+  if (Object.prototype.toString.call(v) === "[object Date]") {
+    return Utilities.formatDate(v, "Asia/Tokyo", "yyyy/MM/dd HH:mm:ss");
+  }
+  return String(v);
+}
+
 function readLedger_() {
   var sh = ledger_();
   var last = sh.getLastRow();
@@ -129,8 +139,8 @@ function readLedger_() {
       confirmToken: r[c["確認トークン"]],
       idempotencyKey: r[c["冪等キー"]],
       staffMemo: r[c["スタッフメモ"]],
-      createdAt: r[c["作成日時(JST)"]],
-      updatedAt: r[c["更新日時(JST)"]],
+      createdAt: cellStr_(r[c["作成日時(JST)"]]),
+      updatedAt: cellStr_(r[c["更新日時(JST)"]]),
       updatedBy: r[c["最終操作者"]],
     };
   });
@@ -646,7 +656,7 @@ function adminList(params) {
         staffMemo: r.staffMemo, updatedAt: r.updatedAt, updatedBy: r.updatedBy,
       };
     });
-  return { ok: true, rows: out };
+  return jsonSafe_({ ok: true, rows: out });
 }
 
 /* タイムテーブル（担当者×時間グリッド）用データを一括取得。
@@ -689,7 +699,13 @@ function adminTimetable(dateStr) {
     });
   });
 
-  return { ok: true, openMin: openMin, closeMin: closeMin, step: step, therapists: therapists, bookings: bookings };
+  return jsonSafe_({ ok: true, openMin: openMin, closeMin: closeMin, step: step, therapists: therapists, bookings: bookings });
+}
+
+/* google.script.run はDate等を含む戻り値をnull化することがある。JSON往復で
+   確実にプリミティブな素のオブジェクトにしてから返す（画面向けの保険）。 */
+function jsonSafe_(o) {
+  return JSON.parse(JSON.stringify(o));
 }
 
 /* 手動登録（電話/LINEで受けた予約）。asConfirmed=true で直接確定も可。 */
