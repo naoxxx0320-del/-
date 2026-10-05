@@ -11,8 +11,13 @@
  *   STAFF_EMAILS          … 管理画面を使えるスタッフのGoogleメール（カンマ区切り）
  *   TENTATIVE_TTL_MIN     … 仮予約の確認期限（分）。既定 30
  *   PROXY_SHARED_SECRET   … LINE署名検証プロキシから受け取る共有シークレット
- *   OWNER_EMAIL           … 店舗通知メール（任意）
- *   TEST_MODE             … "true" の間はメール送信せずログのみ（本番前の検証用）
+ *   OWNER_EMAIL           … 店舗通知メール（STORE_EMAIL 未設定時の控え先）
+ *   STORE_EMAIL           … 予約控えメールの送り先（例 aromadiamond00@gmail.com）
+ *   MAIL_SENDER_NAME      … 送信者表示名。既定 "AROMA DAIAMOND"
+ *   STORE_TEL             … 文面に載せる電話番号。既定 "09043918013"
+ *   PUBLIC_EXEC_URL       … 公開API /exec のURL（確認リンク生成用。未設定なら自動取得）
+ *   TEST_MODE             … メール送信ガード。"false" で実送信、それ以外(既定)は送らずログのみ
+ *                           ※本番切替は、テスト検証後に明示的に "false" を設定する
  *
  * ■ デプロイ（2つのウェブアプリ）… README 参照
  *   公開API  : 実行=自分 / アクセス=全員         （availability / web_create / line_event）
@@ -54,8 +59,10 @@ function nowMs_() {
 function ttlMin_() {
   return parseInt(cfg_("TENTATIVE_TTL_MIN", "30"), 10) || 30;
 }
+/* メール送信ガード。安全側の既定＝テストモード（TEST_MODE を明示的に "false"
+   にしたときだけ実送信する）。未設定のまま誤って実送信することを防ぐ。 */
 function isTestMode_() {
-  return String(cfg_("TEST_MODE", "false")).toLowerCase() === "true";
+  return String(cfg_("TEST_MODE", "true")).toLowerCase() !== "false";
 }
 function genId_(prefix) {
   return (
@@ -235,7 +242,8 @@ function normDate_(s) {
  * 戻り値: {ok, id, status, duplicated?} / 失敗時 {ok:false, reason}
  * すべてロック内で冪等・重複・出勤内判定を行う。 */
 function createBooking(payload) {
-  return withLock_(function () {
+  var toNotify = null; // 送信はロック解放後（予約ロックを長引かせない）
+  var result = withLock_(function () {
     var p = payload || {};
     var therapistId = p.therapistId || p.therapistName;
     if (!therapistId || !p.therapistName)
@@ -304,13 +312,20 @@ function createBooking(payload) {
     };
     appendRow_(o);
     logHistory_(o.id, o.updatedBy, "create(" + o.status + ")", null, o);
+    toNotify = o;
     return { ok: true, id: o.id, status: o.status, confirmToken: o.confirmToken };
   });
+  // 新規作成時の通知（仮予約=確認リンク／確定=確定メール）。重複(再送)時は toNotify=null で送らない。
+  if (toNotify) {
+    notifyCustomer_(toNotify, toNotify.status === STATUS.TENTATIVE ? "tentative" : "confirmed");
+  }
+  return result;
 }
 
 /* メール確認リンクで確定（期限切れ・キャンセル済みは確定しない）。 */
 function confirmByToken(token) {
-  return withLock_(function () {
+  var confirmedRow = null;
+  var result = withLock_(function () {
     if (!token) return { ok: false, reason: "トークンがありません。" };
     var rows = readLedger_();
     var r = rows.filter(function (x) {
@@ -328,8 +343,11 @@ function confirmByToken(token) {
     var conflict = findConflict(rows, r.therapistId, r.startAt, r.endAt, r.id);
     if (conflict) return { ok: false, reason: "その時間は既に予約が入りました。別の時間をお選びください。" };
     _setStatus_(r, STATUS.CONFIRMED, "customer");
+    confirmedRow = JSON.parse(JSON.stringify(r));
     return { ok: true, id: r.id };
   });
+  if (confirmedRow) notifyCustomer_(confirmedRow, "confirmed");
+  return result;
 }
 
 /* 状態だけ変える内部ヘルパー（ロック済み前提）。 */
@@ -351,18 +369,175 @@ function _setStatus_(r, to, actor) {
 
 /* 期限切れの仮予約を一括で解放（時間主導トリガーで定期実行）。 */
 function expireTentatives() {
-  return withLock_(function () {
+  var expiredRows = [];
+  var result = withLock_(function () {
     var rows = readLedger_();
     var now = nowMs_();
-    var n = 0;
     rows.forEach(function (r) {
       if (isTentativeExpired(r, now)) {
         _setStatus_(r, STATUS.EXPIRED, "system");
-        n++;
+        expiredRows.push(JSON.parse(JSON.stringify(r)));
       }
     });
-    return { ok: true, expired: n };
+    return { ok: true, expired: expiredRows.length };
   });
+  expiredRows.forEach(function (r) {
+    notifyCustomer_(r, "expired");
+  });
+  return result;
+}
+
+/* ---------- メール通知（確認リンク/確定/期限切れ/キャンセル・TEST_MODEでガード） ----------
+   ・文面はここに集約（WEB/LINE/電話のどの経路でも同じテンプレート）。
+   ・宛先メールが無い予約（電話・LINEなど）は自動スキップ（＝必須にしない）。
+   ・TEST_MODE 中は実送信せずログのみ（本番前の検証用）。 */
+function senderName_() {
+  return cfg_("MAIL_SENDER_NAME", "AROMA DAIAMOND");
+}
+function storeEmail_() {
+  return cfg_("STORE_EMAIL", "") || cfg_("OWNER_EMAIL", "");
+}
+function storeTel_() {
+  return cfg_("STORE_TEL", "09043918013");
+}
+/* 公開API /exec のベースURL（確認リンク用）。未設定なら現デプロイのURLを使う。 */
+function publicExecUrl_() {
+  var u = cfg_("PUBLIC_EXEC_URL", "");
+  if (u) return u;
+  try {
+    return (ScriptApp.getService().getUrl() || "");
+  } catch (e) {
+    return "";
+  }
+}
+function confirmUrl_(token) {
+  var base = publicExecUrl_();
+  if (!base || !token) return "";
+  return base + (base.indexOf("?") >= 0 ? "&" : "?") + "action=confirm&token=" + encodeURIComponent(token);
+}
+
+/* 予約内容の共通テキスト。 */
+function mailBookingDetail_(r) {
+  return [
+    "日時: " + fmtJst(r.startAt) + " 〜 " + fmtJst(r.endAt).split(" ")[1],
+    "セラピスト: " + (r.therapistName || ""),
+    "コース: " + (r.course || "") + (r.price ? "（¥" + Number(r.price).toLocaleString("en-US") + "）" : ""),
+    "お名前: " + (r.customerName || ""),
+  ].join("\n");
+}
+
+/* 種別→{subject,body}。type: tentative/confirmed/expired/cancelled。 */
+function mailTemplate_(type, r) {
+  var nm = senderName_();
+  var tel = storeTel_();
+  var detail = mailBookingDetail_(r);
+  if (type === "tentative") {
+    var url = confirmUrl_(r.confirmToken);
+    return {
+      subject: "【" + nm + "】ご予約の確認（確定のお手続きをお願いします）",
+      body: [
+        (r.customerName || "お客様") + " 様",
+        "",
+        "この度はご予約ありがとうございます。ただいま【仮予約】の状態です。",
+        "下記リンクを開くと、ご予約が【確定】します。",
+        "",
+        "▼ご予約を確定する",
+        url || "（確認リンクの発行に失敗しました。お手数ですがお電話ください）",
+        "",
+        "※リンクの有効期限は発行から " + ttlMin_() + " 分です。期限を過ぎると枠は解放されます。",
+        "",
+        "▼ご予約内容（仮）",
+        detail,
+        "",
+        "変更・キャンセルはお電話（" + tel + "）までご連絡ください。",
+        nm,
+      ].join("\n"),
+    };
+  }
+  if (type === "confirmed") {
+    return {
+      subject: "【" + nm + "】ご予約が確定しました",
+      body: [
+        (r.customerName || "お客様") + " 様",
+        "",
+        "ご予約が【確定】しました。ご来店を心よりお待ちしております。",
+        "",
+        "▼ご予約内容",
+        detail,
+        "",
+        "変更・キャンセルはお電話（" + tel + "）までご連絡ください。",
+        nm,
+      ].join("\n"),
+    };
+  }
+  if (type === "expired") {
+    return {
+      subject: "【" + nm + "】仮予約の確認期限が過ぎました",
+      body: [
+        (r.customerName || "お客様") + " 様",
+        "",
+        "仮予約の確認期限（" + ttlMin_() + "分）を過ぎたため、枠を解放いたしました。",
+        "恐れ入りますが、ご希望の場合は再度ご予約をお願いいたします。",
+        "",
+        "▼対象のご予約（仮）",
+        detail,
+        "",
+        "お電話（" + tel + "）でも承ります。",
+        nm,
+      ].join("\n"),
+    };
+  }
+  if (type === "cancelled") {
+    return {
+      subject: "【" + nm + "】ご予約をキャンセルしました",
+      body: [
+        (r.customerName || "お客様") + " 様",
+        "",
+        "下記のご予約をキャンセルいたしました。またのご利用をお待ちしております。",
+        "",
+        "▼キャンセルしたご予約",
+        detail,
+        "",
+        "お心当たりがない場合はお電話（" + tel + "）までご連絡ください。",
+        nm,
+      ].join("\n"),
+    };
+  }
+  return null;
+}
+
+/* 1通送信（TEST_MODE中はログのみ・宛先なしはスキップ）。 */
+function sendMail_(to, subject, body) {
+  if (!to) {
+    Logger.log("[mail skip:宛先なし] " + subject);
+    return false;
+  }
+  if (isTestMode_()) {
+    Logger.log("[TEST_MODE 送信抑止] to=" + to + " / " + subject + "\n" + body);
+    return false;
+  }
+  try {
+    GmailApp.sendEmail(to, subject, body, { name: senderName_() });
+    return true;
+  } catch (e) {
+    Logger.log("mail error: " + e);
+    return false;
+  }
+}
+
+/* お客様へ通知＋（新規・確定のみ）店舗へ控え。 */
+function notifyCustomer_(r, type) {
+  var tpl = mailTemplate_(type, r);
+  if (!tpl) return;
+  sendMail_(r.email, tpl.subject, tpl.body);
+  var store = storeEmail_();
+  if (store && (type === "tentative" || type === "confirmed")) {
+    sendMail_(
+      store,
+      "[控え]" + tpl.subject + "（" + (r.therapistName || "") + "）",
+      mailBookingDetail_(r) + "\n経路: " + (r.source || "") + "\n状態: " + (STATUS_LABEL[r.status] || r.status) + "\nID: " + (r.id || "")
+    );
+  }
 }
 
 /* ---------- スタッフ認証 ---------- */
@@ -537,7 +712,8 @@ function adminUpdate(id, changes) {
 /* 確定（電話など確認済みをスタッフが確定）。 */
 function adminConfirm(id) {
   var staff = requireStaff_();
-  return withLock_(function () {
+  var confirmedRow = null;
+  var result = withLock_(function () {
     var rows = readLedger_();
     var r = rows.filter(function (x) {
       return String(x.id) === String(id);
@@ -549,14 +725,18 @@ function adminConfirm(id) {
     var conflict = findConflict(rows, r.therapistId, r.startAt, r.endAt, r.id);
     if (conflict) return { ok: false, reason: "その時間は既に予約が入っています。" };
     _setStatus_(r, STATUS.CONFIRMED, staff);
+    confirmedRow = JSON.parse(JSON.stringify(r));
     return { ok: true, id: r.id };
   });
+  if (confirmedRow) notifyCustomer_(confirmedRow, "confirmed");
+  return result;
 }
 
 /* キャンセル（削除せず履歴として残す）。 */
 function adminCancel(id, reason) {
   var staff = requireStaff_();
-  return withLock_(function () {
+  var cancelledRow = null;
+  var result = withLock_(function () {
     var rows = readLedger_();
     var r = rows.filter(function (x) {
       return String(x.id) === String(id);
@@ -572,8 +752,11 @@ function adminCancel(id, reason) {
     r.updatedBy = staff;
     writeRow_(r.rowNum, r);
     logHistory_(r.id, staff, "cancel", before, r);
+    cancelledRow = JSON.parse(JSON.stringify(r));
     return { ok: true, id: r.id };
   });
+  if (cancelledRow) notifyCustomer_(cancelledRow, "cancelled");
+  return result;
 }
 
 /* スタッフメモ編集。 */

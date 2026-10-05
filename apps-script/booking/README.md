@@ -181,6 +181,36 @@ LINE → Cloudflare Worker（X-Line-Signature検証）→ LINEボット(line-boo
 - 冪等キー（`LINE|userId|日付|時刻|コース`）で **Webhook再送・確定二度押しの二重作成を防止**。
 - 旧 `writeReservation` / `isTaken` / 独自 `"LINE予約"` シートは**廃止**（台帳を一本化）。
 
+### 6-3. メール文面の統一 と TEST_MODE → 本番切替 ✅ 実装済み
+
+予約管理API（Code.gs）に**メール送信を統一実装**しました（文面は `mailTemplate_` に集約）。
+
+| 種別 | 送信タイミング | 主な内容 |
+|------|----------------|----------|
+| 仮予約（確認リンク） | WEB予約の受付時（`createBooking` で仮予約作成） | `?action=confirm&token=` の確定リンク＋TTL期限の案内 |
+| 確定 | 確認リンク確定（`confirmByToken`）／スタッフ確定（`adminConfirm`） | 確定のご案内 |
+| 期限切れ | 仮予約TTL超過（`expireTentatives` の定期トリガー） | 枠解放・再予約のお願い |
+| キャンセル | スタッフキャンセル（`adminCancel`） | キャンセルのご案内 |
+
+- **宛先メールが無い予約（電話・LINE）は自動スキップ**（メールは必須にしない）。
+- **店舗控え**：仮予約・確定時に `STORE_EMAIL`（無ければ `OWNER_EMAIL`）へ控えを送付。
+- 送信は**予約ロック解放後**に実施（ロックを長引かせない）。
+- 確認リンクは `PUBLIC_EXEC_URL`（未設定時は現デプロイURLを自動取得）から生成。
+
+**関連スクリプトプロパティ**（予約管理API側）:
+`STORE_EMAIL` / `MAIL_SENDER_NAME`（既定 "AROMA DAIAMOND"）/ `STORE_TEL`（既定 "09043918013"）/
+`PUBLIC_EXEC_URL` / `TEST_MODE`。
+
+**TEST_MODE → 本番切替手順**（安全側の既定＝テストモード）:
+1. 既定では `TEST_MODE` は**テスト扱い**（`"false"` を明示しない限り**実送信しません**。
+   未設定のまま誤送信することを防ぐ安全設計）。
+2. まず `TEST_MODE` を未設定（または `true`）のまま、テスト台帳・**自分宛のテストメール**で
+   4種のメールが想定どおり出るか、実行ログ（`[TEST_MODE 送信抑止]`）で文面を確認。
+3. 問題なければ `TEST_MODE` を **`false`** に設定して実送信を有効化。
+   （本番のお客様へ実送信が始まるため、切替は検証完了後に実施すること）
+4. `STORE_EMAIL`（例 `aromadiamond00@gmail.com`）、`MAIL_SENDER_NAME`、`PUBLIC_EXEC_URL` を設定。
+5. 送信元は GAS 実行アカウント（Gmail）です。送信者表示名は `MAIL_SENDER_NAME` で制御します。
+
 ---
 
 ## 7. セキュリティ・個人情報
@@ -197,7 +227,7 @@ LINE → Cloudflare Worker（X-Line-Signature検証）→ LINEボット(line-boo
 
 ## 8. 検証結果（この環境で実施できたもの）
 
-純ロジックの自動テスト（`tests/logic.test.mjs`）が **全11件パス**：
+純ロジックの自動テスト（`tests/logic.test.mjs`）が **全13件パス**：
 
 - 日時のJST変換（TZ非依存）／**翌表記・日またぎ**の正しい扱い
 - コース所要分の算出
@@ -229,7 +259,7 @@ LINE → Cloudflare Worker（X-Line-Signature検証）→ LINEボット(line-boo
 1. ~~**サイト側WEB予約の切替**：`app/reserve/page.jsx` を新APIへ（JSON結果確認・no-cors廃止）＋空き状況の失敗を空き扱いしない実装~~ ✅ 実装済み（`reserve-config.json` の `apiV2` にデプロイ後のURLを設定すると有効化。6-1 参照）
 2. ~~**LINE連携の確定**：`line-booking.gs` の `doPost` 署名/シークレット確認＋`finalizeBooking`→`createBooking` 統一~~ ✅ 実装済み（Worker→ボット→`line_event`→共有台帳。6-2 参照。デプロイ＆プロパティ設定が必要）
 3. ~~**管理画面のタイムテーブル表示**：担当者×時間のグリッド（チョイスリザーブ風）~~ ✅ 実装済み（下記「タイムテーブル」参照）
-4. **メール文面の統一**（確定/期限切れ/キャンセル）と TEST_MODE→本番の切替確認
+4. ~~**メール文面の統一**（確定/期限切れ/キャンセル）と TEST_MODE→本番の切替確認~~ ✅ 実装済み（仮予約/確定/期限切れ/キャンセルの4種を統一・TEST_MODEでガード。6-3 参照）
 5. **安定した担当者ID**：出勤/名簿シートに明示的なID列を設ける運用（現状は名前をキー）
 6. 実データでのE2E検証（WEB/LINE/電話が同一台帳・重複拒否・日またぎ・期限解放・期限切れリンク無効）
 
