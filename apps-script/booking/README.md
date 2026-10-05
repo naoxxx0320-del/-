@@ -127,15 +127,28 @@ GitHub Pages だけでは認証付きの安全な予約更新は実現できな�
 > ここは**本番切替**にあたるため、テスト検証後に実施してください。当方では
 > 実環境に接続していないため、以下は手順として提供します。
 
-### 6-1. WEB予約（サイト → 新バックエンド）
-現在 `data/reserve-config.json` の `endpoint` は旧Apps Scriptを指しています。
-新しい公開APIに切り替える際は：
-- `app/reserve/page.jsx` の送信を `POST {action:"web_create", ...}` にし、
-  **`mode:"no-cors"` をやめて JSON レスポンス（`{ok,id,status}`）を読み**、
-  `ok:true` のときだけ完了画面を表示（＝通信失敗を成功表示しない）。
-- 空き状況の取得は `?action=availability&date=YYYY/M/D&callback=...` を使い、
-  **取得失敗（`ok:false`）時は「空き」と見なさない**。
-- これらはテスト台帳・テストエンドポイントで確認後に切り替えます（Phase 2で実装予定）。
+### 6-1. WEB予約（サイト → 新バックエンド）✅ 実装済み（設定で有効化）
+`app/reserve/page.jsx` を新APIに対応させました。**`data/reserve-config.json` の
+`apiV2` が空の間は従来エンドポイント・従来挙動のまま**（＝現在のライブサイトに無影響）。
+新バックエンドをデプロイしたら、その**公開API（実行=自分/アクセス=全員）の /exec URL**
+を `apiV2` に設定するだけで切り替わります。
+
+`apiV2` を設定したときの挙動：
+- 送信は `POST {action:"web_create", ...}`（JSON）。**`mode:"no-cors"` を使わず
+  JSONレスポンス（`{ok,id,status,confirmToken}` / `{ok:false,reason}`）を読み、
+  `ok:true` のときだけ完了画面を表示**（＝通信失敗・満席・出勤外を成功表示しない）。
+  - CORSプリフライト回避のため `Content-Type` を付けず `text/plain`（単純リクエスト）で
+    JSON文字列を送信。GASは `e.postData.contents` を `JSON.parse` するため問題なし。
+  - 冪等キー（`WEB|担当|日付|時刻|メール|コース`）を同送し、**二重送信での重複作成を防止**。
+- 空き状況の取得は `?action=availability&date=YYYY/M/D&callback=...`（GET+JSONP／CORS回避）。
+  返却は `{ok,busy:[{th,s,e,st}]}`（PIIなし・epoch区間）。
+  **取得失敗（`ok:false`・通信エラー）時は「空き」と見なさず、時間選択をブロック**し、
+  お電話での予約を案内（＝取得失敗≠空き）。
+- 担当者IDは出勤シートの「名前」を安定キーとして使用（`adminTherapists` と一致）。
+
+> ⚠️ 切替前に**テスト台帳・テストエンドポイント・テスト用メール**で E2E を確認してから
+> `apiV2` を本番URLに設定してください。切替直後は旧 `endpoint` の送信は止まり、
+> 予約は新台帳に入ります（＝二重運用を避ける）。確定メール送信は 6-3 で有効化します。
 
 ### 6-2. LINE予約（署名検証 → 同じ台帳）
 1. `proxy/line-verify-worker.js` を Cloudflare Worker としてデプロイ
@@ -194,7 +207,7 @@ GitHub Pages だけでは認証付きの安全な予約更新は実現できな�
 
 ## 10. 本番運用までに残っている作業（Phase 2 予定）
 
-1. **サイト側WEB予約の切替**：`app/reserve/page.jsx` を新APIへ（JSON結果確認・no-cors廃止）＋空き状況の失敗を空き扱いしない実装
+1. ~~**サイト側WEB予約の切替**：`app/reserve/page.jsx` を新APIへ（JSON結果確認・no-cors廃止）＋空き状況の失敗を空き扱いしない実装~~ ✅ 実装済み（`reserve-config.json` の `apiV2` にデプロイ後のURLを設定すると有効化。6-1 参照）
 2. **LINE連携の確定**：`line-booking.gs` の `doPost` 署名/シークレット確認＋`finalizeBooking`→`createBooking` 統一（具体パッチ提供）
 3. ~~**管理画面のタイムテーブル表示**：担当者×時間のグリッド（チョイスリザーブ風）~~ ✅ 実装済み（下記「タイムテーブル」参照）
 4. **メール文面の統一**（確定/期限切れ/キャンセル）と TEST_MODE→本番の切替確認
