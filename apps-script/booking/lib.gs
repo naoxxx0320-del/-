@@ -126,6 +126,31 @@ function findConflict(rows, therapistId, startMs, endMs, excludeId) {
   return null;
 }
 
+/* ---- 管理タイムテーブル（担当者×時間グリッド）用の純ロジック ---- */
+
+/* epoch(ms) を「その日(dateStr)の0:00からの経過分」に変換（JST）。
+   翌日の深夜（翌2:00）は 24:00=1440 を超える値になる（例 翌2:00→1560）。 */
+function minutesFromDate(epochMs, dateStr) {
+  var base = parseJstDateTime(dateStr, "0:00");
+  if (base == null || epochMs == null) return null;
+  return Math.round((epochMs - base) / 60000);
+}
+
+/* 予約[startMin,endMin]（その日0:00基準の分）を、開始行index・行spanに変換。
+   openMin: グリッド開始分（例 10:00=600）/ stepMin: 1行の分（例 30）/ rowCount: 行数。
+   枠外ははみ出さないようクランプする。戻り値 {startIdx, span} / 範囲外は null。 */
+function gridPlacement(startMin, endMin, openMin, stepMin, rowCount) {
+  if (startMin == null || endMin == null) return null;
+  if (endMin <= openMin) return null; // 開始前に終わる
+  var closeMin = openMin + rowCount * stepMin;
+  if (startMin >= closeMin) return null; // 営業後に始まる
+  var startIdx = Math.floor((Math.max(startMin, openMin) - openMin) / stepMin);
+  var endIdx = Math.ceil((Math.min(endMin, closeMin) - openMin) / stepMin);
+  startIdx = Math.max(0, Math.min(startIdx, rowCount - 1));
+  endIdx = Math.max(startIdx + 1, Math.min(endIdx, rowCount));
+  return { startIdx: startIdx, span: endIdx - startIdx };
+}
+
 // Node テスト用のエクスポート（GASでは typeof module === 'undefined' で無視される）
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
@@ -142,5 +167,7 @@ if (typeof module !== "undefined" && module.exports) {
     isTentativeExpired,
     canTransition,
     findConflict,
+    minutesFromDate,
+    gridPlacement,
   };
 }

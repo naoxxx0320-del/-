@@ -428,6 +428,49 @@ function adminList(params) {
   return { ok: true, rows: out };
 }
 
+/* タイムテーブル（担当者×時間グリッド）用データを一括取得。
+   その日に出勤 or 予約がある担当者だけを列にする。個人情報は管理画面内のみ。 */
+function adminTimetable(dateStr) {
+  requireStaff_();
+  var openMin = parseInt(cfg_("GRID_OPEN_MIN", "600"), 10) || 600; // 10:00
+  var closeMin = parseInt(cfg_("GRID_CLOSE_MIN", "1740"), 10) || 1740; // 翌5:00
+  var step = parseInt(cfg_("GRID_STEP_MIN", "30"), 10) || 30;
+  var want = normDate_(dateStr);
+
+  var rows = readLedger_().filter(function (r) {
+    return ACTIVE_STATUSES.indexOf(r.status) >= 0 && normDate_(fmtJst(r.startAt)) === want;
+  });
+  var bookings = rows.map(function (r) {
+    return {
+      id: r.id, therapistId: r.therapistId, therapistName: r.therapistName,
+      status: r.status, statusLabel: STATUS_LABEL[r.status], source: r.source,
+      course: r.course, customerName: r.customerName, price: r.price,
+      tel: r.tel, email: r.email,
+      start: fmtJst(r.startAt), end: fmtJst(r.endAt),
+      startMin: minutesFromDate(r.startAt, dateStr), endMin: minutesFromDate(r.endAt, dateStr),
+    };
+  });
+
+  var all = adminTherapists().therapists; // [{id,name}]（出勤シートの全名）
+  var bookedIds = {};
+  bookings.forEach(function (b) {
+    bookedIds[String(b.therapistId)] = 1;
+  });
+  var therapists = [];
+  all.forEach(function (t) {
+    var sh = readShift_(t.name, dateStr);
+    var worksToday = !!sh || bookedIds[String(t.id)];
+    if (!worksToday) return; // その日に出勤も予約も無い人は列に出さない
+    therapists.push({
+      id: t.id, name: t.name,
+      shiftStartMin: sh ? minutesFromDate(sh.startMs, dateStr) : null,
+      shiftEndMin: sh ? minutesFromDate(sh.endMs, dateStr) : null,
+    });
+  });
+
+  return { ok: true, openMin: openMin, closeMin: closeMin, step: step, therapists: therapists, bookings: bookings };
+}
+
 /* 手動登録（電話/LINEで受けた予約）。asConfirmed=true で直接確定も可。 */
 function adminCreate(payload) {
   var staff = requireStaff_();

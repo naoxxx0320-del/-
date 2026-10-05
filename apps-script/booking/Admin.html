@@ -48,6 +48,24 @@
     .toast { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); background:#2a2420; color:#fff; padding:10px 16px; border-radius:24px; font-size:13px; z-index:80; opacity:0; transition:opacity .2s; pointer-events:none; }
     .toast.on { opacity:.96; }
     .loading { text-align:center; color:#8a7c64; padding:20px; }
+    /* 表示切替 */
+    .vtoggle { padding:8px 12px; background:#fff; color:var(--wine); font-weight:700; }
+    .vtoggle.on { background:linear-gradient(180deg,var(--wine2),var(--wine)); color:#fff; }
+    /* タイムテーブル */
+    .tt-wrap { overflow:auto; border:1px solid var(--line); border-radius:10px; background:#fff; }
+    table.tt { border-collapse:collapse; width:100%; font-size:12px; }
+    table.tt th, table.tt td { border:1px solid #ece4d3; }
+    table.tt thead th { position:sticky; top:0; background:#f3ece0; color:#5a4a33; padding:6px 4px; z-index:2; white-space:nowrap; }
+    table.tt th.tcol { position:sticky; left:0; background:#f3ece0; z-index:3; }
+    table.tt td.tlabel { position:sticky; left:0; background:#faf6ee; color:#7a6a4a; font-size:11px; text-align:center; width:52px; white-space:nowrap; z-index:1; }
+    table.tt td.cell { height:22px; min-width:92px; cursor:pointer; }
+    table.tt td.cell.off { background:repeating-linear-gradient(45deg,#f3f1ec,#f3f1ec 6px,#eceae3 6px,#eceae3 12px); cursor:default; }
+    table.tt td.cell.free:hover { background:#fff7df; }
+    table.tt td.bk { vertical-align:top; padding:3px 5px; color:#2a2420; font-weight:600; cursor:pointer; line-height:1.3; }
+    table.tt td.bk small { display:block; font-weight:400; font-size:10.5px; color:#52473a; }
+    table.tt td.bk.st-tentative { background:#fff6e2; }
+    table.tt td.bk.st-confirmed { background:#e7f6ec; }
+    .tt-hint { font-size:11px; color:#8a7c64; margin:6px 2px; }
   </style>
 </head>
 <body>
@@ -78,6 +96,10 @@
         <option value="電話">電話</option>
       </select>
     </label>
+    <span style="display:inline-flex;border:1px solid var(--gold);border-radius:8px;overflow:hidden">
+      <button id="v-list" class="vtoggle on" style="border:none;border-radius:0">一覧</button>
+      <button id="v-grid" class="vtoggle" style="border:none;border-radius:0">タイム表</button>
+    </span>
     <button class="ghost" id="btn-reload">更新</button>
     <button class="primary" id="btn-new">＋ 手動登録</button>
   </div>
@@ -85,6 +107,7 @@
   <main>
     <div class="summary" id="summary"></div>
     <div id="list"><div class="loading">読み込み中…</div></div>
+    <div id="timetable" style="display:none"></div>
   </main>
 
   <!-- 登録/編集モーダル -->
@@ -242,7 +265,7 @@
 
     function runOp(fn, okMsg){
       fn(function(res){
-        if(res&&res.ok){ toast(okMsg); $("detail-bg").classList.remove("on"); $("modal-bg").classList.remove("on"); load(); }
+        if(res&&res.ok){ toast(okMsg); $("detail-bg").classList.remove("on"); $("modal-bg").classList.remove("on"); refresh(); }
         else { alert("できませんでした：" + ((res&&res.reason)||"不明")); }
       }, function(e){ alert("エラー：" + (e&&e.message?e.message:e)); });
     }
@@ -285,8 +308,87 @@
       }
     };
 
-    $("btn-reload").onclick=load;
-    ["f-date","f-ther","f-status","f-source"].forEach(function(idv){ $(idv).addEventListener("change",load); });
+    // ---- タイムテーブル表示 ----
+    var view = "list";
+    // lib.gs の gridPlacement と同一ロジック（クライアント用に複製）
+    function gridPlacement(startMin,endMin,openMin,stepMin,rowCount){
+      if(startMin==null||endMin==null) return null;
+      if(endMin<=openMin) return null;
+      var closeMin=openMin+rowCount*stepMin;
+      if(startMin>=closeMin) return null;
+      var s=Math.floor((Math.max(startMin,openMin)-openMin)/stepMin);
+      var e=Math.ceil((Math.min(endMin,closeMin)-openMin)/stepMin);
+      s=Math.max(0,Math.min(s,rowCount-1));
+      e=Math.max(s+1,Math.min(e,rowCount));
+      return {startIdx:s,span:e-s};
+    }
+    function minLabel(min){ var h=Math.floor(min/60),m=min%60; var p=function(n){return String(n).padStart(2,"0");}; return (h>=24?("翌"+(h-24)):h)+":"+p(m); }
+
+    function loadTimetable(){
+      $("timetable").innerHTML='<div class="loading">読み込み中…</div>';
+      google.script.run
+        .withSuccessHandler(renderTimetable)
+        .withFailureHandler(function(e){ $("timetable").innerHTML='<div class="err">'+esc(e&&e.message?e.message:e)+'</div>'; })
+        .adminTimetable(dateInputToSlash($("f-date").value));
+    }
+
+    function renderTimetable(res){
+      if(!res||!res.ok){ $("timetable").innerHTML='<div class="err">'+esc((res&&res.reason)||"取得に失敗しました")+'</div>'; return; }
+      var open=res.openMin, step=res.step, rowCount=Math.round((res.closeMin-open)/step);
+      var ths=res.therapists||[];
+      current={}; (res.bookings||[]).forEach(function(b){ current[b.id]=b; });
+      if(!ths.length){ $("timetable").innerHTML='<div class="empty">この日に出勤・予約のある担当者がいません。</div>'; $("summary").textContent=""; return; }
+      $("summary").textContent = ths.length+"名 / 予約 "+res.bookings.length+"件";
+      // 列ごとの配置（colMap[thIdx][rowIdx] = {kind:'bk',booking,span} or 'skip'）
+      var cols = ths.map(function(){ return {}; });
+      ths.forEach(function(t,ti){
+        res.bookings.filter(function(b){return String(b.therapistId)===String(t.id);}).forEach(function(b){
+          var g=gridPlacement(b.startMin,b.endMin,open,step,rowCount); if(!g) return;
+          cols[ti][g.startIdx]={kind:'bk',booking:b,span:g.span};
+          for(var k=1;k<g.span;k++) cols[ti][g.startIdx+k]='skip';
+        });
+      });
+      var html='<div class="tt-wrap"><table class="tt"><thead><tr><th class="tcol">時間</th>';
+      ths.forEach(function(t){ html+='<th>'+esc(t.name)+'</th>'; });
+      html+='</tr></thead><tbody>';
+      for(var r=0;r<rowCount;r++){
+        var min=open+r*step;
+        html+='<tr><td class="tlabel">'+esc(minLabel(min))+'</td>';
+        for(var ti=0;ti<ths.length;ti++){
+          var t=ths[ti], cell=cols[ti][r];
+          if(cell==='skip') continue; // rowspanで覆われている
+          if(cell&&cell.kind==='bk'){
+            var b=cell.booking;
+            html+='<td class="bk st-'+esc(b.status)+'" rowspan="'+cell.span+'" onclick="openDetail(\''+esc(b.id)+'\')">'
+              +esc(b.customerName||"（名前なし）")+'<small>'+esc(b.course||"")+' / '+esc(b.statusLabel)+' / '+esc(b.source)+'</small></td>';
+          } else {
+            var inShift = (t.shiftStartMin!=null && t.shiftEndMin!=null) ? (min>=t.shiftStartMin && min<t.shiftEndMin) : true;
+            if(inShift) html+='<td class="cell free" onclick="openNewAt(\''+esc(t.id)+'\',\''+esc(minLabel(min))+'\')"></td>';
+            else html+='<td class="cell off"></td>';
+          }
+        }
+        html+='</tr>';
+      }
+      html+='</tbody></table></div><div class="tt-hint">空きマスをタップで手動登録／予約マスをタップで詳細。斜線は出勤時間外。</div>';
+      $("timetable").innerHTML=html;
+    }
+
+    window.openNewAt=function(therapistId, timeLabel){
+      openEdit(null);
+      $("m-ther").value=therapistId;
+      $("m-time").value=timeLabel;
+      $("m-date").value=$("f-date").value;
+    };
+
+    function refresh(){
+      if(view==="list"){ $("list").style.display="block"; $("timetable").style.display="none"; load(); }
+      else { $("list").style.display="none"; $("timetable").style.display="block"; loadTimetable(); }
+    }
+    $("v-list").onclick=function(){ view="list"; $("v-list").classList.add("on"); $("v-grid").classList.remove("on"); refresh(); };
+    $("v-grid").onclick=function(){ view="grid"; $("v-grid").classList.add("on"); $("v-list").classList.remove("on"); refresh(); };
+
+    $("btn-reload").onclick=refresh;
+    ["f-date","f-ther","f-status","f-source"].forEach(function(idv){ $(idv).addEventListener("change",refresh); });
   </script>
 </body>
 </html>
