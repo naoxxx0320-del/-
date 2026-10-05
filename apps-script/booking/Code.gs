@@ -234,6 +234,44 @@ function normDate_(s) {
   return m ? +m[1] * 10000 + +m[2] * 100 + +m[3] : "";
 }
 
+/* ---------- 担当者ディレクトリ（安定ID） ----------
+   出勤シートに任意の「担当者ID」（または「ID」）列があれば、それを
+   “名前が変わっても不変の安定ID”として採用する。無ければ従来どおり名前をIDに使う。
+   これにより、改名や表記ゆれがあっても予約と担当者の紐付けが壊れない。
+   戻り値: { list:[{id,name}], byName:{<name>:<id>} }（名前で重複排除）。 */
+function therapistDirectory_() {
+  var out = { list: [], byName: {} };
+  try {
+    var sh = book_().getSheetByName(SCHEDULE_SHEET);
+    if (!sh || sh.getLastRow() < 2) return out;
+    var v = sh.getDataRange().getValues();
+    var head = v[0].map(function (x) {
+      return String(x).trim();
+    });
+    var ni = head.indexOf("名前");
+    var idi = head.indexOf("担当者ID");
+    if (idi < 0) idi = head.indexOf("ID");
+    var seen = {};
+    for (var i = 1; i < v.length; i++) {
+      var nm = ni >= 0 ? String(v[i][ni]).trim() : "";
+      if (!nm || seen[nm]) continue;
+      var id = idi >= 0 ? String(v[i][idi]).trim() : "";
+      if (!id) id = nm; // ID列が空なら名前を安定キーに（従来互換）
+      seen[nm] = 1;
+      out.list.push({ id: id, name: nm });
+      out.byName[nm] = id;
+    }
+  } catch (err) {}
+  return out;
+}
+
+/* 名前（または既存ID）→ 安定ID。マッピングが無ければそのまま返す。 */
+function resolveTherapistId_(nameOrId) {
+  if (!nameOrId) return "";
+  var dir = therapistDirectory_();
+  return dir.byName[nameOrId] || nameOrId;
+}
+
 /* ---------- コア操作 ---------- */
 /* 予約を作成する（WEB/LINE/電話 共通）。
  * payload: {source, therapistId?, therapistName, dateStr, timeLabel, course,
@@ -245,9 +283,17 @@ function createBooking(payload) {
   var toNotify = null; // 送信はロック解放後（予約ロックを長引かせない）
   var result = withLock_(function () {
     var p = payload || {};
-    var therapistId = p.therapistId || p.therapistName;
-    if (!therapistId || !p.therapistName)
+    if (!p.therapistName && !p.therapistId)
       return { ok: false, reason: "担当者が未指定です。" };
+    // 安定IDに正規化する。
+    //  ・管理画面が名前と異なる明示IDを渡した場合はそれを尊重（同名担当の区別）。
+    //  ・WEB/LINE は名前のみ送るため、出勤シートの「担当者ID」列で名前→安定IDに解決。
+    //  ・ID列が無ければ名前がそのままIDになる（従来互換）。
+    var therapistId =
+      p.therapistId && p.therapistId !== p.therapistName
+        ? p.therapistId
+        : resolveTherapistId_(p.therapistName || p.therapistId);
+    if (!therapistId) return { ok: false, reason: "担当者が未指定です。" };
     var startMs = parseJstDateTime(p.dateStr, p.timeLabel);
     if (startMs == null) return { ok: false, reason: "日時が不正です。" };
     var dur = courseDurationMin(p.course);
@@ -899,30 +945,11 @@ function serveAdmin_() {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
 }
 
-/* roster を管理画面に渡す（担当者選択用。個人情報ではない）。 */
+/* roster を管理画面に渡す（担当者選択用。個人情報ではない）。
+   IDは出勤シートの「担当者ID」列があればその安定ID、無ければ名前（従来互換）。 */
 function adminTherapists() {
   requireStaff_();
-  // 出勤シートの名前一覧（重複排除）。IDは名前を安定キーとして使用。
-  var out = [];
-  try {
-    var sh = book_().getSheetByName(SCHEDULE_SHEET);
-    if (sh && sh.getLastRow() > 1) {
-      var v = sh.getDataRange().getValues();
-      var head = v[0].map(function (x) {
-        return String(x).trim();
-      });
-      var ni = head.indexOf("名前");
-      var seen = {};
-      for (var i = 1; i < v.length; i++) {
-        var nm = ni >= 0 ? String(v[i][ni]).trim() : "";
-        if (nm && !seen[nm]) {
-          seen[nm] = 1;
-          out.push({ id: nm, name: nm });
-        }
-      }
-    }
-  } catch (err) {}
-  return { ok: true, therapists: out };
+  return { ok: true, therapists: therapistDirectory_().list };
 }
 
 /* ---------- 出力ヘルパー ---------- */
