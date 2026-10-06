@@ -886,6 +886,20 @@ function doGet(e) {
   return serveAdmin_();
 }
 
+/* WEB予約フォームの補足項目（フリガナ／お支払い／きっかけ／ご希望）を
+   スタッフメモ用の1行にまとめる。各項目は長さを制限して保存する。 */
+function webMemo_(b) {
+  var clip = function (v, n) {
+    return String(v == null ? "" : v).replace(/\s+/g, " ").trim().slice(0, n);
+  };
+  var parts = [];
+  if (clip(b.kana, 50)) parts.push("フリガナ:" + clip(b.kana, 50));
+  if (clip(b.pay, 30)) parts.push("支払:" + clip(b.pay, 30));
+  if (clip(b.source, 50)) parts.push("きっかけ:" + clip(b.source, 50));
+  if (clip(b.note, 300)) parts.push("ご希望:" + clip(b.note, 300));
+  return parts.join(" / ");
+}
+
 function doPost(e) {
   try {
     var body = {};
@@ -913,6 +927,7 @@ function doPost(e) {
         tel: body.tel,
         email: body.email,
         idempotencyKey: body.idempotencyKey,
+        staffMemo: webMemo_(body),
       });
       return json_(r);
     }

@@ -431,6 +431,11 @@ export default function Reserve() {
             customerName: form.name,
             tel: form.tel,
             email: form.email,
+            // 補足項目（店側のスタッフメモに記録される）
+            kana: form.kana,
+            pay: form.pay,
+            source: source || "",
+            note: form.note,
             idempotencyKey,
           }),
         });
