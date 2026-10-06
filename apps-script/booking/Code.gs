@@ -133,7 +133,7 @@ function readLedger_() {
       course: r[c["コース"]],
       price: r[c["料金"]],
       customerName: r[c["お客様名"]],
-      tel: r[c["電話"]],
+      tel: fixTel_(r[c["電話"]]),
       email: r[c["メール"]],
       lineUserId: r[c["LINE_UID"]],
       tentativeExpireAt: Number(r[c["仮予約期限epoch"]]) || 0,
@@ -147,12 +147,25 @@ function readLedger_() {
   });
 }
 
+/* 電話番号の先頭0を守る。シートは "08012345678" を数値に自動変換して0を落とすため、
+   ・読み込み時：0が欠けた9〜10桁の数字（日本の番号は必ず0始まり）に0を補う
+   ・書き込み時：先頭に ' を付けて「文字列」として保存（' 自体はセル値に含まれない） */
+function fixTel_(v) {
+  var s = String(v == null ? "" : v).trim();
+  if (/^[1-9]\d{8,9}$/.test(s)) s = "0" + s;
+  return s;
+}
+function telCell_(v) {
+  var s = fixTel_(v);
+  return s ? "'" + s : "";
+}
+
 function objToRow_(o) {
   return [
     o.id, o.source, o.status, STATUS_LABEL[o.status] || o.status,
     o.therapistId, o.therapistName,
     fmtJst(o.startAt), fmtJst(o.endAt), o.startAt, o.endAt, o.durationMin,
-    o.course, o.price, o.customerName, o.tel || "", o.email || "", o.lineUserId || "",
+    o.course, o.price, o.customerName, telCell_(o.tel), o.email || "", o.lineUserId || "",
     o.tentativeExpireAt || "", o.confirmToken || "", o.idempotencyKey || "", o.staffMemo || "",
     o.createdAt, o.updatedAt, o.updatedBy || "",
   ];
@@ -947,8 +960,11 @@ function doPost(e) {
         course: body.course,
         price: body.price,
         customerName: body.customerName,
+        tel: body.tel,
         lineUserId: body.lineUserId,
         idempotencyKey: body.idempotencyKey,
+        staffMemo: body.lineName ? "LINE表示名:" + String(body.lineName).slice(0, 50) : "",
+        asConfirmed: true, // LINE予約はその場で確定（店舗方針）。署名検証済みルートのみ
       });
       return json_(rr);
     }
@@ -1159,6 +1175,15 @@ function normalizeLegacyDate_(s) {
   if (!m) return "";
   var y = new Date().getFullYear();
   return y + "/" + (+m[1]) + "/" + (+m[2]);
+}
+
+/* エディタの「実行」から呼ぶための移行ラッパー（引数を渡せないため）。
+   migrateDry: 書き込みなしで件数を確認 / migrateRun: バックアップ後に移行（再実行しても重複しない）。 */
+function migrateDry() {
+  Logger.log(JSON.stringify(migrateFromLegacy({ dryRun: true }), null, 2));
+}
+function migrateRun() {
+  Logger.log(JSON.stringify(migrateFromLegacy({ dryRun: false }), null, 2));
 }
 
 /* ブック全体を複製してバックアップ（移行前の安全策）。 */
