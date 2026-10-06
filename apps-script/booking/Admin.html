@@ -69,14 +69,45 @@
     table.tt td.bk.st-tentative { background:#fff6e2; }
     table.tt td.bk.st-confirmed { background:#e7f6ec; }
     .tt-hint { font-size:11px; color:#8a7c64; margin:6px 2px; }
+    /* ページ切替（予約／セラピスト） */
+    .ptabs { display:inline-flex; gap:4px; margin-left:8px; }
+    .ptab { padding:6px 12px; font-size:13px; background:transparent; color:#f3e6c9; border:1px solid rgba(243,230,201,.5); }
+    .ptab.on { background:#fff; color:var(--wine); border-color:#fff; }
+    /* 週間出勤表 */
+    table.sg { border-collapse:collapse; width:100%; font-size:12px; }
+    table.sg th, table.sg td { border:1px solid #ece4d3; }
+    table.sg thead th { position:sticky; top:0; background:#f3ece0; color:#5a4a33; padding:6px 4px; white-space:nowrap; z-index:2; }
+    table.sg th.nm { position:sticky; left:0; background:#faf6ee; z-index:3; text-align:left; padding:0; min-width:84px; }
+    table.sg th.nm button { width:100%; border:none; border-radius:0; background:transparent; text-align:left; padding:8px 6px; font-size:13px; color:var(--wine); text-decoration:underline; }
+    table.sg td.sc { height:44px; min-width:84px; padding:3px 4px; vertical-align:top; cursor:pointer; text-align:center; }
+    table.sg td.sc:hover { background:#fff7df; }
+    table.sg td.sc.on { background:#e7f6ec; }
+    table.sg td.sc.off { background:repeating-linear-gradient(45deg,#f3f1ec,#f3f1ec 6px,#eceae3 6px,#eceae3 12px); color:#888; }
+    table.sg td.sc.draft { background:#fff6e2; color:#9a6a00; }
+    table.sg td.sc .t { font-weight:700; white-space:nowrap; }
+    table.sg td.sc small { display:block; font-size:10.5px; color:#6b5d44; }
+    table.sg td.sc .plus { color:#c9bfa9; font-size:16px; line-height:36px; }
+    table.sg td.sc.today, table.sg th.today { outline:2px solid var(--gold); outline-offset:-2px; }
+    .sec-h { font-size:13px; color:var(--wine); font-weight:700; margin:12px 0 4px; border-bottom:1px solid var(--line); padding-bottom:3px; }
+    .kv { display:grid; grid-template-columns:auto 1fr; gap:2px 10px; font-size:12.5px; }
+    .kv dt { color:#8a7c64; } .kv dd { margin:0; word-break:break-all; }
+    .li { font-size:12.5px; padding:5px 2px; border-bottom:1px dashed #eee5d2; display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+    .li.click { cursor:pointer; } .li.click:hover { background:#fff7df; }
+    .stat { display:inline-block; background:#faf6ee; border:1px solid var(--line); border-radius:8px; padding:6px 10px; margin:2px 4px 2px 0; font-size:12px; }
+    .stat b { font-size:16px; color:var(--wine); margin-left:4px; }
   </style>
 </head>
 <body>
   <header>
     <h1>予約管理 ｜ AROMA DAIAMOND</h1>
+    <nav class="ptabs">
+      <button class="ptab on" id="tab-bk">予約</button>
+      <button class="ptab" id="tab-th">セラピスト</button>
+    </nav>
     <span class="me" id="me"></span>
   </header>
 
+  <div id="page-bk">
   <div class="bar">
     <label>日付<input type="date" id="f-date" /></label>
     <label>担当者
@@ -112,6 +143,59 @@
     <div id="list"><div class="loading">読み込み中…</div></div>
     <div id="timetable" style="display:none"></div>
   </main>
+  </div>
+
+  <!-- セラピスト（週間出勤表） -->
+  <div id="page-th" style="display:none">
+    <div class="bar">
+      <button class="ghost" id="th-prev">‹ 前の週</button>
+      <label>週の始まり<input type="date" id="th-from" /></label>
+      <button class="ghost" id="th-next">次の週 ›</button>
+      <button class="ghost" id="th-today">今日</button>
+      <button class="ghost" id="th-reload">更新</button>
+      <button class="primary" id="th-new">＋ 出勤を登録</button>
+    </div>
+    <main>
+      <div class="summary" id="th-summary"></div>
+      <div id="th-grid"><div class="loading">読み込み中…</div></div>
+      <p class="tt-hint">マスをタップで出勤の登録・変更／名前をタップで個別ページ。斜線＝休み、黄色＝申請中・希望休（サイト非表示・予約不可）。サイトの出勤表示への反映は最大15分ほどかかります。</p>
+    </main>
+  </div>
+
+  <!-- 出勤の登録/変更モーダル -->
+  <div class="modal-bg" id="sh-bg">
+    <div class="modal">
+      <h2 id="sh-title">出勤の登録</h2>
+      <div class="field"><label>セラピスト（新しい人は名前を入力）</label><input id="sh-name" list="sh-names" autocomplete="off" /><datalist id="sh-names"></datalist></div>
+      <div class="field"><label>日付</label><input type="date" id="sh-date" /></div>
+      <div class="field"><label>出勤時間（開始〜終了）</label><div class="two"><select id="sh-start"></select><select id="sh-end"></select></div></div>
+      <div class="field"><label>サイトの空き表示／区分</label>
+        <div class="two">
+          <select id="sh-status"><option>空きあり</option><option>残りわずか</option><option>満了</option><option>受付終了</option></select>
+          <select id="sh-kbn"><option>確定</option><option>申請中</option><option>希望休</option></select>
+        </div>
+      </div>
+      <p class="note" id="sh-state">※「申請中」「希望休」はサイトに表示されず、WEB・LINEの予約も受け付けません。</p>
+      <div class="modal-actions">
+        <button class="ghost" id="sh-close">閉じる</button>
+        <button class="danger" id="sh-del">削除</button>
+        <button class="ghost" id="sh-absent">休みにする</button>
+        <button class="primary" id="sh-save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- セラピスト個別ページ -->
+  <div class="modal-bg" id="td-bg">
+    <div class="modal" style="max-width:560px">
+      <h2 id="td-title">セラピスト</h2>
+      <div id="td-body"><div class="loading">読み込み中…</div></div>
+      <div class="modal-actions">
+        <button class="ghost" id="td-close">閉じる</button>
+        <button class="primary" id="td-add">＋ 出勤を登録</button>
+      </div>
+    </div>
+  </div>
 
   <!-- 登録/編集モーダル -->
   <div class="modal-bg" id="modal-bg">
@@ -406,6 +490,169 @@
 
     $("btn-reload").onclick=refresh;
     ["f-date","f-ther","f-status","f-source"].forEach(function(idv){ $(idv).addEventListener("change",refresh); });
+  </script>
+  <script>
+  /* ===== セラピスト管理（週間出勤表・出勤の登録・個別ページ） ===== */
+  (function(){
+    var STEP_TIMES = (function(){ var a=[]; for(var m=600;m<=1740;m+=30){ var h=Math.floor(m/60), mm=m%60; a.push((h>=24?"翌"+(h-24):h)+":"+(mm<10?"0":"")+mm); } return a; })();
+    var shData = null, shCur = null, tdName = "";
+    function slashToInput(s){ var m=String(s||"").match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/); if(!m) return ""; var p=function(n){return String(n).padStart(2,"0");}; return m[1]+"-"+p(m[2])+"-"+p(m[3]); }
+    function addDaysInput(v,n){ var d=new Date(v+"T00:00:00"); d.setDate(d.getDate()+n); var p=function(x){return String(x).padStart(2,"0");}; return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate()); }
+    function splitTime(t){ var m=String(t||"").match(/(.+?)\s*[〜~\-]\s*(.+)/); return m?[m[1].trim(),m[2].trim()]:[String(t||"").trim(),""]; }
+    function fillTimes(sel, val){
+      var opts=STEP_TIMES.slice(); if(val && opts.indexOf(val)<0) opts.unshift(val);
+      sel.innerHTML=opts.map(function(t){ return '<option'+(t===val?' selected':'')+'>'+esc(t)+'</option>'; }).join("");
+    }
+    function setSelect(sel, val){ if(!val) return; var has=[].some.call(sel.options,function(o){return o.value===val;}); if(!has){ var o=document.createElement("option"); o.textContent=val; sel.appendChild(o);} sel.value=val; }
+
+    // ---- ページ切替 ----
+    function showPage(th){
+      $("page-bk").style.display = th?"none":"block";
+      $("page-th").style.display = th?"block":"none";
+      $("tab-bk").classList.toggle("on", !th); $("tab-th").classList.toggle("on", th);
+      if(th && !shData) loadShifts();
+    }
+    $("tab-bk").onclick=function(){ showPage(false); };
+    $("tab-th").onclick=function(){ showPage(true); };
+
+    // ---- 週間出勤表 ----
+    $("th-from").value = todayStr();
+    function loadShifts(){
+      $("th-grid").innerHTML='<div class="loading">読み込み中…</div>';
+      google.script.run.withSuccessHandler(renderShifts)
+        .withFailureHandler(function(e){ $("th-grid").innerHTML='<div class="err">'+esc(e&&e.message?e.message:e)+'</div>'; })
+        .adminShifts(dateInputToSlash($("th-from").value), 7);
+    }
+    function renderShifts(res){
+      if(!res||!res.ok){ $("th-grid").innerHTML='<div class="err">'+esc((res&&res.reason)||"取得に失敗しました")+'</div>'; return; }
+      shData=res;
+      var map={}; res.shifts.forEach(function(s,i){ map[s.name+"|"+s.date]=i; });
+      var today=dateInputToSlash(todayStr());
+      var working=res.shifts.filter(function(s){return !s.absent&&!s.draft;}).length;
+      $("th-summary").textContent = res.names.length+"名 ／ この週の出勤 "+working+"件";
+      $("sh-names").innerHTML = res.names.map(function(n){return '<option value="'+esc(n).replace(/"/g,"&quot;")+'">';}).join("");
+      var h='<div class="tt-wrap"><table class="sg"><thead><tr><th class="nm" style="padding:6px">セラピスト</th>';
+      res.dates.forEach(function(d){ h+='<th'+(d.date===today?' class="today"':'')+'>'+esc(d.label)+'</th>'; });
+      h+='</tr></thead><tbody>';
+      res.names.forEach(function(n,ni){
+        h+='<tr><th class="nm"><button data-ther="'+ni+'">'+esc(n)+'</button></th>';
+        res.dates.forEach(function(d,di){
+          var idx=map[n+"|"+d.date], cls="sc"+(d.date===today?" today":"");
+          if(idx==null){ h+='<td class="'+cls+'" data-n="'+ni+'" data-d="'+di+'"><span class="plus">＋</span></td>'; return; }
+          var s=res.shifts[idx];
+          if(s.absent){ h+='<td class="'+cls+' off" data-s="'+idx+'"><span class="t">休み</span><small>'+esc(s.time)+'</small></td>'; return; }
+          if(s.draft){ h+='<td class="'+cls+' draft" data-s="'+idx+'"><span class="t">'+esc(s.time)+'</span><small>'+esc(s.kbn||"申請中")+'</small></td>'; return; }
+          h+='<td class="'+cls+' on" data-s="'+idx+'"><span class="t">'+esc(s.time)+'</span><small>'+esc(s.status||"")+'</small></td>';
+        });
+        h+='</tr>';
+      });
+      h+='</tbody></table></div>';
+      if(!res.names.length) h='<div class="empty">セラピストがまだいません。「＋ 出勤を登録」から追加できます。</div>';
+      $("th-grid").innerHTML=h;
+    }
+    $("th-grid").addEventListener("click", function(ev){
+      var b=ev.target.closest("[data-ther]"); if(b){ openTherapist(shData.names[+b.getAttribute("data-ther")]); return; }
+      var td=ev.target.closest("td.sc"); if(!td||!shData) return;
+      if(td.hasAttribute("data-s")) openShift(shData.shifts[+td.getAttribute("data-s")]);
+      else openShift({ name: shData.names[+td.getAttribute("data-n")], date: shData.dates[+td.getAttribute("data-d")].date });
+    });
+    $("th-prev").onclick=function(){ $("th-from").value=addDaysInput($("th-from").value,-7); loadShifts(); };
+    $("th-next").onclick=function(){ $("th-from").value=addDaysInput($("th-from").value,7); loadShifts(); };
+    $("th-today").onclick=function(){ $("th-from").value=todayStr(); loadShifts(); };
+    $("th-reload").onclick=loadShifts;
+    $("th-from").addEventListener("change", loadShifts);
+    $("th-new").onclick=function(){ openShift({ date: dateInputToSlash($("th-from").value) }); };
+
+    // ---- 出勤の登録/変更 ----
+    function openShift(s){
+      shCur = s && s.row ? s : null;
+      var tt = splitTime(s&&s.time);
+      $("sh-title").textContent = shCur ? "出勤の変更" : "出勤の登録";
+      $("sh-name").value = (s&&s.name)||"";
+      $("sh-date").value = slashToInput(s&&s.date) || todayStr();
+      fillTimes($("sh-start"), tt[0] || "13:00");
+      fillTimes($("sh-end"), tt[1] || "翌2:00");
+      $("sh-status").value="空きあり"; setSelect($("sh-status"), shCur&&shCur.status);
+      $("sh-kbn").value="確定"; setSelect($("sh-kbn"), shCur&&shCur.draft ? shCur.kbn : "");
+      $("sh-del").style.display = shCur ? "inline-block" : "none";
+      $("sh-absent").style.display = shCur ? "inline-block" : "none";
+      $("sh-absent").textContent = shCur&&shCur.absent ? "出勤に戻す" : "休みにする";
+      $("sh-state").textContent = shCur&&shCur.absent
+        ? "※ 現在「休み」です。保存すると出勤に戻ります。"
+        : "※「申請中」「希望休」はサイトに表示されず、WEB・LINEの予約も受け付けません。";
+      $("sh-bg").classList.add("on");
+    }
+    function shiftDone(msg){
+      return function(res){
+        if(res&&res.ok){
+          toast(msg); $("sh-bg").classList.remove("on"); loadShifts();
+          if(tdName && $("td-bg").classList.contains("on")) openTherapist(tdName);
+          if(res.warning) setTimeout(function(){ alert("⚠ "+res.warning); }, 50);
+        } else alert("できませんでした："+((res&&res.reason)||"不明"));
+      };
+    }
+    function shiftFail(e){ alert("エラー："+(e&&e.message?e.message:e)); }
+    $("sh-close").onclick=function(){ $("sh-bg").classList.remove("on"); };
+    $("sh-save").onclick=function(){
+      var p={ name:$("sh-name").value.trim(), date:dateInputToSlash($("sh-date").value), start:$("sh-start").value, end:$("sh-end").value, status:$("sh-status").value, kbn:$("sh-kbn").value };
+      if(!p.name){ alert("セラピストを入力してください。"); return; }
+      if(shCur){ p.row=shCur.row; p.origName=shCur.name; p.origDate=shCur.date; }
+      google.script.run.withSuccessHandler(shiftDone("出勤を保存しました")).withFailureHandler(shiftFail).adminShiftSave(p);
+    };
+    $("sh-absent").onclick=function(){
+      if(!shCur) return;
+      var toAbsent=!shCur.absent;
+      if(toAbsent && !confirm(shCur.name+"さんの "+shCur.date+" を「休み」にします。よろしいですか？")) return;
+      google.script.run.withSuccessHandler(shiftDone(toAbsent?"休みにしました":"出勤に戻しました")).withFailureHandler(shiftFail)
+        .adminShiftSetAbsent({ row:shCur.row, name:shCur.name, date:shCur.date, absent:toAbsent });
+    };
+    $("sh-del").onclick=function(){
+      if(!shCur) return;
+      if(!confirm(shCur.name+"さんの "+shCur.date+" の出勤を削除します。よろしいですか？\n（休みの場合は「休みにする」をお使いください）")) return;
+      google.script.run.withSuccessHandler(shiftDone("削除しました")).withFailureHandler(shiftFail)
+        .adminShiftDelete({ row:shCur.row, name:shCur.name, date:shCur.date });
+    };
+
+    // ---- 個別ページ ----
+    function openTherapist(name){
+      tdName=name;
+      $("td-title").textContent=name+" さん";
+      $("td-body").innerHTML='<div class="loading">読み込み中…</div>';
+      $("td-bg").classList.add("on");
+      google.script.run.withSuccessHandler(renderTherapist)
+        .withFailureHandler(function(e){ $("td-body").innerHTML='<div class="err">'+esc(e&&e.message?e.message:e)+'</div>'; })
+        .adminTherapistDetail(name);
+    }
+    function renderTherapist(res){
+      if(!res||!res.ok){ $("td-body").innerHTML='<div class="err">'+esc((res&&res.reason)||"取得に失敗しました")+'</div>'; return; }
+      var h='<div><span class="stat">今月の確定予約<b>'+res.counts.thisMonth+'</b>件</span><span class="stat">今後の予約<b>'+res.counts.upcoming+'</b>件</span></div>';
+      h+='<div class="sec-h">出勤予定（今日から2週間）</div>';
+      if(!res.shifts.length) h+='<div class="note">登録された出勤はありません。</div>';
+      res.shifts.forEach(function(s,i){
+        var st = s.absent ? '<span class="pill st-cancelled">休み</span>' : s.draft ? '<span class="pill st-tentative">申請中・希望休</span>' : '<span class="pill st-confirmed">出勤</span>';
+        h+='<div class="li click" data-tds="'+i+'"><b>'+esc(s.label)+'</b> '+esc(s.time)+' '+st+(s.status&&!s.absent?' <small>'+esc(s.status)+'</small>':'')+'</div>';
+      });
+      h+='<div class="sec-h">今後の予約</div>';
+      if(!res.bookings.length) h+='<div class="note">今後の予約はありません。</div>';
+      res.bookings.forEach(function(b){
+        h+='<div class="li"><b>'+esc(b.start.slice(5))+'〜'+esc(b.end.split(" ")[1])+'</b> <span class="pill st-'+esc(b.status)+'">'+esc(b.statusLabel)+'</span> <span class="src">'+esc(b.source)+'</span> '+esc(b.customerName||"（名前なし）")+' / '+esc(b.course||"")+'</div>';
+      });
+      if(res.profile.length){
+        h+='<div class="sec-h">プロフィール（名簿シート）</div><dl class="kv">';
+        res.profile.forEach(function(x){ h+='<dt>'+esc(x.label)+'</dt><dd>'+esc(x.value)+'</dd>'; });
+        h+='</dl>';
+      }
+      $("td-body").innerHTML=h;
+      $("td-body").__shifts=res.shifts;
+    }
+    $("td-body").addEventListener("click", function(ev){
+      var li=ev.target.closest("[data-tds]"); if(!li) return;
+      var s=$("td-body").__shifts[+li.getAttribute("data-tds")];
+      openShift({ row:s.row, name:tdName, date:s.date, time:s.time, status:s.status, absent:s.absent, draft:s.draft, kbn:s.draft?"申請中":"" });
+    });
+    $("td-close").onclick=function(){ $("td-bg").classList.remove("on"); };
+    $("td-add").onclick=function(){ openShift({ name: tdName, date: dateInputToSlash(todayStr()) }); };
+  })();
   </script>
 </body>
 </html>

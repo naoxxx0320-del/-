@@ -203,45 +203,116 @@ function withLock_(fn) {
 }
 
 /* ---------- 出勤（空き・出勤内判定） ---------- */
-/* 出勤シートから (name,dateStr) の勤務レンジ {startMs,endMs} を返す。無ければ null。
-   列: 日付 / 名前 / 出勤時間 / 終了（"13:00〜翌2:00" 形式でも、開始/終了が分かれていても対応）。 */
-function readShift_(name, dateStr) {
+/* 出勤シートを読み込む（見出し行＝「名前」を含む行を自動検出）。
+   戻り値: { sh, values, hi(見出し行index), head, c:{列index} } */
+function schedSheet_() {
   var sh = book_().getSheetByName(SCHEDULE_SHEET);
-  if (!sh || sh.getLastRow() < 2) return null;
-  var v = sh.getDataRange().getValues();
-  var head = v[0].map(function (x) {
+  if (!sh) throw new Error("「" + SCHEDULE_SHEET + "」シートが見つかりません。");
+  var v = sh.getLastRow() > 0 ? sh.getDataRange().getValues() : [[]];
+  var hi = -1;
+  for (var i = 0; i < Math.min(v.length, 10); i++) {
+    var rowHead = v[i].map(function (x) {
+      return String(x).trim();
+    });
+    if (rowHead.indexOf("名前") >= 0) {
+      hi = i;
+      break;
+    }
+  }
+  if (hi < 0) throw new Error("「" + SCHEDULE_SHEET + "」シートに「名前」の見出しがありません。");
+  var head = v[hi].map(function (x) {
     return String(x).trim();
   });
-  var ci = {
-    date: head.indexOf("日付"),
-    name: head.indexOf("名前"),
-    start: head.indexOf("出勤時間"),
-    end: head.indexOf("終了"),
-  };
-  var want = normDate_(dateStr);
-  for (var i = 1; i < v.length; i++) {
-    var nm = ci.name >= 0 ? String(v[i][ci.name]).trim() : "";
-    if (nm !== name) continue;
-    var dv = ci.date >= 0 ? v[i][ci.date] : "";
-    var dstr = dateCell_(dv);
-    if (normDate_(dstr) !== want) continue;
-    var sCell = ci.start >= 0 ? timeCell_(v[i][ci.start]) : "";
-    var eCell = ci.end >= 0 ? timeCell_(v[i][ci.end]) : "";
-    var startLabel = sCell,
-      endLabel = eCell;
-    // "13:00〜翌2:00" のように1セルに入っている場合
-    var m = String(sCell).match(/(.+?)\s*[〜~\-]\s*(.+)/);
-    if (m) {
-      startLabel = m[1];
-      endLabel = m[2];
+  var col = function (names) {
+    for (var k = 0; k < names.length; k++) {
+      var j = head.indexOf(names[k]);
+      if (j >= 0) return j;
     }
-    var sMs = parseJstDateTime(dstr, startLabel);
-    var eMs = parseJstDateTime(dstr, endLabel);
-    if (sMs == null || eMs == null) return null;
-    if (eMs <= sMs) eMs += 24 * 3600 * 1000; // 念のため（翌表記漏れ対策）
-    return { startMs: sMs, endMs: eMs };
+    return -1;
+  };
+  var c = {
+    date: col(["日付"]),
+    label: col(["ラベル"]),
+    name: col(["名前"]),
+    time: col(["出勤時間", "時間"]),
+    end: col(["終了"]),
+    status: col(["ステータス"]),
+    present: col(["出勤"]),
+    kbn: col(["区分"]),
+    area: col(["エリア"]),
+  };
+  return { sh: sh, values: v, hi: hi, head: head, c: c };
+}
+/* 「出勤」列の ✖️ 等（休み）／「区分」列の 申請中・希望休 等（未確定）。サイト側の判定と同じ。 */
+function isAbsentMark_(v) {
+  return /^(✖️|✖|✗|×|✕|x|欠|欠勤|休|休み|no|false|非表示)$/i.test(String(v == null ? "" : v).trim());
+}
+function isDraftKbn_(v) {
+  return /^(申請|申請中|希望|希望休|未確定|保留|draft|下書き)$/i.test(String(v == null ? "" : v).trim());
+}
+/* 出勤シートの1行 → 出勤情報。休み・未確定・日付不正なら active=false。 */
+function shiftRowInfo_(S, row) {
+  var c = S.c;
+  var dstr = c.date >= 0 ? dateCell_(row[c.date]) : "";
+  var sCell = c.time >= 0 ? timeCell_(row[c.time]) : "";
+  var eCell = c.end >= 0 ? timeCell_(row[c.end]) : "";
+  var startLabel = sCell,
+    endLabel = eCell;
+  var m = String(sCell).match(/(.+?)\s*[〜~\-]\s*(.+)/); // "13:00〜翌2:00" 形式
+  if (m) {
+    startLabel = m[1];
+    endLabel = m[2];
+  }
+  var sMs = parseJstDateTime(dstr, startLabel);
+  var eMs = parseJstDateTime(dstr, endLabel);
+  if (sMs != null && eMs != null && eMs <= sMs) eMs += 24 * 3600 * 1000; // 翌表記漏れ対策
+  var absent = c.present >= 0 && isAbsentMark_(row[c.present]);
+  var draft = c.kbn >= 0 && isDraftKbn_(row[c.kbn]);
+  return {
+    name: c.name >= 0 ? String(row[c.name]).trim() : "",
+    date: dstr,
+    dateKey: normDate_(dstr),
+    time: sCell + (eCell && !m ? "〜" + eCell : ""),
+    startMs: sMs,
+    endMs: eMs,
+    absent: absent,
+    draft: draft,
+    active: !absent && !draft && sMs != null && eMs != null,
+  };
+}
+
+/* (name,dateStr) の勤務レンジ {startMs,endMs}。休み・未確定・未登録なら null。 */
+function readShift_(name, dateStr) {
+  var S;
+  try {
+    S = schedSheet_();
+  } catch (e) {
+    return null;
+  }
+  var want = normDate_(dateStr);
+  for (var i = S.hi + 1; i < S.values.length; i++) {
+    var info = shiftRowInfo_(S, S.values[i]);
+    if (info.name !== name || info.dateKey !== want) continue;
+    if (!info.active) continue;
+    return { startMs: info.startMs, endMs: info.endMs };
   }
   return null;
+}
+/* その日に（誰かの）確定出勤が1件でも登録されているか。
+   出勤表が読めない・未入力の日は false（＝出勤チェックをしない＝従来どおり受け付ける）。 */
+function dayHasShifts_(dateStr) {
+  var S;
+  try {
+    S = schedSheet_();
+  } catch (e) {
+    return false;
+  }
+  var want = normDate_(dateStr);
+  for (var i = S.hi + 1; i < S.values.length; i++) {
+    var info = shiftRowInfo_(S, S.values[i]);
+    if (info.dateKey === want && info.active) return true;
+  }
+  return false;
 }
 function dateCell_(dv) {
   return Object.prototype.toString.call(dv) === "[object Date]"
@@ -266,17 +337,14 @@ function normDate_(s) {
 function therapistDirectory_() {
   var out = { list: [], byName: {} };
   try {
-    var sh = book_().getSheetByName(SCHEDULE_SHEET);
-    if (!sh || sh.getLastRow() < 2) return out;
-    var v = sh.getDataRange().getValues();
-    var head = v[0].map(function (x) {
-      return String(x).trim();
-    });
+    var S = schedSheet_();
+    var v = S.values;
+    var head = S.head;
     var ni = head.indexOf("名前");
     var idi = head.indexOf("担当者ID");
     if (idi < 0) idi = head.indexOf("ID");
     var seen = {};
-    for (var i = 1; i < v.length; i++) {
+    for (var i = S.hi + 1; i < v.length; i++) {
       var nm = ni >= 0 ? String(v[i][ni]).trim() : "";
       if (!nm || seen[nm]) continue;
       var id = idi >= 0 ? String(v[i][idi]).trim() : "";
@@ -348,6 +416,17 @@ function createBooking(payload) {
     var shift = readShift_(p.therapistName, p.dateStr);
     if (shift && !withinShift(startMs, endMs, shift.startMs, shift.endMs)) {
       return { ok: false, reason: "コース終了が出勤時間を超えます。" };
+    }
+    // WEB・LINE：その日の出勤表に載っていない（休み・未登録）セラピストへの予約は断る。
+    // サイトの出勤表示が切り替わるまでの間に、休みの人へ予約が入るのを防ぐため。
+    // 出勤表が読めない／その日が未入力の場合は、従来どおり受け付ける。おまかせは対象外。
+    var isOmakase = /おまかせ/.test(String(p.therapistName || ""));
+    if (
+      !shift && !isOmakase &&
+      (p.source === SOURCE.WEB || p.source === SOURCE.LINE) &&
+      dayHasShifts_(p.dateStr)
+    ) {
+      return { ok: false, reason: "その日は出勤予定がありません。別の日・セラピストをお選びください。" };
     }
 
     // 重複判定（同一担当者・占有状態）
@@ -1034,6 +1113,320 @@ function serveAdmin_() {
 function adminTherapists() {
   requireStaff_();
   return { ok: true, therapists: therapistDirectory_().list };
+}
+
+/* ===================== セラピスト管理（出勤の登録・個別ページ） =====================
+   出勤は既存の「出勤情報」シートに直接書き込む（サイト表示・WEB/LINE予約と同じデータ）。
+   変更は「予約履歴」シートに SHIFT として記録する。 */
+var WEEKDAY_JA_ = ["日", "月", "火", "水", "木", "金", "土"];
+function keyToDate_(key) {
+  key = +key;
+  return Math.floor(key / 10000) + "/" + Math.floor((key % 10000) / 100) + "/" + (key % 100);
+}
+function addDays_(dstr, n) {
+  var m = String(dstr).match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+  if (!m) return "";
+  var d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] + n));
+  return d.getUTCFullYear() + "/" + (d.getUTCMonth() + 1) + "/" + d.getUTCDate();
+}
+function dateLabel_(dstr) {
+  var m = String(dstr).match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+  if (!m) return String(dstr);
+  var dow = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay();
+  return +m[2] + "/" + +m[3] + "(" + WEEKDAY_JA_[dow] + ")";
+}
+function todayJst_() {
+  return Utilities.formatDate(new Date(), "Asia/Tokyo", "yyyy/M/d");
+}
+
+/* 名簿（プロフィール）シート：「名前」と「年齢」の見出しを持つシートを自動で探す。
+   Script Properties の THERAPIST_SHEET でシート名を指定することも可。見つからなければ null。 */
+function profileSheet_() {
+  var b = book_();
+  var named = cfg_("THERAPIST_SHEET", "");
+  var sheets = named ? [b.getSheetByName(named)] : b.getSheets();
+  var skip = [SCHEDULE_SHEET, LEDGER_SHEET, HISTORY_SHEET];
+  for (var k = 0; k < sheets.length; k++) {
+    var sh = sheets[k];
+    if (!sh || skip.indexOf(sh.getName()) >= 0 || sh.getLastRow() < 1) continue;
+    var top = sh.getRange(1, 1, Math.min(5, sh.getLastRow()), Math.max(1, sh.getLastColumn())).getValues();
+    for (var i = 0; i < top.length; i++) {
+      var head = top[i].map(function (x) {
+        return String(x).trim();
+      });
+      if (head.indexOf("名前") >= 0 && head.indexOf("年齢") >= 0) {
+        return { sh: sh, hi: i, head: head, values: sh.getDataRange().getValues() };
+      }
+    }
+  }
+  return null;
+}
+
+/* セラピスト名の一覧（名簿シートの順 → 出勤シートにだけいる人を後ろに追加）。 */
+function therapistNames_() {
+  var names = [];
+  var add = function (n) {
+    n = String(n || "").trim();
+    if (n && names.indexOf(n) < 0) names.push(n);
+  };
+  try {
+    var P = profileSheet_();
+    if (P) {
+      var ni = P.head.indexOf("名前");
+      for (var i = P.hi + 1; i < P.values.length; i++) add(P.values[i][ni]);
+    }
+  } catch (e) {}
+  therapistDirectory_().list.forEach(function (t) {
+    add(t.name);
+  });
+  return names;
+}
+
+/* その日の営業（5:00〜翌5:00）に入っている有効予約のうち、[sMs,eMs) に収まらないもの。
+   sMs が null なら全件（＝出勤が無くなった場合）。 */
+function bookingsOutside_(rows, name, dstr, sMs, eMs) {
+  var dayS = parseJstDateTime(dstr, "5:00"),
+    dayE = parseJstDateTime(dstr, "翌5:00");
+  var tid = resolveTherapistId_(name);
+  return rows.filter(function (r) {
+    if (ACTIVE_STATUSES.indexOf(r.status) < 0) return false;
+    if (String(r.therapistName) !== name && String(r.therapistId) !== String(tid)) return false;
+    if (!(r.startAt >= dayS && r.startAt < dayE)) return false;
+    return sMs == null || !withinShift(r.startAt, r.endAt, sMs, eMs);
+  });
+}
+function outsideWarning_(list, what) {
+  if (!list.length) return "";
+  return what + "予約が " + list.length + " 件あります（" +
+    list.map(function (r) {
+      return fmtJst(r.startAt).split(" ")[1] + " " + (r.customerName || "名前なし");
+    }).join("、") + "）。予約の変更・キャンセルが必要か確認してください。";
+}
+
+/* 週間出勤表：from から days 日分（既定7日）の出勤と、セラピスト一覧を返す。 */
+function adminShifts(fromStr, days) {
+  requireStaff_();
+  var from = normDate_(fromStr) ? keyToDate_(normDate_(fromStr)) : todayJst_();
+  var n = Math.min(Math.max(parseInt(days, 10) || 7, 1), 31);
+  var dates = [],
+    keys = {};
+  for (var i = 0; i < n; i++) {
+    var d = addDays_(from, i);
+    dates.push({ date: d, label: dateLabel_(d) });
+    keys[normDate_(d)] = 1;
+  }
+  var S = schedSheet_(),
+    c = S.c;
+  var shifts = [];
+  var names = therapistNames_();
+  for (var r = S.hi + 1; r < S.values.length; r++) {
+    var row = S.values[r];
+    var info = shiftRowInfo_(S, row);
+    if (!info.name || !keys[info.dateKey]) continue;
+    if (names.indexOf(info.name) < 0) names.push(info.name);
+    shifts.push({
+      row: r + 1,
+      date: keyToDate_(info.dateKey),
+      name: info.name,
+      time: info.time,
+      status: c.status >= 0 ? String(row[c.status]).trim() : "",
+      kbn: c.kbn >= 0 ? String(row[c.kbn]).trim() : "",
+      absent: info.absent,
+      draft: info.draft,
+    });
+  }
+  return jsonSafe_({ ok: true, from: from, dates: dates, names: names, shifts: shifts });
+}
+
+/* 編集対象の行を特定（行番号と元の名前・日付が一致するか確認。ずれていたら null）。 */
+function findShiftRow_(S, row, name, dateStr) {
+  var r = +row;
+  if (!r || r <= S.hi + 1 || r > S.values.length) return null;
+  var info = shiftRowInfo_(S, S.values[r - 1]);
+  if (info.name !== String(name || "").trim() || info.dateKey !== normDate_(dateStr)) return null;
+  return r;
+}
+
+/* 出勤の登録・変更。p = {row?, origName?, origDate?, name, date, start, end, status?, kbn?}
+   row 無し＝新規（同じ人・同じ日の行があればそれを更新）。 */
+function adminShiftSave(p) {
+  var staff = requireStaff_();
+  p = p || {};
+  var name = String(p.name || "").trim();
+  if (!name) return { ok: false, reason: "セラピストを選んでください。" };
+  var dkey = normDate_(p.date);
+  if (!dkey) return { ok: false, reason: "日付が不正です。" };
+  var dstr = keyToDate_(dkey);
+  var start = String(p.start || "").trim(),
+    end = String(p.end || "").trim();
+  var sMs = parseJstDateTime(dstr, start),
+    eMs = parseJstDateTime(dstr, end);
+  if (sMs == null || eMs == null) return { ok: false, reason: "出勤時間が不正です。" };
+  if (eMs <= sMs) return { ok: false, reason: "終了は開始より後にしてください（深夜は「翌2:00」のように選んでください）。" };
+
+  var res = withLock_(function () {
+    var S = schedSheet_(),
+      c = S.c;
+    if (c.date < 0 || c.name < 0 || c.time < 0)
+      return { ok: false, reason: "出勤情報シートに「日付」「名前」「出勤時間」の列が必要です。" };
+    var target = -1,
+      orig = null;
+    if (p.row) {
+      target = findShiftRow_(S, p.row, p.origName, p.origDate) || -1;
+      if (target < 0) return { ok: false, reason: "出勤表がほかで更新されました。画面を更新してからやり直してください。" };
+      orig = shiftRowInfo_(S, S.values[target - 1]);
+    }
+    for (var i = S.hi + 1; i < S.values.length; i++) {
+      if (i + 1 === target) continue;
+      var inf = shiftRowInfo_(S, S.values[i]);
+      if (inf.name === name && inf.dateKey === dkey) {
+        if (target < 0) target = i + 1; // 新規だが既に行がある → その行を更新
+        else return { ok: false, reason: name + "さんの" + dateLabel_(dstr) + "の出勤はすでに登録されています。" };
+      }
+    }
+    var width = Math.max(S.head.length, S.sh.getLastColumn());
+    var arr, before = null;
+    if (target > 0) {
+      arr = S.sh.getRange(target, 1, 1, width).getValues()[0];
+      before = arr.slice();
+    } else {
+      arr = [];
+      for (var w = 0; w < width; w++) arr.push("");
+    }
+    arr[c.date] = "'" + dstr;
+    if (c.label >= 0) arr[c.label] = "'" + dateLabel_(dstr);
+    arr[c.name] = name;
+    if (c.end >= 0) {
+      arr[c.time] = "'" + start;
+      arr[c.end] = "'" + end;
+    } else {
+      arr[c.time] = "'" + start + "〜" + end;
+    }
+    if (c.status >= 0) arr[c.status] = String(p.status || "").trim() || String(arr[c.status] || "").trim() || "空きあり";
+    if (c.present >= 0) arr[c.present] = "○";
+    if (c.kbn >= 0) arr[c.kbn] = String(p.kbn || "").trim() || "確定";
+    if (c.area >= 0 && !String(arr[c.area] || "").trim()) arr[c.area] = "亀戸";
+    if (target > 0) S.sh.getRange(target, 1, 1, width).setValues([arr]);
+    else S.sh.appendRow(arr);
+    logHistory_("SHIFT", staff, "出勤" + (before ? "変更" : "登録") + " " + name + " " + dstr, before, arr);
+    return { ok: true, orig: orig };
+  });
+  if (!res.ok) return res;
+  // 予約との整合チェック（警告のみ。予約は自動では動かさない）
+  var rows = readLedger_();
+  var warn = outsideWarning_(bookingsOutside_(rows, name, dstr, sMs, eMs), "この出勤時間の外に");
+  if (res.orig && (res.orig.name !== name || res.orig.dateKey !== dkey)) {
+    var w2 = outsideWarning_(bookingsOutside_(rows, res.orig.name, keyToDate_(res.orig.dateKey), null, null),
+      "変更前（" + res.orig.name + " " + dateLabel_(res.orig.date) + "）に");
+    warn = [warn, w2].filter(Boolean).join("\n");
+  }
+  return { ok: true, warning: warn };
+}
+
+/* 休みにする／出勤に戻す。p = {row, name, date, absent:true|false} */
+function adminShiftSetAbsent(p) {
+  var staff = requireStaff_();
+  p = p || {};
+  var res = withLock_(function () {
+    var S = schedSheet_(),
+      c = S.c;
+    if (c.present < 0) return { ok: false, reason: "出勤情報シートに「出勤」列（○/✖️）がありません。" };
+    var r = findShiftRow_(S, p.row, p.name, p.date);
+    if (!r) return { ok: false, reason: "出勤表がほかで更新されました。画面を更新してからやり直してください。" };
+    var cell = S.sh.getRange(r, c.present + 1);
+    var before = cell.getValue();
+    cell.setValue(p.absent ? "✖️" : "○");
+    logHistory_("SHIFT", staff, (p.absent ? "休みに変更 " : "出勤に戻す ") + p.name + " " + p.date, { 出勤: before }, { 出勤: p.absent ? "✖️" : "○" });
+    return { ok: true };
+  });
+  if (!res.ok || !p.absent) return res;
+  var dstr = keyToDate_(normDate_(p.date));
+  return { ok: true, warning: outsideWarning_(bookingsOutside_(readLedger_(), String(p.name).trim(), dstr, null, null), "この日に") };
+}
+
+/* 出勤の削除（登録間違いなど）。p = {row, name, date} */
+function adminShiftDelete(p) {
+  var staff = requireStaff_();
+  p = p || {};
+  var res = withLock_(function () {
+    var S = schedSheet_();
+    var r = findShiftRow_(S, p.row, p.name, p.date);
+    if (!r) return { ok: false, reason: "出勤表がほかで更新されました。画面を更新してからやり直してください。" };
+    var before = S.values[r - 1];
+    S.sh.deleteRow(r);
+    logHistory_("SHIFT", staff, "出勤削除 " + p.name + " " + p.date, before, null);
+    return { ok: true };
+  });
+  if (!res.ok) return res;
+  var dstr = keyToDate_(normDate_(p.date));
+  return { ok: true, warning: outsideWarning_(bookingsOutside_(readLedger_(), String(p.name).trim(), dstr, null, null), "この日に") };
+}
+
+/* セラピスト個別ページ：プロフィール（名簿シートの値）・今後2週間の出勤・今後の予約・件数。 */
+function adminTherapistDetail(name) {
+  requireStaff_();
+  name = String(name || "").trim();
+  if (!name) return { ok: false, reason: "セラピストが指定されていません。" };
+  var profile = [];
+  try {
+    var P = profileSheet_();
+    if (P) {
+      var ni = P.head.indexOf("名前");
+      for (var i = P.hi + 1; i < P.values.length; i++) {
+        if (String(P.values[i][ni]).trim() !== name) continue;
+        P.head.forEach(function (h, j) {
+          var v = P.values[i][j];
+          if (h && h !== "名前" && String(v).trim() !== "") profile.push({ label: h, value: cellStr_(v) });
+        });
+        break;
+      }
+    }
+  } catch (e) {}
+
+  var today = todayJst_();
+  var keys = {};
+  for (var d = 0; d < 14; d++) keys[normDate_(addDays_(today, d))] = 1;
+  var shifts = [];
+  var S = schedSheet_();
+  for (var r = S.hi + 1; r < S.values.length; r++) {
+    var info = shiftRowInfo_(S, S.values[r]);
+    if (info.name !== name || !keys[info.dateKey]) continue;
+    shifts.push({
+      row: r + 1, date: keyToDate_(info.dateKey), label: dateLabel_(info.date), time: info.time,
+      absent: info.absent, draft: info.draft,
+      status: S.c.status >= 0 ? String(S.values[r][S.c.status]).trim() : "",
+    });
+  }
+  shifts.sort(function (a, b) {
+    return normDate_(a.date) - normDate_(b.date);
+  });
+
+  var tid = resolveTherapistId_(name);
+  var mine = readLedger_().filter(function (x) {
+    return String(x.therapistName) === name || String(x.therapistId) === String(tid);
+  });
+  var dayStart = parseJstDateTime(today, "0:00");
+  var upcoming = mine
+    .filter(function (x) {
+      return ACTIVE_STATUSES.indexOf(x.status) >= 0 && x.endAt >= dayStart;
+    })
+    .sort(function (a, b) {
+      return a.startAt - b.startAt;
+    })
+    .map(function (x) {
+      return {
+        id: x.id, start: fmtJst(x.startAt), end: fmtJst(x.endAt), course: x.course, price: x.price,
+        customerName: x.customerName, status: x.status, statusLabel: STATUS_LABEL[x.status], source: x.source,
+      };
+    });
+  var ym = today.split("/").slice(0, 2).join("/");
+  var monthCount = mine.filter(function (x) {
+    return x.status === STATUS.CONFIRMED && fmtJst(x.startAt).indexOf(ym.replace(/\/(\d)$/, "/0$1")) === 0;
+  }).length;
+  return jsonSafe_({
+    ok: true, name: name, profile: profile, shifts: shifts, bookings: upcoming,
+    counts: { thisMonth: monthCount, upcoming: upcoming.length },
+  });
 }
 
 /* ---------- 出力ヘルパー ---------- */
