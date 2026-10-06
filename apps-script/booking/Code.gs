@@ -1161,6 +1161,15 @@ function normalizeLegacyDate_(s) {
   return y + "/" + (+m[1]) + "/" + (+m[2]);
 }
 
+/* エディタの「実行」から呼ぶための移行ラッパー（引数を渡せないため）。
+   migrateDry: 書き込みなしで件数を確認 / migrateRun: バックアップ後に移行（再実行しても重複しない）。 */
+function migrateDry() {
+  Logger.log(JSON.stringify(migrateFromLegacy({ dryRun: true }), null, 2));
+}
+function migrateRun() {
+  Logger.log(JSON.stringify(migrateFromLegacy({ dryRun: false }), null, 2));
+}
+
 /* ブック全体を複製してバックアップ（移行前の安全策）。 */
 function backupBook_() {
   var f = DriveApp.getFileById(sheetId_());
