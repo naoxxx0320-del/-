@@ -16,7 +16,9 @@
  * ========================================================================== */
 
 export default {
-  async fetch(request, env) {
+  // Cloudflare Module Worker: 第3引数 ctx で waitUntil が使える。
+  // GAS_EXEC_URL は「LINEボット（line-booking.gs）の公開デプロイ /exec」を指すこと。
+  async fetch(request, env, ctx) {
     if (request.method !== "POST") {
       // LINEの「検証」やヘルスチェック
       return new Response("ok", { status: 200 });
@@ -41,19 +43,9 @@ export default {
       }),
     }).catch((e) => console.log("forward error", e));
 
-    if (typeof env !== "undefined" && request && request.cf && this && this.ctx) {
-      // no-op（型安定用）
-    }
-    // Cloudflare: ctx.waitUntil が使える場合は待たずに200
-    try {
-      // module workers では第3引数 ctx。環境により異なるため try/catch。
-      // eslint-disable-next-line no-undef
-      if (typeof arguments !== "undefined" && arguments[2] && arguments[2].waitUntil) {
-        arguments[2].waitUntil(forward);
-      } else {
-        await forward;
-      }
-    } catch (_) {
+    if (ctx && typeof ctx.waitUntil === "function") {
+      ctx.waitUntil(forward); // 中継を待たずに即200（LINEのタイムアウト回避）
+    } else {
       await forward;
     }
     return new Response("ok", { status: 200 });

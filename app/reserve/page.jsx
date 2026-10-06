@@ -11,6 +11,14 @@ const BASE = "../"; // /reserve/ はルートから1階層下
 const PROFILE = Object.fromEntries(roster.map((p) => [p.name, p]));
 const yen = (n) => "¥" + Number(n).toLocaleString("ja-JP");
 
+/* 新予約管理API（apps-script/booking）のエンドポイント。
+   空（未デプロイ）なら従来エンドポイント・従来挙動のまま（＝ライブ無影響）。
+   デプロイ後に data/reserve-config.json の apiV2 にその /exec URL を設定すると、
+   ・空き取得は {ok,busy:[{th,s,e,st}]} 形式（epoch区間）
+   ・予約作成は web_create（JSON POST・結果をJSONで確認してから完了表示）
+   に切り替わる。 */
+const API2 = (cfg.apiV2 || "").trim();
+
 /* 出勤時間文字列（例 "13:00〜翌2:00"）→ 分レンジ */
 function parseShift(str) {
   const m = (str || "").match(/(\d{1,2}):(\d{2})\s*[〜~\-]\s*(翌)?\s*(\d{1,2}):(\d{2})/);
@@ -61,6 +69,20 @@ function apptString(dateStr, timeLabel) {
   )}:${p(dt.getMinutes())}`;
 }
 
+/* 希望日(例 "2026/9/16") の「JST 0:00」を UTC epoch(ms) に（端末TZ非依存／JST=UTC+9）。
+   新API(apiV2)の busy 区間 epoch を「その日の0:00からの経過分」に直すための基準。 */
+function dayMidnightMs(dateStr) {
+  const m = String(dateStr || "").match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+  if (!m) return null;
+  return Date.UTC(+m[1], +m[2] - 1, +m[3], -9, 0); // 0:00 JST = 前日15:00 UTC
+}
+/* epoch(ms) → その日(dateStr)0:00からの経過分（翌日の深夜は1440超）。 */
+function epochToDayMin(epochMs, dateStr) {
+  const base = dayMidnightMs(dateStr);
+  if (base == null || epochMs == null) return null;
+  return Math.round((Number(epochMs) - base) / 60000);
+}
+
 export default function Reserve() {
   const days = schedule.days || [];
   const [dayIdx, setDayIdx] = useState(0);
@@ -80,6 +102,9 @@ export default function Reserve() {
   const [confirming, setConfirming] = useState(false);
   const [state, setState] = useState({ sending: false, done: false, error: "" });
   const [booked, setBooked] = useState([]); // 既存予約（スプレッドシートから取得）
+  // 空き状況の取得状態（新API時のみ判定に使用）。"loading" | "ok" | "error"
+  // ・error のときは「空き」と誤表示せず、時間選択をブロックする（取得失敗≠空き）。
+  const [availState, setAvailState] = useState("loading");
   // 指定担当者の出勤が今日以降に無い等の案内（通常フォームは引き続き利用可）
   const [notice, setNotice] = useState("");
 
@@ -152,13 +177,17 @@ export default function Reserve() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 現在の予約状況を JSONP で取得（重複予約を防ぐ）。
-  // ・セラピストを選ぶたび／ページ復帰時に取り直し
+  // 現在の予約状況を JSONP で取得（重複予約を防ぐ）。GET+JSONPでCORSを回避。
+  // ・セラピストを選ぶたび／日付変更／ページ復帰時に取り直し
   // ・末尾に時刻を付けてブラウザ／CDNのキャッシュを回避（＝常に最新）
+  // ・新API(apiV2)：{ok,busy:[{th,s,e,st}]} を受け取り、ok:false／取得失敗は error 扱い
+  //   （＝「空き」と誤表示しない）。従来エンドポイントは配列をそのまま使う（従来挙動）。
   useEffect(() => {
-    if (!cfg.endpoint) return;
+    const base = API2 || cfg.endpoint;
+    if (!base) return;
     let cancelled = false;
     const load = () => {
+      if (!cancelled) setAvailState("loading");
       const cb = "__resvAvail_" + Math.random().toString(36).slice(2);
       const script = document.createElement("script");
       const done = () => {
@@ -168,17 +197,38 @@ export default function Reserve() {
         script.remove();
       };
       window[cb] = (data) => {
-        if (!cancelled) setBooked(Array.isArray(data) ? data : []);
+        if (!cancelled) {
+          if (API2) {
+            // 新API：{ok:true,busy:[...]} のときのみ空き状況を反映
+            if (data && data.ok && Array.isArray(data.busy)) {
+              setBooked(data.busy);
+              setAvailState("ok");
+            } else {
+              setBooked([]);
+              setAvailState("error"); // ok:false 等 → 空き扱いしない
+            }
+          } else {
+            // 従来エンドポイント：配列をそのまま（従来挙動を維持）
+            setBooked(Array.isArray(data) ? data : []);
+            setAvailState(Array.isArray(data) ? "ok" : "error");
+          }
+        }
         done();
       };
-      script.src =
-        cfg.endpoint +
-        (cfg.endpoint.includes("?") ? "&" : "?") +
+      const q =
         "callback=" +
         cb +
         "&_=" +
-        Date.now();
-      script.onerror = done;
+        Date.now() +
+        (API2 ? "&action=availability&date=" + encodeURIComponent(day.date || "") : "");
+      script.src = base + (base.includes("?") ? "&" : "?") + q;
+      script.onerror = () => {
+        if (!cancelled) {
+          setBooked([]);
+          setAvailState("error"); // 通信失敗 → 空き扱いしない
+        }
+        done();
+      };
       document.body.appendChild(script);
     };
     load();
@@ -190,6 +240,7 @@ export default function Reserve() {
       cancelled = true;
       document.removeEventListener("visibilitychange", onVisible);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [therapist, dayIdx]);
 
   // 選択中セラピストの出勤時間 → 予約可能スロット
@@ -209,18 +260,29 @@ export default function Reserve() {
     return ms.length ? Math.min(...ms) : 60;
   }, [course]);
 
-  // 選択中セラピスト・日付で「埋まっている時間帯」（コース所要時間を考慮）
-  const occupied = useMemo(
-    () =>
-      booked
-        .filter((b) => b.th === therapist && b.d === (day.label || ""))
+  // 選択中セラピスト・日付で「埋まっている時間帯」（分レンジ）。
+  // ・新API：busy=[{th:担当ID, s:開始epoch, e:終了epoch, st}]（終了まで正確に保持）
+  //   → その日0:00基準の分に変換。担当IDは名前（adminTherapistsが名前をIDに採用）。
+  // ・従来：[{th,d,t,c}] → 開始ラベル＋コース所要分で区間を算出（従来挙動）。
+  const occupied = useMemo(() => {
+    if (API2) {
+      return booked
+        .filter((b) => String(b.th) === String(therapist))
         .map((b) => {
-          const s = labelToMin(b.t);
-          return s == null ? null : { s, e: s + courseMinOf(b.c) };
+          const s = epochToDayMin(b.s, day.date);
+          const e = epochToDayMin(b.e, day.date);
+          return s == null || e == null ? null : { s, e };
         })
-        .filter(Boolean),
-    [booked, therapist, day]
-  );
+        .filter(Boolean);
+    }
+    return booked
+      .filter((b) => b.th === therapist && b.d === (day.label || ""))
+      .map((b) => {
+        const s = labelToMin(b.t);
+        return s == null ? null : { s, e: s + courseMinOf(b.c) };
+      })
+      .filter(Boolean);
+  }, [booked, therapist, day]);
   // 予約枠が選択不可かを判定する。
   //  overlap: 新規区間[開始, 開始+コース所要] が既存予約区間と一部でも重なる
   //           （一般的な区間重複判定: 新規開始 < 既存終了 && 新規終了 > 既存開始）
@@ -293,6 +355,9 @@ export default function Reserve() {
   const validate = () => {
     if (!therapist) return "セラピストを選んでください。";
     if (courseI < 0) return "コースを選んでください。";
+    // 新API：空き状況を取得できていない状態では予約へ進めない（取得失敗≠空き）
+    if (API2 && availState === "error")
+      return "空き状況を取得できませんでした。少し時間をおいて再読み込みいただくか、お電話でご予約ください。";
     if (!time) return "予約時間を選んでください。";
     const blk = slotBlock(time);
     if (blk.exceed)
@@ -322,8 +387,23 @@ export default function Reserve() {
 
   const source = form.source === "該当なし・その他" ? form.sourceOther : form.source;
 
+  // 二重送信・再送での重複作成を防ぐ冪等キー（同じ予約内容なら同じ値）。
+  const idempotencyKey = useMemo(
+    () =>
+      [
+        "WEB",
+        therapist,
+        day.date || "",
+        time,
+        (form.email || "").toLowerCase(),
+        course ? course.label : "",
+      ].join("|"),
+    [therapist, day.date, time, form.email, course]
+  );
+
   const submit = async () => {
-    if (!cfg.endpoint) {
+    const base = API2 || cfg.endpoint;
+    if (!base) {
       setState({
         sending: false,
         done: false,
@@ -332,6 +412,61 @@ export default function Reserve() {
       return;
     }
     setState({ sending: true, done: false, error: "" });
+
+    // --- 新API（apiV2）：web_create を JSON POST し、結果を確認してから完了表示 ---
+    if (API2) {
+      try {
+        // Content-Type を付けず text/plain（＝単純リクエスト）で送りCORSプリフライトを回避。
+        // GASは e.postData.contents を JSON.parse するためボディはJSON文字列でよい。
+        const res = await fetch(API2, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "web_create",
+            therapistId: therapist,
+            therapistName: therapist,
+            dateStr: day.date || "",
+            timeLabel: time,
+            course: course.label,
+            price: yen(course.price),
+            customerName: form.name,
+            tel: form.tel,
+            email: form.email,
+            // 補足項目（店側のスタッフメモに記録される）
+            kana: form.kana,
+            pay: form.pay,
+            source: source || "",
+            note: form.note,
+            idempotencyKey,
+          }),
+        });
+        const r = await res.json(); // ← バックエンドの結果を必ず確認
+        if (r && r.ok) {
+          setState({ sending: false, done: true, error: "" });
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          // 重複・満席・出勤外などはバックエンドの理由を表示（＝未確定を完了と誤表示しない）
+          setState({
+            sending: false,
+            done: false,
+            error:
+              (r && r.reason) ||
+              "ご予約を受け付けられませんでした。時間を変えて再度お試しください。",
+          });
+          // 満席の可能性があるため空き状況を取り直す
+          setBooked((b) => b);
+        }
+      } catch (e) {
+        setState({
+          sending: false,
+          done: false,
+          error:
+            "送信に失敗しました。通信環境をご確認のうえ、再度お試しください。",
+        });
+      }
+      return;
+    }
+
+    // --- 従来エンドポイント（no-cors・従来挙動を維持） ---
     const body = new URLSearchParams({
       date: day.label || "",
       time,
@@ -612,8 +747,16 @@ export default function Reserve() {
           <h2 className="rsv-h">
             <span className="rsv-n">3</span>予約時間を選んでください
           </h2>
-          {therapist ? (
-            slotGroups.length > 0 ? (
+          {therapist && API2 && availState === "error" ? (
+            <p className="rsv-hint" role="alert">
+              ただいま空き状況を取得できませんでした。安全のため、この時間帯のご予約は
+              お受けできません。少し時間をおいて再読み込みいただくか、恐れ入りますが
+              お電話（{SITE.telephoneDisplay}）でご予約ください。
+            </p>
+          ) : therapist ? (
+            availState === "loading" && API2 ? (
+              <p className="rsv-hint">空き状況を確認しています…</p>
+            ) : slotGroups.length > 0 ? (
               <>
                 <p className="rsv-avail">
                   <b>{therapist}</b>：{day.label} は

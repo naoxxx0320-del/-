@@ -127,27 +127,89 @@ GitHub Pages だけでは認証付きの安全な予約更新は実現できな�
 > ここは**本番切替**にあたるため、テスト検証後に実施してください。当方では
 > 実環境に接続していないため、以下は手順として提供します。
 
-### 6-1. WEB予約（サイト → 新バックエンド）
-現在 `data/reserve-config.json` の `endpoint` は旧Apps Scriptを指しています。
-新しい公開APIに切り替える際は：
-- `app/reserve/page.jsx` の送信を `POST {action:"web_create", ...}` にし、
-  **`mode:"no-cors"` をやめて JSON レスポンス（`{ok,id,status}`）を読み**、
-  `ok:true` のときだけ完了画面を表示（＝通信失敗を成功表示しない）。
-- 空き状況の取得は `?action=availability&date=YYYY/M/D&callback=...` を使い、
-  **取得失敗（`ok:false`）時は「空き」と見なさない**。
-- これらはテスト台帳・テストエンドポイントで確認後に切り替えます（Phase 2で実装予定）。
+### 6-1. WEB予約（サイト → 新バックエンド）✅ 実装済み（設定で有効化）
+`app/reserve/page.jsx` を新APIに対応させました。**`data/reserve-config.json` の
+`apiV2` が空の間は従来エンドポイント・従来挙動のまま**（＝現在のライブサイトに無影響）。
+新バックエンドをデプロイしたら、その**公開API（実行=自分/アクセス=全員）の /exec URL**
+を `apiV2` に設定するだけで切り替わります。
 
-### 6-2. LINE予約（署名検証 → 同じ台帳）
+`apiV2` を設定したときの挙動：
+- 送信は `POST {action:"web_create", ...}`（JSON）。**`mode:"no-cors"` を使わず
+  JSONレスポンス（`{ok,id,status,confirmToken}` / `{ok:false,reason}`）を読み、
+  `ok:true` のときだけ完了画面を表示**（＝通信失敗・満席・出勤外を成功表示しない）。
+  - CORSプリフライト回避のため `Content-Type` を付けず `text/plain`（単純リクエスト）で
+    JSON文字列を送信。GASは `e.postData.contents` を `JSON.parse` するため問題なし。
+  - 冪等キー（`WEB|担当|日付|時刻|メール|コース`）を同送し、**二重送信での重複作成を防止**。
+- 空き状況の取得は `?action=availability&date=YYYY/M/D&callback=...`（GET+JSONP／CORS回避）。
+  返却は `{ok,busy:[{th,s,e,st}]}`（PIIなし・epoch区間）。
+  **取得失敗（`ok:false`・通信エラー）時は「空き」と見なさず、時間選択をブロック**し、
+  お電話での予約を案内（＝取得失敗≠空き）。
+- 担当者IDは出勤シートの「名前」を安定キーとして使用（`adminTherapists` と一致）。
+
+> ⚠️ 切替前に**テスト台帳・テストエンドポイント・テスト用メール**で E2E を確認してから
+> `apiV2` を本番URLに設定してください。切替直後は旧 `endpoint` の送信は止まり、
+> 予約は新台帳に入ります（＝二重運用を避ける）。確定メール送信は 6-3 で有効化します。
+
+### 6-2. LINE予約（署名検証 → 同じ台帳）✅ 実装済み（要デプロイ＆設定）
+
+**データフロー**（2プロジェクトをHTTPで連結）:
+```
+LINE → Cloudflare Worker（X-Line-Signature検証）→ LINEボット(line-booking.gs・会話)
+     → 予約管理API(booking/Code.gs) の line_event → 共有台帳「予約台帳」
+```
+※ GASのdoPostは署名ヘッダを取得できないため、署名検証はWorkerで実施。
+※ LINEボットと予約管理APIは**別プロジェクト**（doPost競合と定数衝突を避けるため）。
+   `line_event` エンドポイントを再利用して**同一台帳**に一本化。
+
+**手順**:
 1. `proxy/line-verify-worker.js` を Cloudflare Worker としてデプロイ
-   - 環境変数：`LINE_CHANNEL_SECRET` / `GAS_EXEC_URL`(公開API) / `PROXY_SHARED_SECRET`
-2. LINE Developers の **Webhook URL を Worker の URL** に変更（検証も通ります）
-3. 既存 `line-booking.gs` を**同じGASプロジェクト**に置き、次の2点を変更：
-   - `doPost` の先頭で、`JSON.parse(e.postData.contents).proxySecret` が
-     `PROXY_SHARED_SECRET` と一致することを確認（不一致は拒否）。生のLINEイベントは
-     `JSON.parse(body.lineBody).events` から取得。
-   - 予約確定（`finalizeBooking`）で独自シート書き込みの代わりに
-     **`createBooking({source:"LINE", ...})`** を呼び、**同じ台帳**へ記録。
-   （この2点の具体パッチはPhase 2で提供します。Worker自体は今回同梱済み）
+   - 環境変数：`LINE_CHANNEL_SECRET` / `GAS_EXEC_URL`（＝**LINEボット**の /exec）/ `PROXY_SHARED_SECRET`
+2. LINE Developers の **Webhook URL を Worker の URL** に変更（検証も通る。LINEのURLを直接登録しない）
+3. `line-booking.gs`（LINEボット・別プロジェクト）のスクリプトプロパティ：
+   - `PROXY_SHARED_SECRET`（Worker・予約管理APIと同じ値）
+   - `BOOKING_API_URL`（＝**予約管理API**の公開 /exec URL）
+   - 既存の `LINE_CHANNEL_ACCESS_TOKEN` / `SHEET_ID`（出勤読取）/ `OWNER_EMAIL`(任意)
+4. 予約管理API（booking/Code.gs）側のスクリプトプロパティにも同じ
+   `PROXY_SHARED_SECRET` を設定（`line_event` の正規性確認に使用）。
+
+**実装済みの変更点**（コード同梱）:
+- `doPost`：`action:"line_webhook"` かつ `proxySecret` 一致のみ受理。生イベントは
+  `JSON.parse(lineBody).events` から取得。**プロキシ未経由の直接Webhookは拒否**（なりすまし防止）。
+- `finalizeBooking`：独自シート書き込みを廃止し、`createOnLedger_()` が
+  **`line_event` を予約管理APIへPOST**。結果 `{ok}` を確認してから完了を案内し、
+  重複/出勤外/満席（`ok:false`）は時間を選び直してもらう。
+- 冪等キー（`LINE|userId|日付|時刻|コース`）で **Webhook再送・確定二度押しの二重作成を防止**。
+- 旧 `writeReservation` / `isTaken` / 独自 `"LINE予約"` シートは**廃止**（台帳を一本化）。
+
+### 6-3. メール文面の統一 と TEST_MODE → 本番切替 ✅ 実装済み
+
+予約管理API（Code.gs）に**メール送信を統一実装**しました（文面は `mailTemplate_` に集約）。
+
+| 種別 | 送信タイミング | 主な内容 |
+|------|----------------|----------|
+| 仮予約（確認リンク） | WEB予約の受付時（`createBooking` で仮予約作成） | `?action=confirm&token=` の確定リンク＋TTL期限の案内 |
+| 確定 | 確認リンク確定（`confirmByToken`）／スタッフ確定（`adminConfirm`） | 確定のご案内 |
+| 期限切れ | 仮予約TTL超過（`expireTentatives` の定期トリガー） | 枠解放・再予約のお願い |
+| キャンセル | スタッフキャンセル（`adminCancel`） | キャンセルのご案内 |
+
+- **宛先メールが無い予約（電話・LINE）は自動スキップ**（メールは必須にしない）。
+- **店舗控え**：仮予約・確定時に `STORE_EMAIL`（無ければ `OWNER_EMAIL`）へ控えを送付。
+- 送信は**予約ロック解放後**に実施（ロックを長引かせない）。
+- 確認リンクは `PUBLIC_EXEC_URL`（未設定時は現デプロイURLを自動取得）から生成。
+
+**関連スクリプトプロパティ**（予約管理API側）:
+`STORE_EMAIL` / `MAIL_SENDER_NAME`（既定 "AROMA DAIAMOND"）/ `STORE_TEL`（既定 "09043918013"）/
+`PUBLIC_EXEC_URL` / `TEST_MODE`。
+
+**TEST_MODE → 本番切替手順**（安全側の既定＝テストモード）:
+1. 既定では `TEST_MODE` は**テスト扱い**（`"false"` を明示しない限り**実送信しません**。
+   未設定のまま誤送信することを防ぐ安全設計）。
+2. まず `TEST_MODE` を未設定（または `true`）のまま、テスト台帳・**自分宛のテストメール**で
+   4種のメールが想定どおり出るか、実行ログ（`[TEST_MODE 送信抑止]`）で文面を確認。
+3. 問題なければ `TEST_MODE` を **`false`** に設定して実送信を有効化。
+   （本番のお客様へ実送信が始まるため、切替は検証完了後に実施すること）
+4. `STORE_EMAIL`（例 `aromadiamond00@gmail.com`）、`MAIL_SENDER_NAME`、`PUBLIC_EXEC_URL` を設定。
+5. 送信元は GAS 実行アカウント（Gmail）です。送信者表示名は `MAIL_SENDER_NAME` で制御します。
 
 ---
 
@@ -165,7 +227,7 @@ GitHub Pages だけでは認証付きの安全な予約更新は実現できな�
 
 ## 8. 検証結果（この環境で実施できたもの）
 
-純ロジックの自動テスト（`tests/logic.test.mjs`）が **全11件パス**：
+純ロジックの自動テスト（`tests/logic.test.mjs`）が **全13件パス**：
 
 - 日時のJST変換（TZ非依存）／**翌表記・日またぎ**の正しい扱い
 - コース所要分の算出
@@ -194,12 +256,52 @@ GitHub Pages だけでは認証付きの安全な予約更新は実現できな�
 
 ## 10. 本番運用までに残っている作業（Phase 2 予定）
 
-1. **サイト側WEB予約の切替**：`app/reserve/page.jsx` を新APIへ（JSON結果確認・no-cors廃止）＋空き状況の失敗を空き扱いしない実装
-2. **LINE連携の確定**：`line-booking.gs` の `doPost` 署名/シークレット確認＋`finalizeBooking`→`createBooking` 統一（具体パッチ提供）
-3. **管理画面のタイムテーブル表示**：担当者×時間のグリッド（チョイスリザーブ風）
-4. **メール文面の統一**（確定/期限切れ/キャンセル）と TEST_MODE→本番の切替確認
-5. **安定した担当者ID**：出勤/名簿シートに明示的なID列を設ける運用（現状は名前をキー）
+1. ~~**サイト側WEB予約の切替**：`app/reserve/page.jsx` を新APIへ（JSON結果確認・no-cors廃止）＋空き状況の失敗を空き扱いしない実装~~ ✅ 実装済み（`reserve-config.json` の `apiV2` にデプロイ後のURLを設定すると有効化。6-1 参照）
+2. ~~**LINE連携の確定**：`line-booking.gs` の `doPost` 署名/シークレット確認＋`finalizeBooking`→`createBooking` 統一~~ ✅ 実装済み（Worker→ボット→`line_event`→共有台帳。6-2 参照。デプロイ＆プロパティ設定が必要）
+3. ~~**管理画面のタイムテーブル表示**：担当者×時間のグリッド（チョイスリザーブ風）~~ ✅ 実装済み（下記「タイムテーブル」参照）
+4. ~~**メール文面の統一**（確定/期限切れ/キャンセル）と TEST_MODE→本番の切替確認~~ ✅ 実装済み（仮予約/確定/期限切れ/キャンセルの4種を統一・TEST_MODEでガード。6-3 参照）
+5. ~~**安定した担当者ID**：出勤/名簿シートに明示的なID列を設ける運用（現状は名前をキー）~~ ✅ 実装済み（下記「安定した担当者ID」参照）
 6. 実データでのE2E検証（WEB/LINE/電話が同一台帳・重複拒否・日またぎ・期限解放・期限切れリンク無効）
+
+### タイムテーブル（担当者×時間のグリッド・チョイスリザーブ風）
+
+管理画面（`Admin.html`）に「一覧／タイム表」の切替を追加しました。
+
+- **タイム表**：縦軸=時間（既定 10:00〜翌5:00・30分刻み）、横軸=その日の出勤担当者。
+  予約は該当セルに `rowspan` で帯表示し、状態（仮予約/確定）をテキストと色で区別します。
+- 空きセルはクリックで**その担当者・その時刻**の新規登録フォームが開きます（電話/LINE手入力）。
+- 出勤シフト外のセルは縞模様で非稼働を明示します。
+- グリッドの開始/終了/刻みは Script Properties（`GRID_OPEN_MIN`/`GRID_CLOSE_MIN`/`GRID_STEP_MIN`）で変更可能。
+- バックエンドは `adminTimetable(dateStr)`（`requireStaff_()` 必須／PIIはログイン済みスタッフにのみ返却）。
+  配置計算は `lib.gs` の `minutesFromDate` / `gridPlacement`（Nodeテスト済み・GASとクライアントで同一ロジック）。
+
+### リピーター判定（電話番号で「◯回目」を表示）
+
+管理画面で、**電話番号から同一のお客様を判別し、来店が何回目か**を表示します。
+
+- 電話番号は数字だけに正規化（`090-1234-5678` と `09012345678` は同一人物）。
+- 有効予約（確定・仮予約）を日付順に数え、各予約に **visitNo（何回目）／visitCount（総回数）** を付与。
+  キャンセル・期限切れは数えません。電話番号が無い予約（LINE等）は対象外。
+- 表示：一覧カード・詳細・タイム表に **「初回」/「リピーター ◯回目」** を表示。
+- 実装：`normTel_()` / `visitInfoMap_()`（`adminList` と `adminTimetable` で算出）。
+  **公開APIには出しません**（個人情報のため管理画面内のみ）。
+
+### 安定した担当者ID
+
+担当者の紐付けを**名前ではなく不変のID**で管理できるようにしました（改名・表記ゆれに強い）。
+
+- 出勤シート（`出勤情報`）に任意で **「担当者ID」列**（または「ID」列）を追加し、
+  担当者ごとに不変のID（例 `th001`、`mio` など）を入れておきます。
+- 列があれば **そのIDを安定キーとして採用**、無ければ従来どおり**名前をキー**として動作します
+  （＝列を追加しなくても壊れません・後からの導入も可）。
+- 正規化は全経路で共通：
+  - 管理画面（`adminTherapists`）は `{id:安定ID, name:名前}` を返し、登録時にIDを送信。
+  - WEB／LINE は名前のみ送るため、`createBooking` が **名前→安定ID** に解決して保存。
+  - 同名の担当者を区別したい場合は、管理画面から名前と異なる明示IDを送れば尊重されます。
+- 出勤シフトの読取（`readShift_`）は従来どおり**名前**で引くため、シフト表の運用は変更不要です。
+
+> 実装：`therapistDirectory_()` / `resolveTherapistId_()`。台帳の「担当者ID」列に
+> 正規化済みの安定IDが保存され、タイム表・重複判定もこのIDで一貫して行われます。
 
 > まずは**テスト用の台帳と通知先**で 4〜9 を確認し、問題がなければ 6-1/6-2 の
 > 本番切替に進んでください。

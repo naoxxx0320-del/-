@@ -11,8 +11,13 @@
  *   STAFF_EMAILS          … 管理画面を使えるスタッフのGoogleメール（カンマ区切り）
  *   TENTATIVE_TTL_MIN     … 仮予約の確認期限（分）。既定 30
  *   PROXY_SHARED_SECRET   … LINE署名検証プロキシから受け取る共有シークレット
- *   OWNER_EMAIL           … 店舗通知メール（任意）
- *   TEST_MODE             … "true" の間はメール送信せずログのみ（本番前の検証用）
+ *   OWNER_EMAIL           … 店舗通知メール（STORE_EMAIL 未設定時の控え先）
+ *   STORE_EMAIL           … 予約控えメールの送り先（例 aromadiamond00@gmail.com）
+ *   MAIL_SENDER_NAME      … 送信者表示名。既定 "AROMA DAIAMOND"
+ *   STORE_TEL             … 文面に載せる電話番号。既定 "09043918013"
+ *   PUBLIC_EXEC_URL       … 公開API /exec のURL（確認リンク生成用。未設定なら自動取得）
+ *   TEST_MODE             … メール送信ガード。"false" で実送信、それ以外(既定)は送らずログのみ
+ *                           ※本番切替は、テスト検証後に明示的に "false" を設定する
  *
  * ■ デプロイ（2つのウェブアプリ）… README 参照
  *   公開API  : 実行=自分 / アクセス=全員         （availability / web_create / line_event）
@@ -54,8 +59,11 @@ function nowMs_() {
 function ttlMin_() {
   return parseInt(cfg_("TENTATIVE_TTL_MIN", "30"), 10) || 30;
 }
+/* メール送信ガード。安全側の既定＝テストモード（TEST_MODE を明示的に "false"
+   にしたときだけ実送信する）。未設定のまま誤って実送信することを防ぐ。 */
 function isTestMode_() {
-  return String(cfg_("TEST_MODE", "false")).toLowerCase() === "true";
+  // 前後の空白・大文字小文字を無視。"false" を明示したときだけ実送信。
+  return String(cfg_("TEST_MODE", "true")).trim().toLowerCase() !== "false";
 }
 function genId_(prefix) {
   return (
@@ -95,6 +103,16 @@ function colIndex_() {
 }
 
 /* 台帳の全行をオブジェクト配列で返す（ヘッダ行を除く）。rowNum も保持。 */
+/* セル値を文字列へ。日付型(Date)はJST文字列に（google.script.run はDateを含む
+   戻り値をnull化することがあるため、画面に返す値は必ずプリミティブにする）。 */
+function cellStr_(v) {
+  if (v == null) return "";
+  if (Object.prototype.toString.call(v) === "[object Date]") {
+    return Utilities.formatDate(v, "Asia/Tokyo", "yyyy/MM/dd HH:mm:ss");
+  }
+  return String(v);
+}
+
 function readLedger_() {
   var sh = ledger_();
   var last = sh.getLastRow();
@@ -122,8 +140,8 @@ function readLedger_() {
       confirmToken: r[c["確認トークン"]],
       idempotencyKey: r[c["冪等キー"]],
       staffMemo: r[c["スタッフメモ"]],
-      createdAt: r[c["作成日時(JST)"]],
-      updatedAt: r[c["更新日時(JST)"]],
+      createdAt: cellStr_(r[c["作成日時(JST)"]]),
+      updatedAt: cellStr_(r[c["更新日時(JST)"]]),
       updatedBy: r[c["最終操作者"]],
     };
   });
@@ -227,6 +245,44 @@ function normDate_(s) {
   return m ? +m[1] * 10000 + +m[2] * 100 + +m[3] : "";
 }
 
+/* ---------- 担当者ディレクトリ（安定ID） ----------
+   出勤シートに任意の「担当者ID」（または「ID」）列があれば、それを
+   “名前が変わっても不変の安定ID”として採用する。無ければ従来どおり名前をIDに使う。
+   これにより、改名や表記ゆれがあっても予約と担当者の紐付けが壊れない。
+   戻り値: { list:[{id,name}], byName:{<name>:<id>} }（名前で重複排除）。 */
+function therapistDirectory_() {
+  var out = { list: [], byName: {} };
+  try {
+    var sh = book_().getSheetByName(SCHEDULE_SHEET);
+    if (!sh || sh.getLastRow() < 2) return out;
+    var v = sh.getDataRange().getValues();
+    var head = v[0].map(function (x) {
+      return String(x).trim();
+    });
+    var ni = head.indexOf("名前");
+    var idi = head.indexOf("担当者ID");
+    if (idi < 0) idi = head.indexOf("ID");
+    var seen = {};
+    for (var i = 1; i < v.length; i++) {
+      var nm = ni >= 0 ? String(v[i][ni]).trim() : "";
+      if (!nm || seen[nm]) continue;
+      var id = idi >= 0 ? String(v[i][idi]).trim() : "";
+      if (!id) id = nm; // ID列が空なら名前を安定キーに（従来互換）
+      seen[nm] = 1;
+      out.list.push({ id: id, name: nm });
+      out.byName[nm] = id;
+    }
+  } catch (err) {}
+  return out;
+}
+
+/* 名前（または既存ID）→ 安定ID。マッピングが無ければそのまま返す。 */
+function resolveTherapistId_(nameOrId) {
+  if (!nameOrId) return "";
+  var dir = therapistDirectory_();
+  return dir.byName[nameOrId] || nameOrId;
+}
+
 /* ---------- コア操作 ---------- */
 /* 予約を作成する（WEB/LINE/電話 共通）。
  * payload: {source, therapistId?, therapistName, dateStr, timeLabel, course,
@@ -235,11 +291,20 @@ function normDate_(s) {
  * 戻り値: {ok, id, status, duplicated?} / 失敗時 {ok:false, reason}
  * すべてロック内で冪等・重複・出勤内判定を行う。 */
 function createBooking(payload) {
-  return withLock_(function () {
+  var toNotify = null; // 送信はロック解放後（予約ロックを長引かせない）
+  var result = withLock_(function () {
     var p = payload || {};
-    var therapistId = p.therapistId || p.therapistName;
-    if (!therapistId || !p.therapistName)
+    if (!p.therapistName && !p.therapistId)
       return { ok: false, reason: "担当者が未指定です。" };
+    // 安定IDに正規化する。
+    //  ・管理画面が名前と異なる明示IDを渡した場合はそれを尊重（同名担当の区別）。
+    //  ・WEB/LINE は名前のみ送るため、出勤シートの「担当者ID」列で名前→安定IDに解決。
+    //  ・ID列が無ければ名前がそのままIDになる（従来互換）。
+    var therapistId =
+      p.therapistId && p.therapistId !== p.therapistName
+        ? p.therapistId
+        : resolveTherapistId_(p.therapistName || p.therapistId);
+    if (!therapistId) return { ok: false, reason: "担当者が未指定です。" };
     var startMs = parseJstDateTime(p.dateStr, p.timeLabel);
     if (startMs == null) return { ok: false, reason: "日時が不正です。" };
     var dur = courseDurationMin(p.course);
@@ -304,13 +369,20 @@ function createBooking(payload) {
     };
     appendRow_(o);
     logHistory_(o.id, o.updatedBy, "create(" + o.status + ")", null, o);
+    toNotify = o;
     return { ok: true, id: o.id, status: o.status, confirmToken: o.confirmToken };
   });
+  // 新規作成時の通知（仮予約=確認リンク／確定=確定メール）。重複(再送)時は toNotify=null で送らない。
+  if (toNotify) {
+    notifyCustomer_(toNotify, toNotify.status === STATUS.TENTATIVE ? "tentative" : "confirmed");
+  }
+  return result;
 }
 
 /* メール確認リンクで確定（期限切れ・キャンセル済みは確定しない）。 */
 function confirmByToken(token) {
-  return withLock_(function () {
+  var confirmedRow = null;
+  var result = withLock_(function () {
     if (!token) return { ok: false, reason: "トークンがありません。" };
     var rows = readLedger_();
     var r = rows.filter(function (x) {
@@ -328,8 +400,11 @@ function confirmByToken(token) {
     var conflict = findConflict(rows, r.therapistId, r.startAt, r.endAt, r.id);
     if (conflict) return { ok: false, reason: "その時間は既に予約が入りました。別の時間をお選びください。" };
     _setStatus_(r, STATUS.CONFIRMED, "customer");
+    confirmedRow = JSON.parse(JSON.stringify(r));
     return { ok: true, id: r.id };
   });
+  if (confirmedRow) notifyCustomer_(confirmedRow, "confirmed");
+  return result;
 }
 
 /* 状態だけ変える内部ヘルパー（ロック済み前提）。 */
@@ -351,18 +426,175 @@ function _setStatus_(r, to, actor) {
 
 /* 期限切れの仮予約を一括で解放（時間主導トリガーで定期実行）。 */
 function expireTentatives() {
-  return withLock_(function () {
+  var expiredRows = [];
+  var result = withLock_(function () {
     var rows = readLedger_();
     var now = nowMs_();
-    var n = 0;
     rows.forEach(function (r) {
       if (isTentativeExpired(r, now)) {
         _setStatus_(r, STATUS.EXPIRED, "system");
-        n++;
+        expiredRows.push(JSON.parse(JSON.stringify(r)));
       }
     });
-    return { ok: true, expired: n };
+    return { ok: true, expired: expiredRows.length };
   });
+  expiredRows.forEach(function (r) {
+    notifyCustomer_(r, "expired");
+  });
+  return result;
+}
+
+/* ---------- メール通知（確認リンク/確定/期限切れ/キャンセル・TEST_MODEでガード） ----------
+   ・文面はここに集約（WEB/LINE/電話のどの経路でも同じテンプレート）。
+   ・宛先メールが無い予約（電話・LINEなど）は自動スキップ（＝必須にしない）。
+   ・TEST_MODE 中は実送信せずログのみ（本番前の検証用）。 */
+function senderName_() {
+  return cfg_("MAIL_SENDER_NAME", "AROMA DAIAMOND");
+}
+function storeEmail_() {
+  return cfg_("STORE_EMAIL", "") || cfg_("OWNER_EMAIL", "");
+}
+function storeTel_() {
+  return cfg_("STORE_TEL", "09043918013");
+}
+/* 公開API /exec のベースURL（確認リンク用）。未設定なら現デプロイのURLを使う。 */
+function publicExecUrl_() {
+  var u = cfg_("PUBLIC_EXEC_URL", "");
+  if (u) return u;
+  try {
+    return (ScriptApp.getService().getUrl() || "");
+  } catch (e) {
+    return "";
+  }
+}
+function confirmUrl_(token) {
+  var base = publicExecUrl_();
+  if (!base || !token) return "";
+  return base + (base.indexOf("?") >= 0 ? "&" : "?") + "action=confirm&token=" + encodeURIComponent(token);
+}
+
+/* 予約内容の共通テキスト。 */
+function mailBookingDetail_(r) {
+  return [
+    "日時: " + fmtJst(r.startAt) + " 〜 " + fmtJst(r.endAt).split(" ")[1],
+    "セラピスト: " + (r.therapistName || ""),
+    "コース: " + (r.course || "") + (r.price ? "（¥" + Number(r.price).toLocaleString("en-US") + "）" : ""),
+    "お名前: " + (r.customerName || ""),
+  ].join("\n");
+}
+
+/* 種別→{subject,body}。type: tentative/confirmed/expired/cancelled。 */
+function mailTemplate_(type, r) {
+  var nm = senderName_();
+  var tel = storeTel_();
+  var detail = mailBookingDetail_(r);
+  if (type === "tentative") {
+    var url = confirmUrl_(r.confirmToken);
+    return {
+      subject: "【" + nm + "】ご予約の確認（確定のお手続きをお願いします）",
+      body: [
+        (r.customerName || "お客様") + " 様",
+        "",
+        "この度はご予約ありがとうございます。ただいま【仮予約】の状態です。",
+        "下記リンクを開くと、ご予約が【確定】します。",
+        "",
+        "▼ご予約を確定する",
+        url || "（確認リンクの発行に失敗しました。お手数ですがお電話ください）",
+        "",
+        "※リンクの有効期限は発行から " + ttlMin_() + " 分です。期限を過ぎると枠は解放されます。",
+        "",
+        "▼ご予約内容（仮）",
+        detail,
+        "",
+        "変更・キャンセルはお電話（" + tel + "）までご連絡ください。",
+        nm,
+      ].join("\n"),
+    };
+  }
+  if (type === "confirmed") {
+    return {
+      subject: "【" + nm + "】ご予約が確定しました",
+      body: [
+        (r.customerName || "お客様") + " 様",
+        "",
+        "ご予約が【確定】しました。ご来店を心よりお待ちしております。",
+        "",
+        "▼ご予約内容",
+        detail,
+        "",
+        "変更・キャンセルはお電話（" + tel + "）までご連絡ください。",
+        nm,
+      ].join("\n"),
+    };
+  }
+  if (type === "expired") {
+    return {
+      subject: "【" + nm + "】仮予約の確認期限が過ぎました",
+      body: [
+        (r.customerName || "お客様") + " 様",
+        "",
+        "仮予約の確認期限（" + ttlMin_() + "分）を過ぎたため、枠を解放いたしました。",
+        "恐れ入りますが、ご希望の場合は再度ご予約をお願いいたします。",
+        "",
+        "▼対象のご予約（仮）",
+        detail,
+        "",
+        "お電話（" + tel + "）でも承ります。",
+        nm,
+      ].join("\n"),
+    };
+  }
+  if (type === "cancelled") {
+    return {
+      subject: "【" + nm + "】ご予約をキャンセルしました",
+      body: [
+        (r.customerName || "お客様") + " 様",
+        "",
+        "下記のご予約をキャンセルいたしました。またのご利用をお待ちしております。",
+        "",
+        "▼キャンセルしたご予約",
+        detail,
+        "",
+        "お心当たりがない場合はお電話（" + tel + "）までご連絡ください。",
+        nm,
+      ].join("\n"),
+    };
+  }
+  return null;
+}
+
+/* 1通送信（TEST_MODE中はログのみ・宛先なしはスキップ）。 */
+function sendMail_(to, subject, body) {
+  if (!to) {
+    Logger.log("[mail skip:宛先なし] " + subject);
+    return false;
+  }
+  if (isTestMode_()) {
+    Logger.log("[TEST_MODE 送信抑止] to=" + to + " / " + subject + "\n" + body);
+    return false;
+  }
+  try {
+    GmailApp.sendEmail(to, subject, body, { name: senderName_() });
+    return true;
+  } catch (e) {
+    Logger.log("mail error: " + e);
+    return false;
+  }
+}
+
+/* お客様へ通知＋（新規・確定のみ）店舗へ控え。 */
+function notifyCustomer_(r, type) {
+  var tpl = mailTemplate_(type, r);
+  if (!tpl) return;
+  sendMail_(r.email, tpl.subject, tpl.body);
+  var store = storeEmail_();
+  if (store && (type === "tentative" || type === "confirmed")) {
+    sendMail_(
+      store,
+      "[控え]" + tpl.subject + "（" + (r.therapistName || "") + "）",
+      mailBookingDetail_(r) + "\n経路: " + (r.source || "") + "\n状態: " + (STATUS_LABEL[r.status] || r.status) + "\nID: " + (r.id || "")
+    );
+  }
 }
 
 /* ---------- スタッフ認証 ---------- */
@@ -398,12 +630,42 @@ function adminWhoAmI() {
   return { email: currentStaffEmail_(), allowed: staffAllowed_(currentStaffEmail_()) };
 }
 
+/* 電話番号を数字だけに正規化（"090-1234-5678" と "09012345678" を同一視）。 */
+function normTel_(s) {
+  return String(s == null ? "" : s).replace(/[^0-9]/g, "");
+}
+
+/* 電話番号ごとのリピーター情報を作る。
+   有効予約（確定・仮予約／キャンセル・期限切れは除外）を日付順に並べ、
+   各予約IDが「何回目か(visitNo)」と「その番号の総来店数(visitCount)」を返す。
+   戻り値: { <予約ID>: {visitNo, visitCount} }（電話が無い予約は含まれない）。 */
+function visitInfoMap_(rows) {
+  var byTel = {};
+  rows.forEach(function (r) {
+    if (ACTIVE_STATUSES.indexOf(r.status) < 0) return; // 来店とみなす状態のみ
+    var tel = normTel_(r.tel);
+    if (!tel) return;
+    (byTel[tel] = byTel[tel] || []).push({ id: r.id, startAt: Number(r.startAt) || 0 });
+  });
+  var info = {};
+  Object.keys(byTel).forEach(function (tel) {
+    var arr = byTel[tel].sort(function (a, b) {
+      return a.startAt - b.startAt;
+    });
+    arr.forEach(function (x, i) {
+      info[x.id] = { visitNo: i + 1, visitCount: arr.length };
+    });
+  });
+  return info;
+}
+
 /* 日付(dateStr "2026/10/5")と絞り込みで一覧取得。 */
 function adminList(params) {
   requireStaff_();
   var p = params || {};
   var want = p.dateStr ? normDate_(p.dateStr) : null;
   var rows = readLedger_();
+  var vinfo = visitInfoMap_(rows); // 全履歴からリピーター回数を算出
   var out = rows
     .filter(function (r) {
       if (want && normDate_(fmtJst(r.startAt)) !== want) return false;
@@ -416,6 +678,7 @@ function adminList(params) {
       return a.startAt - b.startAt;
     })
     .map(function (r) {
+      var vi = vinfo[r.id] || {};
       return {
         id: r.id, source: r.source, status: r.status, statusLabel: STATUS_LABEL[r.status],
         therapistId: r.therapistId, therapistName: r.therapistName,
@@ -423,9 +686,63 @@ function adminList(params) {
         course: r.course, price: r.price, customerName: r.customerName,
         tel: r.tel, email: r.email, lineUserId: r.lineUserId,
         staffMemo: r.staffMemo, updatedAt: r.updatedAt, updatedBy: r.updatedBy,
+        visitNo: vi.visitNo || null, visitCount: vi.visitCount || null,
       };
     });
-  return { ok: true, rows: out };
+  return jsonSafe_({ ok: true, rows: out });
+}
+
+/* タイムテーブル（担当者×時間グリッド）用データを一括取得。
+   その日に出勤 or 予約がある担当者だけを列にする。個人情報は管理画面内のみ。 */
+function adminTimetable(dateStr) {
+  requireStaff_();
+  var openMin = parseInt(cfg_("GRID_OPEN_MIN", "600"), 10) || 600; // 10:00
+  var closeMin = parseInt(cfg_("GRID_CLOSE_MIN", "1740"), 10) || 1740; // 翌5:00
+  var step = parseInt(cfg_("GRID_STEP_MIN", "30"), 10) || 30;
+  var want = normDate_(dateStr);
+
+  var allRows = readLedger_();
+  var vinfo = visitInfoMap_(allRows); // 全履歴からリピーター回数を算出
+  var rows = allRows.filter(function (r) {
+    return ACTIVE_STATUSES.indexOf(r.status) >= 0 && normDate_(fmtJst(r.startAt)) === want;
+  });
+  var bookings = rows.map(function (r) {
+    var vi = vinfo[r.id] || {};
+    return {
+      id: r.id, therapistId: r.therapistId, therapistName: r.therapistName,
+      status: r.status, statusLabel: STATUS_LABEL[r.status], source: r.source,
+      course: r.course, customerName: r.customerName, price: r.price,
+      tel: r.tel, email: r.email,
+      start: fmtJst(r.startAt), end: fmtJst(r.endAt),
+      startMin: minutesFromDate(r.startAt, dateStr), endMin: minutesFromDate(r.endAt, dateStr),
+      visitNo: vi.visitNo || null, visitCount: vi.visitCount || null,
+    };
+  });
+
+  var all = adminTherapists().therapists; // [{id,name}]（出勤シートの全名）
+  var bookedIds = {};
+  bookings.forEach(function (b) {
+    bookedIds[String(b.therapistId)] = 1;
+  });
+  var therapists = [];
+  all.forEach(function (t) {
+    var sh = readShift_(t.name, dateStr);
+    var worksToday = !!sh || bookedIds[String(t.id)];
+    if (!worksToday) return; // その日に出勤も予約も無い人は列に出さない
+    therapists.push({
+      id: t.id, name: t.name,
+      shiftStartMin: sh ? minutesFromDate(sh.startMs, dateStr) : null,
+      shiftEndMin: sh ? minutesFromDate(sh.endMs, dateStr) : null,
+    });
+  });
+
+  return jsonSafe_({ ok: true, openMin: openMin, closeMin: closeMin, step: step, therapists: therapists, bookings: bookings });
+}
+
+/* google.script.run はDate等を含む戻り値をnull化することがある。JSON往復で
+   確実にプリミティブな素のオブジェクトにしてから返す（画面向けの保険）。 */
+function jsonSafe_(o) {
+  return JSON.parse(JSON.stringify(o));
 }
 
 /* 手動登録（電話/LINEで受けた予約）。asConfirmed=true で直接確定も可。 */
@@ -494,7 +811,8 @@ function adminUpdate(id, changes) {
 /* 確定（電話など確認済みをスタッフが確定）。 */
 function adminConfirm(id) {
   var staff = requireStaff_();
-  return withLock_(function () {
+  var confirmedRow = null;
+  var result = withLock_(function () {
     var rows = readLedger_();
     var r = rows.filter(function (x) {
       return String(x.id) === String(id);
@@ -506,14 +824,18 @@ function adminConfirm(id) {
     var conflict = findConflict(rows, r.therapistId, r.startAt, r.endAt, r.id);
     if (conflict) return { ok: false, reason: "その時間は既に予約が入っています。" };
     _setStatus_(r, STATUS.CONFIRMED, staff);
+    confirmedRow = JSON.parse(JSON.stringify(r));
     return { ok: true, id: r.id };
   });
+  if (confirmedRow) notifyCustomer_(confirmedRow, "confirmed");
+  return result;
 }
 
 /* キャンセル（削除せず履歴として残す）。 */
 function adminCancel(id, reason) {
   var staff = requireStaff_();
-  return withLock_(function () {
+  var cancelledRow = null;
+  var result = withLock_(function () {
     var rows = readLedger_();
     var r = rows.filter(function (x) {
       return String(x.id) === String(id);
@@ -529,8 +851,11 @@ function adminCancel(id, reason) {
     r.updatedBy = staff;
     writeRow_(r.rowNum, r);
     logHistory_(r.id, staff, "cancel", before, r);
+    cancelledRow = JSON.parse(JSON.stringify(r));
     return { ok: true, id: r.id };
   });
+  if (cancelledRow) notifyCustomer_(cancelledRow, "cancelled");
+  return result;
 }
 
 /* スタッフメモ編集。 */
@@ -561,6 +886,20 @@ function doGet(e) {
   return serveAdmin_();
 }
 
+/* WEB予約フォームの補足項目（フリガナ／お支払い／きっかけ／ご希望）を
+   スタッフメモ用の1行にまとめる。各項目は長さを制限して保存する。 */
+function webMemo_(b) {
+  var clip = function (v, n) {
+    return String(v == null ? "" : v).replace(/\s+/g, " ").trim().slice(0, n);
+  };
+  var parts = [];
+  if (clip(b.kana, 50)) parts.push("フリガナ:" + clip(b.kana, 50));
+  if (clip(b.pay, 30)) parts.push("支払:" + clip(b.pay, 30));
+  if (clip(b.source, 50)) parts.push("きっかけ:" + clip(b.source, 50));
+  if (clip(b.note, 300)) parts.push("ご希望:" + clip(b.note, 300));
+  return parts.join(" / ");
+}
+
 function doPost(e) {
   try {
     var body = {};
@@ -588,6 +927,7 @@ function doPost(e) {
         tel: body.tel,
         email: body.email,
         idempotencyKey: body.idempotencyKey,
+        staffMemo: webMemo_(body),
       });
       return json_(r);
     }
@@ -673,30 +1013,11 @@ function serveAdmin_() {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
 }
 
-/* roster を管理画面に渡す（担当者選択用。個人情報ではない）。 */
+/* roster を管理画面に渡す（担当者選択用。個人情報ではない）。
+   IDは出勤シートの「担当者ID」列があればその安定ID、無ければ名前（従来互換）。 */
 function adminTherapists() {
   requireStaff_();
-  // 出勤シートの名前一覧（重複排除）。IDは名前を安定キーとして使用。
-  var out = [];
-  try {
-    var sh = book_().getSheetByName(SCHEDULE_SHEET);
-    if (sh && sh.getLastRow() > 1) {
-      var v = sh.getDataRange().getValues();
-      var head = v[0].map(function (x) {
-        return String(x).trim();
-      });
-      var ni = head.indexOf("名前");
-      var seen = {};
-      for (var i = 1; i < v.length; i++) {
-        var nm = ni >= 0 ? String(v[i][ni]).trim() : "";
-        if (nm && !seen[nm]) {
-          seen[nm] = 1;
-          out.push({ id: nm, name: nm });
-        }
-      }
-    }
-  } catch (err) {}
-  return { ok: true, therapists: out };
+  return { ok: true, therapists: therapistDirectory_().list };
 }
 
 /* ---------- 出力ヘルパー ---------- */

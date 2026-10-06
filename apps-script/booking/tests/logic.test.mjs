@@ -189,4 +189,29 @@ t("二重送信（同一冪等キー）は同じキーになる＝重複作成�
   assert.equal(k1, k2);
 });
 
+t("minutesFromDate: 翌日の深夜は1440超", () => {
+  assert.equal(L.minutesFromDate(L.parseJstDateTime("2026/10/5", "14:00"), "2026/10/5"), 840);
+  assert.equal(L.minutesFromDate(L.parseJstDateTime("2026/10/5", "翌2:00"), "2026/10/5"), 1560);
+  assert.equal(L.minutesFromDate(L.parseJstDateTime("2026/10/5", "0:00"), "2026/10/5"), 0);
+});
+
+t("gridPlacement: 開始行index・行span（10:00開始/30分刻み）", () => {
+  const open = 600,
+    step = 30,
+    rows = 38; // 10:00〜翌5:00
+  // 14:00-15:30 → start=(840-600)/30=8行目、span=3
+  let g = L.gridPlacement(840, 930, open, step, rows);
+  assert.deepEqual(g, { startIdx: 8, span: 3 });
+  // 翌2:00-翌3:00（1560-1620）→ start=(1560-600)/30=32、span=2
+  g = L.gridPlacement(1560, 1620, open, step, rows);
+  assert.deepEqual(g, { startIdx: 32, span: 2 });
+  // 営業前に終わる/営業後に始まる → null
+  assert.equal(L.gridPlacement(300, 540, open, step, rows), null); // 5:00-9:00
+  assert.equal(L.gridPlacement(1800, 1860, open, step, rows), null); // 30:00-
+  // 枠をまたぐ場合はクランプ（9:30-11:00 → 0行目から）
+  g = L.gridPlacement(570, 660, open, step, rows);
+  assert.equal(g.startIdx, 0);
+  assert.ok(g.span >= 1);
+});
+
 console.log(`\n✅ 全 ${passed} 件 パス`);
