@@ -29,6 +29,9 @@
     .st-cancelled { background:#f1f1f1; color:#777; border-color:#ddd; text-decoration:line-through; }
     .st-expired { background:#fbeceb; color:#a23; border-color:#eac3bf; }
     .src { font-size:11px; color:#6b5d44; border:1px solid #d9cfb8; border-radius:6px; padding:1px 6px; }
+    .rep { font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; border:1px solid transparent; }
+    .rep.new { background:#eef2f7; color:#5a6b80; border-color:#cfdae6; }       /* 初回 */
+    .rep.again { background:#fbeede; color:#9a5b00; border-color:#e8c488; }      /* リピーター */
     .meta { font-size:12px; color:#52473a; margin-top:4px; line-height:1.7; }
     .row-actions { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
     .row-actions button { padding:6px 10px; font-size:12.5px; }
@@ -174,6 +177,17 @@
     function todayStr(){ var d=new Date(); var p=function(n){return String(n).padStart(2,"0");}; return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate()); }
     function dateInputToSlash(v){ return v ? v.replace(/-/g,"/").replace(/\/0/g,"/").replace(/^(\d+)\/(\d+)\/(\d+)/,function(_,y,m,d){return y+"/"+(+m)+"/"+(+d);}) : ""; }
     function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+    // リピーター表示：電話番号から判定した「◯回目」。電話が無ければ空。
+    function repHtml(r){
+      if(!r || !r.visitNo) return "";
+      return r.visitNo>=2
+        ? '<span class="rep again">リピーター '+r.visitNo+'回目</span>'
+        : '<span class="rep new">初回</span>';
+    }
+    function repText(r){
+      if(!r || !r.visitNo) return "";
+      return r.visitNo>=2 ? ("リピーター "+r.visitNo+"回目（全"+r.visitCount+"回）") : "初回のお客様";
+    }
 
     $("me").textContent = STAFF_EMAIL || "";
 
@@ -220,6 +234,7 @@
           + '<div class="top"><span class="time">'+esc(t)+'</span>'
           + '<span class="pill st-'+esc(r.status)+'">'+esc(r.statusLabel)+'</span>'
           + '<span class="src">'+esc(r.source)+'</span>'
+          + repHtml(r)
           + '<span style="margin-left:auto;font-weight:700">'+esc(r.therapistName)+'</span></div>'
           + '<div class="meta">'+esc(r.customerName||"（名前なし）")+'　'+esc(r.course||"")+'　'+(r.price?("¥"+Number(r.price).toLocaleString()):"")
           + (r.tel?'　☎ '+esc(r.tel):'')+(r.email?'　✉ '+esc(r.email):'')
@@ -234,7 +249,8 @@
     window.openDetail=function(id){
       var r=current[id]; if(!r) return;
       $("d-body").innerHTML =
-        "<b>"+esc(r.therapistName)+"</b>　<span class='pill st-"+esc(r.status)+"'>"+esc(r.statusLabel)+"</span>　<span class='src'>"+esc(r.source)+"</span><br>"
+        "<b>"+esc(r.therapistName)+"</b>　<span class='pill st-"+esc(r.status)+"'>"+esc(r.statusLabel)+"</span>　<span class='src'>"+esc(r.source)+"</span>　"+repHtml(r)+"<br>"
+        +(repText(r)?("来店 "+esc(repText(r))+"<br>"):"")
         +"開始 "+esc(r.start)+"<br>終了 "+esc(r.end)+"（"+esc(r.durationMin)+"分）<br>"
         +"コース "+esc(r.course||"")+"　料金 "+(r.price?("¥"+Number(r.price).toLocaleString()):"-")+"<br>"
         +"お客様 "+esc(r.customerName||"-")+"<br>連絡先 "+esc(r.tel||"-")+" / "+esc(r.email||"-")+(r.lineUserId?(" / LINE:"+esc(r.lineUserId)):"")+"<br>"
@@ -360,7 +376,8 @@
           if(cell&&cell.kind==='bk'){
             var b=cell.booking;
             html+='<td class="bk st-'+esc(b.status)+'" rowspan="'+cell.span+'" onclick="openDetail(\''+esc(b.id)+'\')">'
-              +esc(b.customerName||"（名前なし）")+'<small>'+esc(b.course||"")+' / '+esc(b.statusLabel)+' / '+esc(b.source)+'</small></td>';
+              +esc(b.customerName||"（名前なし）")+(b.visitNo&&b.visitNo>=2?' <span class="rep again">'+b.visitNo+'回目</span>':'')
+              +'<small>'+esc(b.course||"")+' / '+esc(b.statusLabel)+' / '+esc(b.source)+'</small></td>';
           } else {
             var inShift = (t.shiftStartMin!=null && t.shiftEndMin!=null) ? (min>=t.shiftStartMin && min<t.shiftEndMin) : true;
             if(inShift) html+='<td class="cell free" onclick="openNewAt(\''+esc(t.id)+'\',\''+esc(minLabel(min))+'\')"></td>';

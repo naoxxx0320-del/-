@@ -629,12 +629,42 @@ function adminWhoAmI() {
   return { email: currentStaffEmail_(), allowed: staffAllowed_(currentStaffEmail_()) };
 }
 
+/* 電話番号を数字だけに正規化（"090-1234-5678" と "09012345678" を同一視）。 */
+function normTel_(s) {
+  return String(s == null ? "" : s).replace(/[^0-9]/g, "");
+}
+
+/* 電話番号ごとのリピーター情報を作る。
+   有効予約（確定・仮予約／キャンセル・期限切れは除外）を日付順に並べ、
+   各予約IDが「何回目か(visitNo)」と「その番号の総来店数(visitCount)」を返す。
+   戻り値: { <予約ID>: {visitNo, visitCount} }（電話が無い予約は含まれない）。 */
+function visitInfoMap_(rows) {
+  var byTel = {};
+  rows.forEach(function (r) {
+    if (ACTIVE_STATUSES.indexOf(r.status) < 0) return; // 来店とみなす状態のみ
+    var tel = normTel_(r.tel);
+    if (!tel) return;
+    (byTel[tel] = byTel[tel] || []).push({ id: r.id, startAt: Number(r.startAt) || 0 });
+  });
+  var info = {};
+  Object.keys(byTel).forEach(function (tel) {
+    var arr = byTel[tel].sort(function (a, b) {
+      return a.startAt - b.startAt;
+    });
+    arr.forEach(function (x, i) {
+      info[x.id] = { visitNo: i + 1, visitCount: arr.length };
+    });
+  });
+  return info;
+}
+
 /* 日付(dateStr "2026/10/5")と絞り込みで一覧取得。 */
 function adminList(params) {
   requireStaff_();
   var p = params || {};
   var want = p.dateStr ? normDate_(p.dateStr) : null;
   var rows = readLedger_();
+  var vinfo = visitInfoMap_(rows); // 全履歴からリピーター回数を算出
   var out = rows
     .filter(function (r) {
       if (want && normDate_(fmtJst(r.startAt)) !== want) return false;
@@ -647,6 +677,7 @@ function adminList(params) {
       return a.startAt - b.startAt;
     })
     .map(function (r) {
+      var vi = vinfo[r.id] || {};
       return {
         id: r.id, source: r.source, status: r.status, statusLabel: STATUS_LABEL[r.status],
         therapistId: r.therapistId, therapistName: r.therapistName,
@@ -654,6 +685,7 @@ function adminList(params) {
         course: r.course, price: r.price, customerName: r.customerName,
         tel: r.tel, email: r.email, lineUserId: r.lineUserId,
         staffMemo: r.staffMemo, updatedAt: r.updatedAt, updatedBy: r.updatedBy,
+        visitNo: vi.visitNo || null, visitCount: vi.visitCount || null,
       };
     });
   return jsonSafe_({ ok: true, rows: out });
@@ -668,10 +700,13 @@ function adminTimetable(dateStr) {
   var step = parseInt(cfg_("GRID_STEP_MIN", "30"), 10) || 30;
   var want = normDate_(dateStr);
 
-  var rows = readLedger_().filter(function (r) {
+  var allRows = readLedger_();
+  var vinfo = visitInfoMap_(allRows); // 全履歴からリピーター回数を算出
+  var rows = allRows.filter(function (r) {
     return ACTIVE_STATUSES.indexOf(r.status) >= 0 && normDate_(fmtJst(r.startAt)) === want;
   });
   var bookings = rows.map(function (r) {
+    var vi = vinfo[r.id] || {};
     return {
       id: r.id, therapistId: r.therapistId, therapistName: r.therapistName,
       status: r.status, statusLabel: STATUS_LABEL[r.status], source: r.source,
@@ -679,6 +714,7 @@ function adminTimetable(dateStr) {
       tel: r.tel, email: r.email,
       start: fmtJst(r.startAt), end: fmtJst(r.endAt),
       startMin: minutesFromDate(r.startAt, dateStr), endMin: minutesFromDate(r.endAt, dateStr),
+      visitNo: vi.visitNo || null, visitCount: vi.visitCount || null,
     };
   });
 
