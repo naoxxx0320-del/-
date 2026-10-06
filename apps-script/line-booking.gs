@@ -373,7 +373,12 @@ function readSchedule() {
   const draft = (v) => /^(申請|申請中|希望|希望休|未確定|保留|draft|下書き)$/i.test(String(v || "").trim());
   for (let i = hi + 1; i < values.length; i++) {
     const r = values[i];
-    const date = ci.date >= 0 ? String(r[ci.date]).trim() : "";
+    // 日付セルが日付型(Date)でも "2026/10/6" 形式に揃える
+    const dv = ci.date >= 0 ? r[ci.date] : "";
+    const date =
+      Object.prototype.toString.call(dv) === "[object Date]"
+        ? Utilities.formatDate(dv, "Asia/Tokyo", "yyyy/M/d")
+        : String(dv).trim();
     const name = ci.name >= 0 ? String(r[ci.name]).trim() : "";
     if (!date || !name) continue;
     if (ci.present >= 0 && absent(r[ci.present])) continue;
@@ -389,17 +394,24 @@ function readSchedule() {
   return out;
 }
 
+// 予約可能な日（日本時間の今日以降）を日付順に最大10日返す。過去日は出さない。
 function getDays() {
   const rows = readSchedule();
+  const today = Number(Utilities.formatDate(new Date(), "Asia/Tokyo", "yyyyMMdd"));
+  const key = (d) => {
+    const m = String(d).match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+    return m ? Number(m[1]) * 10000 + Number(m[2]) * 100 + Number(m[3]) : 0;
+  };
   const seen = {};
   const days = [];
   rows.forEach((r) => {
-    if (!seen[r.date]) {
-      seen[r.date] = true;
-      days.push({ date: r.date, label: r.label });
-    }
+    const k = key(r.date);
+    if (!k || k < today || seen[r.date]) return;
+    seen[r.date] = true;
+    days.push({ date: r.date, label: r.label, k: k });
   });
-  return days.slice(0, 10);
+  days.sort((a, b) => a.k - b.k);
+  return days.slice(0, 10).map((d) => ({ date: d.date, label: d.label }));
 }
 
 function getTherapistsOn(date) {
@@ -631,4 +643,19 @@ function hourlySlots(shift) {
     out.push((nextday ? "翌" : "") + h + ":00");
   }
   return out;
+}
+
+/* =========================================================
+   セットアップ補助（エディタの「実行」から使う）
+   ========================================================= */
+// 必要な設定がそろっているか確認（値そのものは表示しない）＋予約可能日を表示
+function checkSetup() {
+  ["LINE_CHANNEL_ACCESS_TOKEN", "SHEET_ID", "PROXY_SHARED_SECRET", "BOOKING_API_URL", "OWNER_EMAIL"].forEach((n) => {
+    Logger.log(n + ": " + (SP.getProperty(n) ? "設定済み" : "未設定"));
+  });
+  Logger.log("予約可能日: " + JSON.stringify(getDays()));
+}
+// 共有シークレット用のランダム文字列を作る（実行ログにだけ表示。チャット等には貼らない）
+function makeSecret() {
+  Logger.log(Utilities.getUuid().replace(/-/g, "") + Utilities.getUuid().replace(/-/g, ""));
 }
