@@ -62,7 +62,8 @@ function ttlMin_() {
 /* メール送信ガード。安全側の既定＝テストモード（TEST_MODE を明示的に "false"
    にしたときだけ実送信する）。未設定のまま誤って実送信することを防ぐ。 */
 function isTestMode_() {
-  return String(cfg_("TEST_MODE", "true")).toLowerCase() !== "false";
+  // 前後の空白・大文字小文字を無視。"false" を明示したときだけ実送信。
+  return String(cfg_("TEST_MODE", "true")).trim().toLowerCase() !== "false";
 }
 function genId_(prefix) {
   return (
