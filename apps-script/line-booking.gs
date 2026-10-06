@@ -16,7 +16,7 @@
  *   LINE_CHANNEL_ACCESS_TOKEN … Messaging API チャネルの長期アクセストークン
  *   LINE_CHANNEL_SECRET        … チャネルシークレット（※署名検証はWorker側で使用）
  *   SHEET_ID                   … 出勤情報が入ったスプレッドシートのID（出勤読取に使用）
- *   OWNER_EMAIL                … 予約通知メールの送り先（任意）
+ *   （店舗への予約通知は予約管理API側の STORE_EMAIL に一本化。OWNER_EMAIL は不要）
  *   PROXY_SHARED_SECRET        … Worker／予約管理APIと共有する秘密文字列（必須）
  *   BOOKING_API_URL            … 予約管理API（公開デプロイ）の /exec URL（必須）
  *
@@ -34,7 +34,6 @@ const SP = PropertiesService.getScriptProperties();
 const TOKEN = SP.getProperty("LINE_CHANNEL_ACCESS_TOKEN");
 const CHANNEL_SECRET = SP.getProperty("LINE_CHANNEL_SECRET");
 const SHEET_ID = SP.getProperty("SHEET_ID");
-const OWNER_EMAIL = SP.getProperty("OWNER_EMAIL") || "";
 
 const SCHEDULE_SHEET = "出勤情報"; // 日付/ラベル/エリア/名前/出勤時間/ステータス/出勤/区分
 // 予約は独自シートではなく共有台帳（予約管理API）へ一本化（旧 "LINE予約" シートは廃止）。
@@ -128,10 +127,30 @@ function handleText(uid, text, replyToken) {
   // 予約フローの「お名前入力」ステップ
   if (st && st.step === "name") {
     st.name = text;
-    st.step = "confirm";
+    st.step = "tel";
     setState(uid, st);
-    reply(replyToken, [confirmMessage(st)]);
+    reply(replyToken, [
+      textMsg("お電話番号をご入力ください（例：090-1234-5678）。\n※ご予約内容の確認でご連絡することがあります。"),
+    ]);
     return;
+  }
+  // 予約フローの「電話番号入力」ステップ
+  if (st && st.step === "tel") {
+    const tel = normalizePhone(text);
+    if (tel) {
+      st.tel = tel;
+      st.step = "confirm";
+      setState(uid, st);
+      reply(replyToken, [confirmMessage(st)]);
+      return;
+    }
+    if (!/キャンセル|やめ|中止/.test(text)) {
+      reply(replyToken, [
+        textMsg("お電話番号を数字でご入力ください（例：090-1234-5678）。\nご予約をやめる場合は「キャンセル」と送ってください。"),
+      ]);
+      return;
+    }
+    // 「キャンセル」等は下のキーワード処理へ
   }
   // 予約フローの「時間 自由入力」も許可
   if (st && st.step === "time") {
@@ -236,7 +255,7 @@ function startBooking(uid, replyToken) {
 
 function finalizeBooking(uid, replyToken) {
   const st = getState(uid);
-  if (!st || !st.date || !st.therapist || !st.time || !st.course || !st.name) {
+  if (!st || !st.date || !st.therapist || !st.time || !st.course || !st.name || !st.tel) {
     clearState(uid);
     return reply(replyToken, [textMsg("入力が不完全でした。もう一度「予約」と送ってください。")]);
   }
@@ -253,7 +272,9 @@ function finalizeBooking(uid, replyToken) {
     course: st.course,
     price: st.price,
     customerName: st.name,
+    tel: st.tel,
     lineUserId: uid,
+    lineName: name, // LINE表示名（スタッフメモに記録）
     idempotencyKey: ["LINE", uid, st.date, st.time, st.course].join("|"),
   });
 
@@ -270,36 +291,21 @@ function finalizeBooking(uid, replyToken) {
     ]);
   }
 
-  // オーナー通知（任意）
-  if (OWNER_EMAIL) {
-    try {
-      MailApp.sendEmail(
-        OWNER_EMAIL,
-        "【LINE予約】" + st.therapist + " " + (st.label || st.date) + " " + st.time,
-        [
-          "LINEから新しい予約が入りました。",
-          "日時: " + (st.label || st.date) + " " + st.time,
-          "セラピスト: " + st.therapist,
-          "コース: " + st.course + "（" + yen(st.price) + "）",
-          "お名前: " + st.name + "（LINE表示名: " + name + "）",
-          "予約ID: " + (res.id || ""),
-        ].join("\n")
-      );
-    } catch (e) {}
-  }
+  // 店舗への通知は予約管理API側の「店舗控えメール」(STORE_EMAIL)に一本化（二重通知を防ぐ）
   clearState(uid);
   reply(replyToken, [
     textMsg(
       [
-        "ご予約ありがとうございます。以下の内容で【仮予約】を承りました。",
+        "ご予約ありがとうございます。以下の内容で【ご予約が確定】しました。",
         "",
         "▼ご予約内容",
         "日時: " + (st.label || st.date) + " " + st.time,
         "セラピスト: " + st.therapist,
         "コース: " + st.course + "（" + yen(st.price) + "）",
         "お名前: " + st.name,
+        "お電話: " + st.tel,
         "",
-        "確定のご連絡を店舗より差し上げます。変更・キャンセルはお電話（" + TEL + "）まで。",
+        "ご来店をお待ちしております。変更・キャンセルはお電話（" + TEL + "）までご連絡ください。",
       ].join("\n")
     ),
   ]);
@@ -563,6 +569,7 @@ function confirmMessage(st) {
         "セラピスト: " + st.therapist,
         "コース: " + st.course + "（" + yen(st.price) + "）",
         "お名前: " + st.name,
+        "お電話: " + (st.tel || ""),
       ].join("\n"),
     quickReply: qr([
       qrPostback("✅ この内容で予約", "a=confirm", "予約を確定"),
@@ -619,6 +626,13 @@ function normalizeDate(s) {
   if (m) return m[1] + "/" + Number(m[2]) + "/" + Number(m[3]);
   return String(s || "").trim();
 }
+// 電話番号を数字だけに正規化（全角・ハイフン・+81 に対応）。日本の番号として不正なら ""。
+function normalizePhone(s) {
+  let t = String(s || "").replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0));
+  let d = t.replace(/[^0-9]/g, "");
+  if (/^81\d{9,10}$/.test(d)) d = "0" + d.slice(2);
+  return /^0\d{9,10}$/.test(d) ? d : "";
+}
 function normalizeTime(s) {
   const m = String(s || "").match(/(翌)?\s*(\d{1,2})[:：](\d{2})/);
   if (!m) return "";
@@ -650,7 +664,7 @@ function hourlySlots(shift) {
    ========================================================= */
 // 必要な設定がそろっているか確認（値そのものは表示しない）＋予約可能日を表示
 function checkSetup() {
-  ["LINE_CHANNEL_ACCESS_TOKEN", "SHEET_ID", "PROXY_SHARED_SECRET", "BOOKING_API_URL", "OWNER_EMAIL"].forEach((n) => {
+  ["LINE_CHANNEL_ACCESS_TOKEN", "SHEET_ID", "PROXY_SHARED_SECRET", "BOOKING_API_URL"].forEach((n) => {
     Logger.log(n + ": " + (SP.getProperty(n) ? "設定済み" : "未設定"));
   });
   Logger.log("予約可能日: " + JSON.stringify(getDays()));

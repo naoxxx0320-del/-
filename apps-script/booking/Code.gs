@@ -960,8 +960,11 @@ function doPost(e) {
         course: body.course,
         price: body.price,
         customerName: body.customerName,
+        tel: body.tel,
         lineUserId: body.lineUserId,
         idempotencyKey: body.idempotencyKey,
+        staffMemo: body.lineName ? "LINE表示名:" + String(body.lineName).slice(0, 50) : "",
+        asConfirmed: true, // LINE予約はその場で確定（店舗方針）。署名検証済みルートのみ
       });
       return json_(rr);
     }
