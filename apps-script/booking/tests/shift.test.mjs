@@ -161,8 +161,8 @@ t("adminShiftDelete: 行を削除", () => {
 });
 
 t("adminShifts: 週の範囲だけ返し、名簿シートの名前も含む", () => {
-  const prof = makeSheet("セラピスト", [["名前", "年齢"], ["みお", "23"], ["新人ちゃん", "20"]]);
-  const g = load({ 出勤情報: makeSheet("出勤情報", baseSched()), セラピスト: prof });
+  const prof = makeSheet("本日の出勤", [["名前", "年齢"], ["みお", "23"], ["新人ちゃん", "20"]]);
+  const g = load({ 出勤情報: makeSheet("出勤情報", baseSched()), 本日の出勤: prof });
   const res = g.adminShifts("2026/10/7", 1);
   assert.equal(res.dates.length, 1);
   assert.equal(res.dates[0].label, "10/7(水)");
@@ -190,6 +190,54 @@ t("createBooking: WEB で出勤表に無い人（休み）は拒否・おまか�
   assert.equal(g.createBooking({ ...base, source: "電話", therapistName: "花恋", tel: "092", asConfirmed: true }).ok, true);
   // 出勤表が未入力の日は従来どおり受け付ける
   assert.equal(g.createBooking({ ...base, dateStr: "2026/10/20", source: "WEB", therapistName: "花恋", tel: "093" }).ok, true);
+});
+
+
+t("名簿シート：応募シート（名前・年齢）を名簿と誤認しない", () => {
+  const apply = makeSheet("応募", [["名前", "年齢", "電話"], ["応募者", "22", "090"]]);
+  const g = load({ 出勤情報: makeSheet("出勤情報", baseSched()), 応募: apply });
+  assert.equal(g.profileSheet_(), null);
+});
+
+t("非公開ファイルへの移動：コピー→LEDGER_SHEET_ID設定→台帳はそちらに読み書き→元から削除", () => {
+  const props = { SHEET_ID: "PUB" };
+  const pub = {
+    出勤情報: makeSheet("出勤情報", baseSched()),
+    予約台帳: makeSheet("予約台帳", [["予約ID"], ["BK1"]]),
+    予約履歴: makeSheet("予約履歴", [["履歴ID"], ["H1"], ["H2"]]),
+  };
+  const books = { PUB: pub };
+  let created = null;
+  const mkBook = (id, tabs) => ({
+    getId: () => id, getUrl: () => "https://example/" + id,
+    getSheetByName: (n) => tabs[n] || null,
+    getSheets: () => Object.values(tabs),
+    deleteSheet: (sh) => { delete tabs[sh.getName()]; },
+  });
+  const g = load(pub, props);
+  g.props_ = () => ({ getProperty: (k) => props[k] ?? null, setProperty: (k, v) => { props[k] = v; } });
+  g.cfg_ = (k, d) => (props[k] == null || props[k] === "" ? d : props[k]);
+  g.SpreadsheetApp = {
+    openById: (id) => mkBook(id, books[id]),
+    create: () => { books.PRIV = { "シート1": makeSheet("シート1", [[]]) }; created = mkBook("PRIV", books.PRIV); return created; },
+  };
+  g.book_ = () => mkBook(g.sheetId_(), books[g.sheetId_()]);
+  // copyTo を模擬
+  for (const sh of Object.values(pub)) sh.copyTo = (dst) => { const c = makeSheet(sh.getName() + " のコピー", sh.v); c.setName = (n) => { delete books.PRIV[c.__n]; books.PRIV[n] = c; c.getName = () => n; }; c.__n = sh.getName() + " のコピー"; books.PRIV[c.__n] = c; return c; };
+  g.privateBookStep1_copy();
+  assert.equal(props.LEDGER_SHEET_ID, "PRIV");
+  assert.ok(books.PRIV["予約台帳"] && books.PRIV["予約履歴"]);
+  assert.equal(books.PRIV["シート1"], undefined);
+  assert.equal(g.ledger_().getName(), "予約台帳");
+  assert.equal(g.ledgerBook_().getId(), "PRIV");
+  // 元ファイルにコピー後の追記があれば削除しない
+  pub["予約台帳"].v.push(["BK2"]);
+  assert.throws(() => g.privateBookStep2_remove(), /追記/);
+  pub["予約台帳"].v.pop();
+  g.privateBookStep2_remove();
+  assert.equal(pub["予約台帳"], undefined);
+  assert.equal(pub["予約履歴"], undefined);
+  assert.ok(pub["出勤情報"]); // サイト用は残る
 });
 
 console.log(`\n✅ 全 ${passed} 件 パス`);
