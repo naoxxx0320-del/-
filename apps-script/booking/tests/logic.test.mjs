@@ -214,4 +214,27 @@ t("gridPlacement: 開始行index・行span（10:00開始/30分刻み）", () => 
   assert.ok(g.span >= 1);
 });
 
+t("calcSettle: コース＋延長に率、指名料・オプションは全額、割引はお店負担", () => {
+  const r = L.calcSettle({ coursePrice: 18000, extendCount: 1, extendPrice: 6000, nomFee: 1000, optionFee: 3000, discount: 2000, rate: 50 });
+  assert.equal(r.courseSales, 24000);
+  assert.equal(r.total, 24000 + 1000 + 3000 - 2000);
+  assert.equal(r.back, 12000 + 1000 + 3000);
+  assert.equal(r.shop, r.total - r.back);
+  assert.equal(r.shop, 12000 - 2000);
+});
+
+t("calcSettle: 文字の金額・端数の四捨五入・不正な率は0%", () => {
+  const r = L.calcSettle({ coursePrice: "¥13,000", rate: 45.5 });
+  assert.equal(r.courseSales, 13000);
+  assert.equal(r.back, Math.round(13000 * 0.455));
+  assert.equal(L.calcSettle({ coursePrice: 13000, rate: 150 }).back, 0);
+  assert.equal(L.calcSettle({ coursePrice: 13000, discount: -500, rate: 50 }).discount, 0);
+});
+
+t("bizDateOf: 翌2:00開始は前日の営業日・14:00は当日", () => {
+  assert.equal(L.bizDateOf(L.parseJstDateTime("2026/10/5", "翌2:00")), "2026/10/5");
+  assert.equal(L.bizDateOf(L.parseJstDateTime("2026/10/5", "14:00")), "2026/10/5");
+  assert.equal(L.bizDateOf(L.parseJstDateTime("2026/10/6", "6:00")), "2026/10/6");
+});
+
 console.log(`\n✅ 全 ${passed} 件 パス`);

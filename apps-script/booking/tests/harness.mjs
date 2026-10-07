@@ -27,6 +27,7 @@ export function makeSheet(name, values) {
     }),
     appendRow: (row) => v.push(row.map(cellIn)),
     deleteRow: (r) => v.splice(r - 1, 1),
+    setFrozenRows: () => {},
   };
 }
 
@@ -53,7 +54,11 @@ export function load(sheets, props = {}, extra = {}) {
   vm.runInContext(code, ctx);
   const history = [];
   vm.runInContext("1", ctx);
-  ctx.book_ = () => ({ getSheetByName: (n) => sheets[n] || null, getSheets: () => Object.values(sheets) });
+  ctx.book_ = () => ({
+    getSheetByName: (n) => sheets[n] || null,
+    getSheets: () => Object.values(sheets),
+    insertSheet: (n) => (sheets[n] = makeSheet(n, [])),
+  });
   ctx.requireStaff_ = () => "staff@example.com";
   ctx.logHistory_ = (...a) => history.push(a);
   ctx.readLedger_ = () => ctx.__ledger || [];

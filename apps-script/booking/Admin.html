@@ -103,6 +103,18 @@
     .pf-add { width:84px; height:112px; border:2px dashed #cfc6b3; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#8a7c64; font-size:12px; cursor:pointer; text-align:center; }
     .pf-hint { font-size:11px; color:#8a7c64; margin-top:2px; }
     .deploy-st { font-size:12px; color:#6b5d44; align-self:center; }
+    table.pr { width:100%; border-collapse:collapse; font-size:12.5px; }
+    table.pr th, table.pr td { padding:7px 8px; border-bottom:1px solid #eee5d2; text-align:right; white-space:nowrap; }
+    table.pr th { background:#faf6ee; color:#6b5d44; font-weight:600; }
+    table.pr td.l, table.pr th.l { text-align:left; }
+    table.pr tr.click { cursor:pointer; } table.pr tr.click:hover td { background:#fff7df; }
+    table.pr tfoot td { font-weight:700; background:#faf6ee; }
+    .warn-box { background:#fff6e2; border:1px solid #f0d9a0; border-radius:10px; padding:8px 12px; margin:0 0 12px; font-size:12.5px; }
+    .warn-box b { color:#9a6a00; }
+    .calc { background:#faf6ee; border:1px solid var(--line); border-radius:10px; padding:8px 12px; margin:8px 0; font-size:13px; display:grid; grid-template-columns:1fr auto; gap:3px 12px; }
+    .calc b { text-align:right; } .calc .big { font-size:15px; color:var(--wine); }
+    .opt-list label { display:inline-flex; align-items:center; gap:4px; margin:2px 10px 2px 0; font-size:13px; color:var(--ink); }
+    .settled { display:inline-block; font-size:11px; padding:1px 7px; border-radius:10px; background:#e7f6ec; color:#1f6b3a; border:1px solid #bfe3cb; }
   </style>
 </head>
 <body>
@@ -111,6 +123,7 @@
     <nav class="ptabs">
       <button class="ptab on" id="tab-bk">予約</button>
       <button class="ptab" id="tab-th">セラピスト</button>
+      <button class="ptab" id="tab-pr">実績</button>
     </nav>
     <span class="me" id="me"></span>
   </header>
@@ -170,6 +183,20 @@
       <div class="summary" id="th-summary"></div>
       <div id="th-grid"><div class="loading">読み込み中…</div></div>
       <p class="tt-hint">マスをタップで出勤の登録・変更／名前をタップで個別ページ。斜線＝休み、黄色＝申請中・希望休（サイト非表示・予約不可）。サイトへの反映は数時間おきの自動更新、または「今すぐサイトに反映」（数分）で行われます。</p>
+    </main>
+  </div>
+
+  <!-- 実績・バック -->
+  <div id="page-pr" style="display:none">
+    <div class="bar">
+      <button class="ghost" id="pr-prev">‹ 前の月</button>
+      <label>月<input type="month" id="pr-month" /></label>
+      <button class="ghost" id="pr-next">次の月 ›</button>
+      <button class="ghost" id="pr-reload">更新</button>
+    </div>
+    <main>
+      <div id="pr-body"><div class="loading">読み込み中…</div></div>
+      <p class="tt-hint">バック＝（コース料金＋延長）×バック率＋指名料＋オプション料金。割引はお店の負担です。日付は営業日（朝6時前の開始は前日）で数えます。セラピスト名をタップで日ごとの内訳。</p>
     </main>
   </div>
 
@@ -257,9 +284,47 @@
       <div class="modal-actions">
         <button class="ghost" id="d-close">閉じる</button>
         <button class="ghost" id="d-memo-save">メモ保存</button>
+        <button class="primary" id="d-settle">精算</button>
         <button class="primary" id="d-edit">変更</button>
         <button class="primary" id="d-confirm">確定</button>
         <button class="danger" id="d-cancel">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 精算 -->
+  <div class="modal-bg" id="st-bg" style="z-index:60">
+    <div class="modal">
+      <h2>精算（実績の入力）</h2>
+      <div id="st-info" class="meta"></div>
+      <div class="field"><label>担当したセラピスト</label><select id="st-ther"></select></div>
+      <div class="field"><label>バック率（％）</label><input type="number" id="st-rate" min="0" max="100" step="0.5" inputmode="decimal" />
+        <div class="pf-hint" id="st-rate-hint">変更すると、この人の今後の精算にも使われます。</div></div>
+      <div class="field"><label>コース料金（円）</label><input type="number" id="st-course" min="0" step="500" inputmode="numeric" /></div>
+      <div class="two">
+        <div class="field"><label>延長</label><select id="st-ext"></select></div>
+        <div class="field"><label>指名</label><select id="st-nom"></select></div>
+      </div>
+      <div class="field"><label>オプション</label><div class="opt-list" id="st-opts"></div></div>
+      <div class="field"><label>割引（円・お店の負担）</label><input type="number" id="st-disc" min="0" step="500" inputmode="numeric" /></div>
+      <div class="field"><label>メモ（任意）</label><input type="text" id="st-memo" maxlength="500" /></div>
+      <div class="calc" id="st-calc"></div>
+      <div class="modal-actions">
+        <button class="ghost" id="st-close">閉じる</button>
+        <button class="danger" id="st-del">精算を取り消す</button>
+        <button class="primary" id="st-save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 実績の内訳（日ごと） -->
+  <div class="modal-bg" id="pd-bg">
+    <div class="modal" style="max-width:600px">
+      <h2 id="pd-title">内訳</h2>
+      <div id="pd-body"></div>
+      <div class="modal-actions">
+        <button class="ghost" id="pd-rate">バック率を変更</button>
+        <button class="primary" id="pd-close">閉じる</button>
       </div>
     </div>
   </div>
@@ -343,6 +408,7 @@
           + '<span class="pill st-'+esc(r.status)+'">'+esc(r.statusLabel)+'</span>'
           + '<span class="src">'+esc(r.source)+'</span>'
           + repHtml(r)
+          + (r.settled?' <span class="settled">精算済</span>':'')
           + '<span style="margin-left:auto;font-weight:700">'+esc(r.therapistName)+'</span></div>'
           + '<div class="meta">'+esc(r.customerName||"（名前なし）")+'　'+esc(r.course||"")+'　'+(r.price?("¥"+Number(r.price).toLocaleString()):"")
           + (r.tel?'　☎ '+esc(r.tel):'')+(r.email?'　✉ '+esc(r.email):'')
@@ -367,6 +433,8 @@
       $("d-confirm").style.display = (r.status==="tentative")?"inline-block":"none";
       $("d-edit").style.display = (r.status==="cancelled"||r.status==="expired")?"none":"inline-block";
       $("d-cancel").style.display = (r.status==="cancelled")?"none":"inline-block";
+      $("d-settle").style.display = (r.status==="confirmed")?"inline-block":"none";
+      $("d-settle").textContent = r.settled ? "精算済（修正）" : "精算";
       $("detail-bg").dataset.id=id;
       $("detail-bg").classList.add("on");
     };
@@ -530,14 +598,14 @@
     function setSelect(sel, val){ if(!val) return; var has=[].some.call(sel.options,function(o){return o.value===val;}); if(!has){ var o=document.createElement("option"); o.textContent=val; sel.appendChild(o);} sel.value=val; }
 
     // ---- ページ切替 ----
-    function showPage(th){
-      $("page-bk").style.display = th?"none":"block";
-      $("page-th").style.display = th?"block":"none";
-      $("tab-bk").classList.toggle("on", !th); $("tab-th").classList.toggle("on", th);
-      if(th && !shData) loadShifts();
+    function showPage(pg){
+      ["bk","th","pr"].forEach(function(k){ $("page-"+k).style.display = k===pg?"block":"none"; $("tab-"+k).classList.toggle("on", k===pg); });
+      if(pg==="th" && !shData) loadShifts();
+      if(pg==="pr" && window.loadPayroll) window.loadPayroll(true);
     }
-    $("tab-bk").onclick=function(){ showPage(false); };
-    $("tab-th").onclick=function(){ showPage(true); };
+    $("tab-bk").onclick=function(){ showPage("bk"); };
+    $("tab-th").onclick=function(){ showPage("th"); };
+    $("tab-pr").onclick=function(){ showPage("pr"); };
 
     // ---- 週間出勤表 ----
     $("th-from").value = todayStr();
@@ -825,6 +893,173 @@
         else { setDeploySt(""); alert((r&&r.reason)||"開始できませんでした。"); }
       }).withFailureHandler(function(e){ setDeploySt(""); alert("エラー："+(e&&e.message?e.message:e)); }).adminDeployNow();
     };
+  })();
+  </script>
+  <script>
+  /* ===== 実績・バック計算（精算の入力・月の集計） ===== */
+  (function(){
+    function yen(n){ return "¥"+Number(n||0).toLocaleString(); }
+    function num(v){ var x=Math.round(Number(String(v==null?"":v).replace(/[^\d.\-]/g,""))||0); return x<0?0:x; }
+    // lib.gs の calcSettle と同じ式（画面の目安。保存時はサーバーで計算し直す）
+    function calc(p){
+      var course=num(p.coursePrice)+num(p.extendPrice)*num(p.extendCount), nom=num(p.nomFee), opt=num(p.optionFee), disc=num(p.discount);
+      var rate=Number(p.rate); if(!(rate>=0&&rate<=100)) rate=0;
+      var total=course+nom+opt-disc, back=Math.round(course*rate/100)+nom+opt;
+      return { courseSales:course, total:total, back:back, shop:total-back };
+    }
+
+    // ---- 精算 ----
+    var st=null; // adminSettleGet の結果
+    window.openSettle=function(id){
+      $("st-info").innerHTML='<div class="loading">読み込み中…</div>';
+      $("st-save").disabled=true;
+      $("st-bg").classList.add("on");
+      google.script.run.withSuccessHandler(function(res){
+        if(!res||!res.ok){ $("st-info").innerHTML='<div class="err">'+esc((res&&res.reason)||"取得に失敗しました")+'</div>'; return; }
+        st=res; fillSettle(); $("st-save").disabled=false;
+      }).withFailureHandler(function(e){ $("st-info").innerHTML='<div class="err">'+esc(e&&e.message?e.message:e)+'</div>'; })
+        .adminSettleGet(id);
+    };
+    function fillSettle(){
+      var b=st.booking, s=st.settle, c=st.config;
+      $("st-info").innerHTML=esc(b.start)+"（営業日 "+esc(b.bizDate)+"）<br>"+esc(b.customerName||"（名前なし）")+"　"+esc(b.course||"")+"　予約の担当："+esc(b.therapistName)
+        +(b.status!=="confirmed"?'<br><span class="err">確定した予約だけ精算できます（現在：'+esc(b.statusLabel)+'）</span>':"")
+        +(s?'<br><span class="settled">精算済</span> '+esc(s.at)+'（'+esc(s.by)+'）':"");
+      var who=s?s.therapistName:(/おまかせ/.test(b.therapistName)?"":b.therapistName);
+      var names=st.names.slice(); if(who&&names.indexOf(who)<0) names.unshift(who);
+      $("st-ther").innerHTML='<option value="">選んでください</option>'+names.map(function(n){ return '<option'+(n===who?' selected':'')+'>'+esc(n)+'</option>'; }).join("");
+      var ext='<option value="0">なし</option>'; for(var i=1;i<=4;i++) ext+='<option value="'+i+'">'+i+'回（'+esc(c.extend.name)+'×'+i+'・'+yen(c.extend.price*i)+'）</option>';
+      $("st-ext").innerHTML=ext; $("st-ext").value=String(s?s.extendCount:0);
+      $("st-nom").innerHTML='<option value="">なし（フリー）</option>'+c.noms.map(function(x){ return '<option value="'+esc(x.name)+'">'+esc(x.name)+'（'+yen(x.price)+'）</option>'; }).join("");
+      $("st-nom").value=s?s.nom:"";
+      $("st-opts").innerHTML=c.options.length?c.options.map(function(x,i){ return '<label><input type="checkbox" data-opt="'+i+'"'+(s&&s.options.indexOf(x.name)>=0?' checked':'')+' />'+esc(x.name)+'（'+yen(x.price)+'）</label>'; }).join(""):'<span class="note">オプションの設定がありません</span>';
+      $("st-course").value=s?s.coursePrice:(b.price||"");
+      $("st-disc").value=s&&s.discount?s.discount:"";
+      $("st-memo").value=s?s.memo:"";
+      $("st-del").style.display=s?"inline-block":"none";
+      setRateFor($("st-ther").value, s?s.rate:null);
+      updCalc();
+    }
+    function setRateFor(name, fallback){
+      var r = name && st.rates[name]!=null ? st.rates[name] : fallback;
+      $("st-rate").value = r==null ? "" : r;
+      $("st-rate-hint").textContent = !name ? "" : (st.rates[name]==null ? "⚠ "+name+" さんのバック率は未設定です。入力すると保存されます。" : "変更すると、この人の今後の精算にも使われます（過去の精算はそのまま）。");
+    }
+    function curInput(){
+      var c=st.config, nom=$("st-nom").value, nomFee=0, opts=[], optFee=0;
+      c.noms.forEach(function(x){ if(x.name===nom) nomFee=x.price; });
+      [].forEach.call($("st-opts").querySelectorAll("[data-opt]"),function(el){ if(el.checked){ var o=c.options[+el.getAttribute("data-opt")]; opts.push(o.name); optFee+=o.price; } });
+      return { therapistName:$("st-ther").value, rate:$("st-rate").value, coursePrice:$("st-course").value, extendCount:+$("st-ext").value, extendPrice:c.extend.price,
+               nom:nom, nomFee:nomFee, options:opts, optionFee:optFee, discount:$("st-disc").value, memo:$("st-memo").value };
+    }
+    function updCalc(){
+      if(!st) return;
+      var p=curInput(), r=calc(p), noRate=String(p.rate).trim()==="";
+      $("st-calc").innerHTML='<span>コース＋延長</span><b>'+yen(r.courseSales)+'</b>'
+        +(p.nomFee?'<span>指名料（全額セラピスト）</span><b>'+yen(p.nomFee)+'</b>':'')
+        +(p.optionFee?'<span>オプション（全額セラピスト）</span><b>'+yen(p.optionFee)+'</b>':'')
+        +(num(p.discount)?'<span>割引（お店の負担）</span><b>−'+yen(num(p.discount))+'</b>':'')
+        +'<span class="big">お支払い合計</span><b class="big">'+yen(r.total)+'</b>'
+        +'<span class="big">バック'+(noRate?'（率が未入力）':'（'+esc(p.rate)+'%）')+'</span><b class="big">'+(noRate?'—':yen(r.back))+'</b>'
+        +'<span>店取り分</span><b>'+(noRate?'—':yen(r.shop))+'</b>';
+    }
+    ["st-rate","st-course","st-ext","st-nom","st-disc"].forEach(function(id){ $(id).addEventListener("input",updCalc); $(id).addEventListener("change",updCalc); });
+    $("st-opts").addEventListener("change",updCalc);
+    $("st-ther").addEventListener("change",function(){ setRateFor(this.value, null); updCalc(); });
+    $("st-close").onclick=function(){ $("st-bg").classList.remove("on"); };
+    function settleDone(msg){
+      return function(res){
+        $("st-save").disabled=false;
+        if(!res||!res.ok){ alert("できませんでした："+((res&&res.reason)||"不明")); return; }
+        toast(msg); $("st-bg").classList.remove("on"); $("detail-bg").classList.remove("on");
+        if(typeof refresh==="function") refresh();
+        if($("page-pr").style.display!=="none") loadPayroll();
+        if($("pd-bg").classList.contains("on")) $("pd-bg").classList.remove("on");
+      };
+    }
+    function settleFail(e){ $("st-save").disabled=false; alert("エラー："+(e&&e.message?e.message:e)); }
+    $("st-save").onclick=function(){
+      var p=curInput();
+      if(!p.therapistName){ alert("担当したセラピストを選んでください。"); return; }
+      if(String(p.rate).trim()===""){ alert("バック率を入力してください。"); return; }
+      p.id=st.booking.id;
+      $("st-save").disabled=true;
+      google.script.run.withSuccessHandler(settleDone("精算を保存しました")).withFailureHandler(settleFail).adminSettleSave(p);
+    };
+    $("st-del").onclick=function(){
+      if(!confirm("この予約の精算を取り消します。よろしいですか？（履歴には残ります）")) return;
+      google.script.run.withSuccessHandler(settleDone("精算を取り消しました")).withFailureHandler(settleFail).adminSettleDelete(st.booking.id);
+    };
+    $("d-settle").onclick=function(){ openSettle($("detail-bg").dataset.id); };
+
+    // ---- 月の実績・バック ----
+    var pr=null, prLoaded=false;
+    (function(){ var d=new Date(); $("pr-month").value=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); })();
+    function monthSlash(){ var m=$("pr-month").value.match(/^(\d{4})-(\d{2})$/); return m?(m[1]+"/"+(+m[2])):""; }
+    function shiftMonth(n){ var m=$("pr-month").value.match(/^(\d{4})-(\d{2})$/); if(!m) return; var d=new Date(+m[1], +m[2]-1+n, 1); $("pr-month").value=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); loadPayroll(); }
+    window.loadPayroll=function(onlyFirst){
+      if(onlyFirst && prLoaded) return; prLoaded=true;
+      $("pr-body").innerHTML='<div class="loading">読み込み中…</div>';
+      google.script.run.withSuccessHandler(renderPayroll)
+        .withFailureHandler(function(e){ $("pr-body").innerHTML='<div class="err">'+esc(e&&e.message?e.message:e)+'</div>'; })
+        .adminPayroll(monthSlash());
+    };
+    function renderPayroll(res){
+      if(!res||!res.ok){ $("pr-body").innerHTML='<div class="err">'+esc((res&&res.reason)||"取得に失敗しました")+'</div>'; return; }
+      pr=res; var T=res.totals, h='';
+      h+='<div><span class="stat">売上合計<b>'+yen(T.total)+'</b></span><span class="stat">バック合計<b>'+yen(T.back)+'</b></span><span class="stat">店取り分<b>'+yen(T.shop)+'</b></span><span class="stat">精算<b>'+T.count+'</b>件</span></div>';
+      if(res.unsettled.length){
+        h+='<div class="warn-box"><b>⚠ 精算がまだの確定予約 '+res.unsettled.length+'件</b>（終了済み。タップで精算）';
+        res.unsettled.forEach(function(u){ h+='<div class="li click" data-us="'+esc(u.id)+'">'+esc(u.start.slice(5))+' '+esc(u.therapistName)+' / '+esc(u.course||"")+' / '+esc(u.customerName||"")+'</div>'; });
+        h+='</div>';
+      }
+      h+='<div class="tt-wrap" style="margin-top:8px"><table class="pr"><thead><tr><th class="l">セラピスト</th><th>バック率</th><th>件数</th><th>売上合計</th><th>指名・OP</th><th>バック</th><th>店取り分</th></tr></thead><tbody>';
+      res.therapists.forEach(function(t,i){
+        h+='<tr class="click" data-pt="'+i+'"><td class="l"><b>'+esc(t.name)+'</b></td><td>'+(t.rate==null?'<span class="err" style="padding:0">未設定</span>':esc(t.rate)+'%')+'</td><td>'+t.count+'</td><td>'+yen(t.total)+'</td><td>'+yen(t.nomFee+t.optionFee)+'</td><td><b>'+yen(t.back)+'</b></td><td>'+yen(t.shop)+'</td></tr>';
+      });
+      h+='</tbody><tfoot><tr><td class="l">合計</td><td></td><td>'+T.count+'</td><td>'+yen(T.total)+'</td><td>'+yen(T.nomFee+T.optionFee)+'</td><td>'+yen(T.back)+'</td><td>'+yen(T.shop)+'</td></tr></tfoot></table></div>';
+      if(!res.therapists.length) h+='<div class="empty">この月の実績はまだありません。</div>';
+      $("pr-body").innerHTML=h;
+    }
+    $("pr-body").addEventListener("click",function(ev){
+      var u=ev.target.closest("[data-us]"); if(u){ openSettle(u.getAttribute("data-us")); return; }
+      var r=ev.target.closest("[data-pt]"); if(r) openPayDetail(pr.therapists[+r.getAttribute("data-pt")]);
+    });
+    var pdCur=null;
+    function openPayDetail(t){
+      pdCur=t;
+      $("pd-title").textContent=t.name+" さん　"+pr.month.replace("/","年")+"月"+"（バック率 "+(t.rate==null?"未設定":t.rate+"%")+"）";
+      var h='<div><span class="stat">件数<b>'+t.count+'</b></span><span class="stat">売上合計<b>'+yen(t.total)+'</b></span><span class="stat">バック<b>'+yen(t.back)+'</b></span></div>';
+      h+='<div class="sec-h">日ごと（日払いの確認用）</div>';
+      if(!t.days.length) h+='<div class="note">この月の精算はありません。</div>';
+      else {
+        h+='<div class="tt-wrap"><table class="pr"><thead><tr><th class="l">営業日</th><th>件数</th><th>売上</th><th>バック</th><th>店取り分</th></tr></thead><tbody>';
+        t.days.forEach(function(d){ h+='<tr><td class="l">'+esc(d.date)+'</td><td>'+d.count+'</td><td>'+yen(d.total)+'</td><td><b>'+yen(d.back)+'</b></td><td>'+yen(d.shop)+'</td></tr>'; });
+        h+='</tbody></table></div>';
+        h+='<div class="sec-h">明細（タップで修正）</div>';
+        t.items.forEach(function(x){
+          var extra=[x.nom, x.extendCount?("延長"+x.extendCount+"回"):"", x.options].filter(Boolean).join("・");
+          h+='<div class="li click" data-it="'+esc(x.id)+'"><b>'+esc(x.start.slice(5))+'</b> '+esc(x.course)+(extra?' <small>'+esc(extra)+'</small>':'')+' <span style="margin-left:auto">'+yen(x.total)+' → バック <b>'+yen(x.back)+'</b></span></div>';
+        });
+      }
+      $("pd-body").innerHTML=h;
+      $("pd-bg").classList.add("on");
+    }
+    $("pd-body").addEventListener("click",function(ev){ var it=ev.target.closest("[data-it]"); if(it) openSettle(it.getAttribute("data-it")); });
+    $("pd-close").onclick=function(){ $("pd-bg").classList.remove("on"); };
+    $("pd-rate").onclick=function(){
+      if(!pdCur) return;
+      var v=prompt(pdCur.name+" さんのバック率（％）を入力してください。\n今後の精算に使われます（過去の精算は変わりません）。", pdCur.rate==null?"":pdCur.rate);
+      if(v==null) return;
+      google.script.run.withSuccessHandler(function(r){
+        if(r&&r.ok){ toast("バック率を "+r.rate+"% にしました"); $("pd-bg").classList.remove("on"); loadPayroll(); }
+        else alert("できませんでした："+((r&&r.reason)||"不明"));
+      }).withFailureHandler(function(e){ alert("エラー："+(e&&e.message?e.message:e)); }).adminSetBackRate(pdCur.name, v);
+    };
+    $("pr-prev").onclick=function(){ shiftMonth(-1); };
+    $("pr-next").onclick=function(){ shiftMonth(1); };
+    $("pr-reload").onclick=function(){ loadPayroll(); };
+    $("pr-month").addEventListener("change",function(){ loadPayroll(); });
   })();
   </script>
 </body>

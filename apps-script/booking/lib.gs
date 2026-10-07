@@ -151,6 +151,31 @@ function gridPlacement(startMin, endMin, openMin, stepMin, rowCount) {
   return { startIdx: startIdx, span: endIdx - startIdx };
 }
 
+/* 精算（バック計算）。金額はすべて円の整数。
+   コース売上 = コース料金 + 延長料金（これにバック率をかける）
+   お支払い合計 = コース売上 + 指名料 + オプション料金 − 割引
+   バック = 四捨五入(コース売上 × 率%) + 指名料 + オプション料金（指名料・オプションは全額セラピスト）
+   店取り分 = お支払い合計 − バック（割引はお店の負担） */
+function calcSettle(p) {
+  var n = function (v) {
+    var x = Math.round(Number(String(v == null ? "" : v).replace(/[^\d.\-]/g, "")) || 0);
+    return x < 0 ? 0 : x;
+  };
+  var course = n(p.coursePrice) + n(p.extendPrice) * n(p.extendCount);
+  var nom = n(p.nomFee), opt = n(p.optionFee), disc = n(p.discount);
+  var rate = Number(p.rate);
+  if (!(rate >= 0 && rate <= 100)) rate = 0;
+  var total = course + nom + opt - disc;
+  var back = Math.round((course * rate) / 100) + nom + opt;
+  return { courseSales: course, nomFee: nom, optionFee: opt, discount: disc, total: total, back: back, shop: total - back, rate: rate };
+}
+
+/* 営業日（"2026/10/5"）。朝6時より前の開始は前日の営業日として数える（翌2:00 など）。 */
+function bizDateOf(epochMs) {
+  var d = new Date(epochMs + 9 * 3600 * 1000 - 6 * 3600 * 1000);
+  return d.getUTCFullYear() + "/" + (d.getUTCMonth() + 1) + "/" + d.getUTCDate();
+}
+
 // Node テスト用のエクスポート（GASでは typeof module === 'undefined' で無視される）
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
@@ -169,5 +194,7 @@ if (typeof module !== "undefined" && module.exports) {
     findConflict,
     minutesFromDate,
     gridPlacement,
+    calcSettle,
+    bizDateOf,
   };
 }

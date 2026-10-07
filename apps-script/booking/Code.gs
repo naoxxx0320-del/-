@@ -765,6 +765,8 @@ function adminList(params) {
   var want = p.dateStr ? normDate_(p.dateStr) : null;
   var rows = readLedger_();
   var vinfo = visitInfoMap_(rows); // 全履歴からリピーター回数を算出
+  var st = {};
+  try { st = settlements_(); } catch (e) {} // 精算済みの表示用（失敗しても一覧は出す）
   var out = rows
     .filter(function (r) {
       if (want && normDate_(fmtJst(r.startAt)) !== want) return false;
@@ -786,6 +788,7 @@ function adminList(params) {
         tel: r.tel, email: r.email, lineUserId: r.lineUserId,
         staffMemo: r.staffMemo, updatedAt: r.updatedAt, updatedBy: r.updatedBy,
         visitNo: vi.visitNo || null, visitCount: vi.visitCount || null,
+        settled: st[String(r.id)] ? { total: yenNum_(st[String(r.id)]["お支払い合計"]), back: yenNum_(st[String(r.id)]["バック"]) } : null,
       };
     });
   return jsonSafe_({ ok: true, rows: out });
@@ -1746,6 +1749,278 @@ function adminDeployStatus() {
   var run = (r.workflow_runs || [])[0];
   if (!run) return { ok: true, status: "none" };
   return { ok: true, status: run.status, conclusion: run.conclusion, startedAt: run.run_started_at || run.created_at };
+}
+
+/* ==========================================================================
+ * 実績・バック計算（③）
+ *   ・接客後に予約ごとの「精算」を入力（指名・延長・オプション・割引）→ 金額は自動計算
+ *   ・セラピストごとのバック率（％）… コース料金＋延長にかける。指名料・オプションは全額セラピスト、
+ *     割引はお店の負担（calcSettle 参照）
+ *   ・集計は営業日ごと（朝6時前の開始は前日）＋月合計
+ * シートはすべてお客様情報と同じ非公開ファイル（ledgerBook_）に置く。
+ * ========================================================================== */
+var SETTLE_SHEET = "精算";
+var SETTLE_HEADER = [
+  "予約ID", "営業日", "担当者名", "コース", "コース料金", "延長(回)", "延長料金", "指名", "指名料",
+  "オプション", "オプション料金", "割引", "お支払い合計", "バック率(%)", "バック", "店取り分",
+  "メモ", "入力者", "入力日時(JST)",
+];
+var RATE_SHEET = "バック率";
+var RATE_HEADER = ["名前", "バック率(%)", "更新日時(JST)", "更新者"];
+var PRICE_SHEET = "料金設定";
+var PRICE_HEADER = ["区分", "名前", "金額"];
+var PRICE_DEFAULTS_ = [
+  ["延長", "延長30分", 6000],
+  ["指名", "写真指名", 1000],
+  ["指名", "本指名", 1000],
+  ["指名", "姫指名", 2000],
+  ["オプション", "パウダートリートメント", 1000],
+  ["オプション", "ホイップトリートメント", 2000],
+  ["オプション", "衣装チェンジ", 2000],
+];
+
+/* 非公開ファイルのシートを取得（無ければ見出し付きで作成。既存のシートは変更しない）。 */
+function privSheet_(name, header, seed) {
+  var b = ledgerBook_();
+  var sh = b.getSheetByName(name);
+  if (!sh) {
+    sh = b.insertSheet(name);
+    sh.appendRow(header);
+    (seed || []).forEach(function (r) { sh.appendRow(r); });
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+function sheetObjs_(sh) {
+  var v = sh.getDataRange().getValues();
+  if (v.length < 2) return [];
+  var head = v[0].map(function (x) { return String(x).trim(); });
+  return v.slice(1).map(function (r, i) {
+    var o = { _row: i + 2 };
+    head.forEach(function (h, j) { if (h) o[h] = r[j]; });
+    return o;
+  });
+}
+/* 日付セル（文字列/Date）→ "2026/10/5" */
+function bizStr_(v) {
+  var x = cellStr_(v).match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+  return x ? +x[1] + "/" + +x[2] + "/" + +x[3] : "";
+}
+function yenNum_(v) {
+  return Math.max(0, Math.round(Number(String(v == null ? "" : v).replace(/[^\d.\-]/g, "")) || 0));
+}
+
+/* 料金設定シート（延長・指名・オプションの金額。シートで変更できる）。 */
+function priceConfig_() {
+  var cfg = { extend: { name: "延長30分", price: 6000 }, noms: [], options: [] };
+  sheetObjs_(privSheet_(PRICE_SHEET, PRICE_HEADER, PRICE_DEFAULTS_)).forEach(function (o) {
+    var kind = String(o["区分"] || "").trim(), name = String(o["名前"] || "").trim(), price = yenNum_(o["金額"]);
+    if (!name) return;
+    if (kind === "延長") cfg.extend = { name: name, price: price };
+    else if (kind === "指名") cfg.noms.push({ name: name, price: price });
+    else if (kind === "オプション") cfg.options.push({ name: name, price: price });
+  });
+  return cfg;
+}
+
+/* バック率 {名前: 率} */
+function backRates_() {
+  var m = {};
+  sheetObjs_(privSheet_(RATE_SHEET, RATE_HEADER)).forEach(function (o) {
+    var n = String(o["名前"] || "").trim(), r = String(o["バック率(%)"]).trim();
+    if (n && r !== "" && !isNaN(Number(r))) m[n] = Number(r);
+  });
+  return m;
+}
+function setBackRate_(name, rate, staff) {
+  var sh = privSheet_(RATE_SHEET, RATE_HEADER);
+  var rows = sheetObjs_(sh);
+  var now = Utilities.formatDate(new Date(), "Asia/Tokyo", "yyyy/MM/dd HH:mm:ss");
+  var hit = rows.filter(function (o) { return String(o["名前"] || "").trim() === name; })[0];
+  var before = hit ? hit["バック率(%)"] : null;
+  if (hit) sh.getRange(hit._row, 1, 1, 4).setValues([[name, rate, now, staff]]);
+  else sh.appendRow([name, rate, now, staff]);
+  logHistory_("RATE", staff, "バック率 " + name, before == null ? null : { rate: before }, { rate: rate });
+}
+function parseRate_(v) {
+  var s = String(v == null ? "" : v).trim();
+  if (s === "" || isNaN(Number(s))) return null;
+  var r = Number(s);
+  return r >= 0 && r <= 100 ? Math.round(r * 10) / 10 : null;
+}
+
+/* 精算 {予約ID: 行オブジェクト} */
+function settlements_() {
+  var m = {};
+  sheetObjs_(privSheet_(SETTLE_SHEET, SETTLE_HEADER)).forEach(function (o) {
+    var id = String(o["予約ID"] || "").trim();
+    if (id) m[id] = o;
+  });
+  return m;
+}
+function settleOut_(o) {
+  if (!o) return null;
+  return {
+    therapistName: String(o["担当者名"] || ""), coursePrice: yenNum_(o["コース料金"]),
+    extendCount: yenNum_(o["延長(回)"]), nom: String(o["指名"] || ""),
+    options: String(o["オプション"] || "").split(";").map(function (x) { return x.trim(); }).filter(Boolean),
+    discount: yenNum_(o["割引"]), total: yenNum_(o["お支払い合計"]), back: yenNum_(o["バック"]),
+    shop: Number(o["店取り分"]) || 0, rate: Number(o["バック率(%)"]) || 0, memo: String(o["メモ"] || ""),
+    by: String(o["入力者"] || ""), at: cellStr_(o["入力日時(JST)"]), bizDate: bizStr_(o["営業日"]),
+  };
+}
+
+/* 精算画面用：予約の内容・既存の精算・料金設定・セラピスト一覧・バック率。 */
+function adminSettleGet(id) {
+  requireStaff_();
+  var r = readLedger_().filter(function (x) { return String(x.id) === String(id); })[0];
+  if (!r) return { ok: false, reason: "予約が見つかりません。" };
+  var rates = backRates_();
+  return jsonSafe_({
+    ok: true,
+    booking: {
+      id: r.id, status: r.status, statusLabel: STATUS_LABEL[r.status], therapistName: r.therapistName,
+      start: fmtJst(r.startAt), course: r.course, price: yenNum_(r.price), customerName: r.customerName,
+      bizDate: bizDateOf(r.startAt),
+    },
+    settle: settleOut_(settlements_()[String(r.id)]),
+    config: priceConfig_(), names: therapistNames_(), rates: rates,
+  });
+}
+
+/* 精算の保存（同じ予約は上書き）。金額はサーバーで計算し直す（画面の値は信用しない）。
+   p = {id, therapistName, coursePrice, extendCount, nom, options:[名前], discount, memo, rate?}
+   rate を渡すと、その人のバック率も更新（未設定なら必須）。 */
+function adminSettleSave(p) {
+  var staff = requireStaff_();
+  p = p || {};
+  var name = String(p.therapistName || "").trim();
+  if (!name || /おまかせ/.test(name)) return { ok: false, reason: "担当したセラピストを選んでください。" };
+  var cfg = priceConfig_();
+  var nom = String(p.nom || "").trim(), nomFee = 0;
+  if (nom) {
+    var nm = cfg.noms.filter(function (x) { return x.name === nom; })[0];
+    if (!nm) return { ok: false, reason: "指名の種類が料金設定にありません：" + nom };
+    nomFee = nm.price;
+  }
+  var opts = [].concat(p.options || []).map(function (x) { return String(x).trim(); }).filter(Boolean);
+  var optFee = 0;
+  for (var i = 0; i < opts.length; i++) {
+    var op = cfg.options.filter(function (x) { return x.name === opts[i]; })[0];
+    if (!op) return { ok: false, reason: "オプションが料金設定にありません：" + opts[i] };
+    optFee += op.price;
+  }
+  var ext = Math.round(Number(p.extendCount) || 0);
+  if (ext < 0 || ext > 10) return { ok: false, reason: "延長の回数が不正です。" };
+  var newRate = p.rate == null || String(p.rate).trim() === "" ? null : parseRate_(p.rate);
+  if (p.rate != null && String(p.rate).trim() !== "" && newRate == null) return { ok: false, reason: "バック率は0〜100の数字で入力してください。" };
+
+  return withLock_(function () {
+    var r = readLedger_().filter(function (x) { return String(x.id) === String(p.id); })[0];
+    if (!r) return { ok: false, reason: "予約が見つかりません。" };
+    if (r.status !== "confirmed") return { ok: false, reason: "確定した予約だけ精算できます（現在：" + (STATUS_LABEL[r.status] || r.status) + "）。" };
+    var rates = backRates_();
+    if (newRate != null && newRate !== rates[name]) { setBackRate_(name, newRate, staff); rates[name] = newRate; }
+    if (rates[name] == null) return { ok: false, reason: name + " さんのバック率が未設定です。" };
+    var c = calcSettle({
+      coursePrice: p.coursePrice == null || p.coursePrice === "" ? r.price : p.coursePrice,
+      extendCount: ext, extendPrice: cfg.extend.price, nomFee: nomFee, optionFee: optFee,
+      discount: p.discount, rate: rates[name],
+    });
+    var coursePrice = c.courseSales - cfg.extend.price * ext;
+    var row = [
+      String(r.id), "'" + bizDateOf(r.startAt), safeCell_(name), safeCell_(r.course), coursePrice, ext, cfg.extend.price * ext,
+      nom, nomFee, opts.join(";"), optFee, c.discount, c.total, c.rate, c.back, c.shop,
+      safeCell_(String(p.memo || "").slice(0, 500)), staff,
+      Utilities.formatDate(new Date(), "Asia/Tokyo", "yyyy/MM/dd HH:mm:ss"),
+    ];
+    var sh = privSheet_(SETTLE_SHEET, SETTLE_HEADER);
+    var old = settlements_()[String(r.id)];
+    if (old) sh.getRange(old._row, 1, 1, row.length).setValues([row]);
+    else sh.appendRow(row);
+    logHistory_(r.id, staff, old ? "精算を修正" : "精算", old ? settleOut_(old) : null, { therapist: name, total: c.total, back: c.back });
+    return { ok: true, total: c.total, back: c.back, shop: c.shop };
+  });
+}
+
+function adminSettleDelete(id) {
+  var staff = requireStaff_();
+  return withLock_(function () {
+    var old = settlements_()[String(id)];
+    if (!old) return { ok: false, reason: "精算が見つかりません。" };
+    privSheet_(SETTLE_SHEET, SETTLE_HEADER).deleteRow(old._row);
+    logHistory_(String(id), staff, "精算を取り消し", settleOut_(old), null);
+    return { ok: true };
+  });
+}
+
+function adminSetBackRate(name, rate) {
+  var staff = requireStaff_();
+  name = String(name || "").trim();
+  var r = parseRate_(rate);
+  if (!name) return { ok: false, reason: "名前がありません。" };
+  if (r == null) return { ok: false, reason: "バック率は0〜100の数字で入力してください。" };
+  return withLock_(function () { setBackRate_(name, r, staff); return { ok: true, rate: r }; });
+}
+
+/* 月の実績・バック集計。month = "2026/10"。
+   セラピストごとの合計と、営業日ごとの内訳、精算がまだの確定予約（終了済み）の一覧。 */
+function adminPayroll(month) {
+  requireStaff_();
+  var m = String(month || "").match(/^(\d{4})\/(\d{1,2})$/);
+  if (!m) return { ok: false, reason: "月の指定が不正です。" };
+  var inMonth = function (d) { var x = String(d).match(/^(\d{4})\/(\d{1,2})\//); return x && +x[1] === +m[1] && +x[2] === +m[2]; };
+  var rates = backRates_();
+  var st = settlements_();
+  var by = {}, tot = { count: 0, courseSales: 0, nomFee: 0, optionFee: 0, discount: 0, total: 0, back: 0, shop: 0 };
+  var add = function (o, s) {
+    o.count++;
+    o.courseSales += s.courseSales; o.nomFee += s.nomFee; o.optionFee += s.optionFee;
+    o.discount += s.discount; o.total += s.total; o.back += s.back; o.shop += s.shop;
+  };
+  var zero = function () { return { count: 0, courseSales: 0, nomFee: 0, optionFee: 0, discount: 0, total: 0, back: 0, shop: 0 }; };
+  var ledger = readLedger_(), byId = {};
+  ledger.forEach(function (r) { byId[String(r.id)] = r; });
+  Object.keys(st).forEach(function (id) {
+    var o = st[id], d = bizStr_(o["営業日"]);
+    if (!inMonth(d)) return;
+    var s = {
+      courseSales: yenNum_(o["コース料金"]) + yenNum_(o["延長料金"]), nomFee: yenNum_(o["指名料"]),
+      optionFee: yenNum_(o["オプション料金"]), discount: yenNum_(o["割引"]), total: yenNum_(o["お支払い合計"]),
+      back: yenNum_(o["バック"]), shop: Number(o["店取り分"]) || 0,
+    };
+    var n = String(o["担当者名"] || "").trim();
+    var t = by[n] || (by[n] = { name: n, rate: rates[n] == null ? null : rates[n], days: {}, items: [] });
+    ["count", "courseSales", "nomFee", "optionFee", "discount", "total", "back", "shop"].forEach(function (k) { if (t[k] == null) t[k] = 0; });
+    add(t, s);
+    add(tot, s);
+    add(t.days[d] || (t.days[d] = zero()), s);
+    var b = byId[id];
+    t.items.push({
+      id: id, bizDate: d, start: b ? fmtJst(b.startAt) : "", course: String(o["コース"] || ""),
+      customerName: b ? b.customerName : "", nom: String(o["指名"] || ""), options: String(o["オプション"] || ""),
+      extendCount: yenNum_(o["延長(回)"]), total: s.total, back: s.back, shop: s.shop,
+    });
+  });
+  var now = nowMs_();
+  var unsettled = ledger.filter(function (r) {
+    return r.status === "confirmed" && r.endAt && r.endAt <= now && !st[String(r.id)] && inMonth(bizDateOf(r.startAt));
+  }).sort(function (a, b) { return a.startAt - b.startAt; }).map(function (r) {
+    return { id: r.id, start: fmtJst(r.startAt), therapistName: r.therapistName, course: r.course, customerName: r.customerName };
+  });
+  var list = Object.keys(by).map(function (n) {
+    var t = by[n];
+    t.days = Object.keys(t.days).sort(function (a, b) { return normDate_(a) - normDate_(b); })
+      .map(function (d) { var x = t.days[d]; x.date = d; return x; });
+    t.items.sort(function (a, b) { return a.start < b.start ? -1 : 1; });
+    return t;
+  }).sort(function (a, b) { return b.total - a.total; });
+  // バック率だけ設定されていて今月の実績が無い人も一覧に出す（率の確認・変更用）
+  therapistNames_().concat(Object.keys(rates)).forEach(function (n) {
+    if (n && !by[n] && !list.some(function (t) { return t.name === n; }))
+      list.push({ name: n, rate: rates[n] == null ? null : rates[n], count: 0, courseSales: 0, nomFee: 0, optionFee: 0, discount: 0, total: 0, back: 0, shop: 0, days: [], items: [] });
+  });
+  return jsonSafe_({ ok: true, month: +m[1] + "/" + +m[2], therapists: list, totals: tot, unsettled: unsettled });
 }
 
 /* ---------- 出力ヘルパー ---------- */
