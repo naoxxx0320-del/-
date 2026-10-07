@@ -52,6 +52,14 @@ jobs:
       - name: Validate data (health check)
         run: node scripts/validate-data.mjs
 
+      - name: Generate lottery deployment files
+        run: |
+          node scripts/build-lottery-line.mjs
+          node scripts/build-lottery-url.mjs
+
+      - name: Check lottery behavior and public link configuration
+        run: node --test scripts/lottery-server.test.cjs scripts/lottery-setup.test.cjs scripts/lottery-url.test.cjs scripts/lottery-public.test.mjs
+
       - name: Build static export
         run: npm run build
         env:

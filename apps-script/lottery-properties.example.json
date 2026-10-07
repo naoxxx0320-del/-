@@ -1,0 +1,9 @@
+{
+  "LINE_LOGIN_CHANNEL_ID": "",
+  "LOTTERY_SHEET_ID": "",
+  "LOTTERY_CAMPAIGN_ID": "aroma-20261006",
+  "LOTTERY_STARTS_AT": "2026-10-06T00:00:00+09:00",
+  "LOTTERY_ENDS_AT": "2026-12-01T00:00:00+09:00",
+  "LOTTERY_PRIZE_RULES": "[{\"id\":1,\"probability\":0.001,\"maxWinners\":3},{\"id\":2,\"probability\":0.333,\"maxWinners\":null},{\"id\":3,\"probability\":0.333,\"maxWinners\":null},{\"id\":4,\"probability\":0.333,\"maxWinners\":null}]",
+  "LOTTERY_EXHAUSTED_PRIZE_POLICY": "equal_lower"
+}

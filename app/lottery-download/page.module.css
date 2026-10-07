@@ -1,0 +1,15 @@
+.page { min-height: 100svh; padding: 40px 20px; background: #f8f1e6; color: #442b2f; font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif; }
+.card { max-width: 470px; margin: auto; padding: 30px 24px; background: #fffaf2; border: 1px solid #d4bb90; border-radius: 16px; box-shadow: 0 12px 40px #4f293415; }
+.brand { margin: 0 0 22px; font: 20px Georgia, serif; color: #501728; letter-spacing: .04em; }
+.badge { padding: 9px 10px; background: #f0e5d1; color: #685035; font-size: 12px; line-height: 1.7; border-radius: 5px; }
+.card h1 { font: 500 28px/1.6 var(--font-serif-jp); color: #501728; margin: 22px 0 14px; }
+.lead, .help p { font-size: 14px; line-height: 1.9; color: #796757; }
+.primary, .secondary { display: flex; justify-content: center; align-items: center; min-height: 54px; padding: 14px 10px; border-radius: 8px; text-align: center; font-size: 14px; font-weight: 700; }
+.primary { background: #501728; color: #ffe3ae; border: 1px solid #ac8652; margin-top: 24px; }
+.secondary { border: 1px solid #ae8a56; color: #501728; margin-top: 18px; }
+.size { font-size: 11px; line-height: 1.8; text-align: center; color: #85735e; }
+.help { margin-top: 28px; border-top: 1px solid #ddc9a8; padding-top: 18px; }
+.help h2 { font-size: 17px; font-weight: 500; }
+.back { display: inline-flex; align-items: center; min-height: 44px; font-size: 13px; color: #795b36; margin-top: 10px; }
+.page a:focus-visible { outline: 3px solid #b68737; outline-offset: 4px; }
+@media (max-width: 360px) { .page { padding: 24px 12px; } .card { padding: 22px 16px; } .primary, .secondary { font-size: 13px; } }

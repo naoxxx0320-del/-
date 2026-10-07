@@ -1,0 +1,15 @@
+{
+  "campaignId": "aroma-20261006",
+  "startsAt": "2026-10-06T00:00:00+09:00",
+  "endsAt": "2026-12-01T00:00:00+09:00",
+  "deadlineLabel": "2026年11月30日 23:59まで（日本時間）",
+  "benefitExpiresAt": null,
+  "benefitExpiryLabel": "無期限",
+  "exhaustedPrizePolicy": "equal_lower",
+  "prizeRules": [
+    { "id": 1, "probability": 0.001, "maxWinners": 3 },
+    { "id": 2, "probability": 0.333, "maxWinners": null },
+    { "id": 3, "probability": 0.333, "maxWinners": null },
+    { "id": 4, "probability": 0.333, "maxWinners": null }
+  ]
+}
