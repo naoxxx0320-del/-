@@ -95,6 +95,14 @@
     .li.click { cursor:pointer; } .li.click:hover { background:#fff7df; }
     .stat { display:inline-block; background:#faf6ee; border:1px solid var(--line); border-radius:8px; padding:6px 10px; margin:2px 4px 2px 0; font-size:12px; }
     .stat b { font-size:16px; color:var(--wine); margin-left:4px; }
+    .pf-photos { display:flex; gap:8px; flex-wrap:wrap; margin:4px 0 8px; }
+    .pf-ph { width:84px; text-align:center; font-size:11px; }
+    .pf-ph img { width:84px; height:112px; object-fit:cover; border-radius:8px; border:1px solid var(--line); background:#f3efe6; display:block; }
+    .pf-ph .main { color:var(--wine); font-weight:700; }
+    .pf-ph button { padding:2px 6px; font-size:11px; margin:2px 1px 0; }
+    .pf-add { width:84px; height:112px; border:2px dashed #cfc6b3; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#8a7c64; font-size:12px; cursor:pointer; text-align:center; }
+    .pf-hint { font-size:11px; color:#8a7c64; margin-top:2px; }
+    .deploy-st { font-size:12px; color:#6b5d44; align-self:center; }
   </style>
 </head>
 <body>
@@ -154,16 +162,19 @@
       <button class="ghost" id="th-today">今日</button>
       <button class="ghost" id="th-reload">更新</button>
       <button class="primary" id="th-new">＋ 出勤を登録</button>
+      <button class="ghost" id="th-addther">＋ セラピストを追加</button>
+      <button class="ghost" id="th-deploy">今すぐサイトに反映</button>
+      <span class="deploy-st" id="th-deploy-st"></span>
     </div>
     <main>
       <div class="summary" id="th-summary"></div>
       <div id="th-grid"><div class="loading">読み込み中…</div></div>
-      <p class="tt-hint">マスをタップで出勤の登録・変更／名前をタップで個別ページ。斜線＝休み、黄色＝申請中・希望休（サイト非表示・予約不可）。サイトの出勤表示への反映は最大15分ほどかかります。</p>
+      <p class="tt-hint">マスをタップで出勤の登録・変更／名前をタップで個別ページ。斜線＝休み、黄色＝申請中・希望休（サイト非表示・予約不可）。サイトへの反映は数時間おきの自動更新、または「今すぐサイトに反映」（数分）で行われます。</p>
     </main>
   </div>
 
   <!-- 出勤の登録/変更モーダル -->
-  <div class="modal-bg" id="sh-bg">
+  <div class="modal-bg" id="sh-bg" style="z-index:60">
     <div class="modal">
       <h2 id="sh-title">出勤の登録</h2>
       <div class="field"><label>セラピスト（新しい人は名前を入力）</label><input id="sh-name" list="sh-names" autocomplete="off" /><datalist id="sh-names"></datalist></div>
@@ -192,7 +203,20 @@
       <div id="td-body"><div class="loading">読み込み中…</div></div>
       <div class="modal-actions">
         <button class="ghost" id="td-close">閉じる</button>
+        <button class="ghost" id="td-prof">プロフィール編集</button>
         <button class="primary" id="td-add">＋ 出勤を登録</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- プロフィール編集 -->
+  <div class="modal-bg" id="pf-bg">
+    <div class="modal" style="max-width:560px">
+      <h2 id="pf-title">プロフィール編集</h2>
+      <div id="pf-body"><div class="loading">読み込み中…</div></div>
+      <div class="modal-actions">
+        <button class="ghost" id="pf-close">閉じる</button>
+        <button class="primary" id="pf-save">保存</button>
       </div>
     </div>
   </div>
@@ -652,6 +676,155 @@
     });
     $("td-close").onclick=function(){ $("td-bg").classList.remove("on"); };
     $("td-add").onclick=function(){ openShift({ name: tdName, date: dateInputToSlash(todayStr()) }); };
+
+    // ---- プロフィール編集 ----
+    var pf = null; // {name, isNew, fields, values, photos, siteUrl, hasToken, local:{file:dataUrl}}
+    function photoSrc(f){
+      if(pf.local[f]) return pf.local[f];
+      if(/^https?:\/\//.test(f)) return f;
+      return String(pf.siteUrl||"").replace(/\/?$/,"/")+encodeURIComponent(f);
+    }
+    function openProfile(name){
+      $("pf-title").textContent = name ? name+" さんのプロフィール" : "セラピストを追加";
+      $("pf-body").innerHTML='<div class="loading">読み込み中…</div>';
+      $("pf-save").disabled=true;
+      $("pf-bg").classList.add("on");
+      google.script.run.withSuccessHandler(function(res){
+        if(!res||!res.ok){ $("pf-body").innerHTML='<div class="err">'+esc((res&&res.reason)||"取得に失敗しました")+'</div>'; return; }
+        pf={ name:name||"", isNew:!res.exists, fields:res.fields, values:res.values, photos:res.photos.slice(), siteUrl:res.siteUrl, hasToken:res.hasToken, migrated:res.migrated, local:{} };
+        if(name && !res.exists){ $("pf-body").innerHTML='<div class="err">「本日の出勤」シートの名簿に '+esc(name)+' さんが見つかりません。</div>'; return; }
+        renderProfile(res.warning);
+        $("pf-save").disabled=false;
+      }).withFailureHandler(function(e){ $("pf-body").innerHTML='<div class="err">'+esc(e&&e.message?e.message:e)+'</div>'; })
+        .adminProfileGet(name||"");
+    }
+    function renderProfile(warning){
+      var h='';
+      if(warning) h+='<p class="note">⚠ '+esc(warning)+'</p>';
+      if(pf.migrated) h+='<p class="note">この方の情報の一部はサイト側の旧設定ファイルに入っています。保存するとシートに移し、以後はシートの内容がサイトに表示されます。</p>';
+      if(!pf.hasToken) h+='<p class="note">GitHubの鍵が未設定のため、写真の追加と「すぐ反映」は使えません。文字の変更はシートに保存され、数時間おきの自動更新でサイトに反映されます。</p>';
+      if(pf.isNew) h+='<div class="field"><label>名前（サイトに表示する名前・あとから変更不可）</label><input id="pf-name" maxlength="30" autocomplete="off" /></div>';
+      h+='<div class="sec-h">写真（左がメイン写真）</div><div class="pf-photos" id="pf-photos"></div>';
+      h+='<input type="file" id="pf-file" accept="image/*" style="display:none" />';
+      var group="";
+      pf.fields.forEach(function(f,i){
+        if(f.group!==group){ group=f.group; h+='<div class="sec-h">'+esc(group)+'</div>'; }
+        var v=pf.values[f.key]==null?"":String(pf.values[f.key]);
+        var lab=esc(f.label||f.key), id='pf-f'+i;
+        if(f.type==="check"){
+          h+='<div class="field"><label><input type="checkbox" id="'+id+'"'+(v?' checked':'')+' /> '+lab+'</label></div>';
+          return;
+        }
+        h+='<div class="field"><label for="'+id+'">'+lab+'</label>';
+        h+= f.type==="textarea"
+          ? '<textarea id="'+id+'" rows="5">'+esc(v)+'</textarea>'
+          : '<input id="'+id+'" value="'+esc(v).replace(/"/g,"&quot;")+'" autocomplete="off" />';
+        if(f.hint) h+='<div class="pf-hint">'+esc(f.hint)+'</div>';
+        h+='</div>';
+      });
+      $("pf-body").innerHTML=h;
+      renderPhotos();
+      $("pf-file").addEventListener("change", function(){ var f=this.files&&this.files[0]; this.value=""; if(f) uploadPhoto(f); });
+    }
+    function renderPhotos(){
+      var h='';
+      pf.photos.forEach(function(f,i){
+        h+='<div class="pf-ph"><img src="'+esc(photoSrc(f)).replace(/"/g,"&quot;")+'" alt="" loading="lazy" />'
+          +(i===0?'<div class="main">メイン</div>':'<button class="ghost" data-pmain="'+i+'">メインに</button>')
+          +'<button class="ghost" data-pdel="'+i+'">外す</button></div>';
+      });
+      if(pf.hasToken) h+='<div class="pf-add" id="pf-addph">＋<br>写真を追加</div>';
+      else if(!pf.photos.length) h+='<div class="note">写真はまだありません。</div>';
+      $("pf-photos").innerHTML=h;
+    }
+    $("pf-body").addEventListener("click", function(ev){
+      if(!pf) return;
+      var t=ev.target.closest("[data-pmain],[data-pdel],#pf-addph"); if(!t) return;
+      if(t.id==="pf-addph"){ $("pf-file").click(); return; }
+      if(t.hasAttribute("data-pmain")){ var i=+t.getAttribute("data-pmain"); pf.photos.unshift(pf.photos.splice(i,1)[0]); }
+      else { var j=+t.getAttribute("data-pdel"); if(!confirm("この写真をサイトから外します（保存したときに反映）。よろしいですか？")) return; pf.photos.splice(j,1); }
+      renderPhotos();
+    });
+    // ブラウザ側で長辺1400pxのJPEGに縮小してから送る（通信量と容量を抑える）
+    function shrinkImage(file, cb){
+      var rd=new FileReader();
+      rd.onload=function(){
+        var img=new Image();
+        img.onload=function(){
+          var max=1400, w=img.naturalWidth, h=img.naturalHeight, r=Math.min(1, max/Math.max(w,h));
+          var c=document.createElement("canvas"); c.width=Math.round(w*r); c.height=Math.round(h*r);
+          var g=c.getContext("2d"); g.fillStyle="#fff"; g.fillRect(0,0,c.width,c.height); g.drawImage(img,0,0,c.width,c.height);
+          cb(null, c.toDataURL("image/jpeg",0.85));
+        };
+        img.onerror=function(){ cb(new Error("画像を読み込めませんでした（JPEG・PNG・WebPをお使いください）。")); };
+        img.src=rd.result;
+      };
+      rd.onerror=function(){ cb(new Error("ファイルを読み込めませんでした。")); };
+      rd.readAsDataURL(file);
+    }
+    function uploadPhoto(file){
+      var box=$("pf-addph"); if(box) box.innerHTML="送信中…";
+      shrinkImage(file, function(err, dataUrl){
+        if(err){ alert(err.message); renderPhotos(); return; }
+        google.script.run.withSuccessHandler(function(res){
+          if(res&&res.ok){ pf.local[res.file]=dataUrl; pf.photos.push(res.file); toast("写真を追加しました（保存で確定）"); }
+          else alert("写真を追加できませんでした："+((res&&res.reason)||"不明"));
+          renderPhotos();
+        }).withFailureHandler(function(e){ alert("エラー："+(e&&e.message?e.message:e)); renderPhotos(); })
+          .adminPhotoUpload({ name: pf.name || (($("pf-name")||{}).value||""), dataUrl: dataUrl });
+      });
+    }
+    $("pf-close").onclick=function(){ $("pf-bg").classList.remove("on"); };
+    $("pf-save").onclick=function(){
+      if(!pf) return;
+      var name=pf.isNew ? $("pf-name").value.trim() : pf.name;
+      if(!name){ alert("名前を入力してください。"); return; }
+      var vals={};
+      pf.fields.forEach(function(f,i){ var el=$("pf-f"+i); if(!el) return; vals[f.key]= f.type==="check" ? (el.checked?"○":"") : el.value; });
+      var btn=$("pf-save"); btn.disabled=true; btn.textContent="保存中…";
+      google.script.run.withSuccessHandler(function(res){
+        btn.disabled=false; btn.textContent="保存";
+        if(!res||!res.ok){ alert("保存できませんでした："+((res&&res.reason)||"不明")); return; }
+        $("pf-bg").classList.remove("on");
+        toast(pf.isNew ? name+" さんを追加しました" : "プロフィールを保存しました");
+        if(res.note) setTimeout(function(){ alert(res.note); }, 50);
+        if(res.deployed) watchDeploy();
+        if(pf.isNew) loadShifts();
+        if($("td-bg").classList.contains("on") && tdName===name) openTherapist(name);
+      }).withFailureHandler(function(e){ btn.disabled=false; btn.textContent="保存"; alert("エラー："+(e&&e.message?e.message:e)); })
+        .adminProfileSave({ name:name, isNew:pf.isNew, values:vals, photos:pf.photos });
+    };
+    $("td-prof").onclick=function(){ openProfile(tdName); };
+    $("th-addther").onclick=function(){ openProfile(""); };
+
+    // ---- 今すぐサイトに反映 ----
+    var dpTimer=null, dpSince=0;
+    function setDeploySt(t){ $("th-deploy-st").textContent=t; }
+    function watchDeploy(){
+      dpSince=Date.now()-60000; // 反映開始の少し前から始まったものを対象にする
+      var tries=0;
+      clearInterval(dpTimer);
+      setDeploySt("サイトに反映中…（数分）");
+      dpTimer=setInterval(function(){
+        if(++tries>48){ clearInterval(dpTimer); setDeploySt("反映の状況を確認できませんでした。しばらくしてからサイトをご確認ください。"); return; }
+        google.script.run.withSuccessHandler(function(r){
+          if(!r||!r.ok||r.status==="none") return;
+          if(new Date(r.startedAt).getTime()<dpSince){ setDeploySt("サイトに反映の準備中…"); return; }
+          if(r.status!=="completed"){ setDeploySt("サイトに反映中…（数分）"); return; }
+          clearInterval(dpTimer);
+          var d=new Date(), hm=d.getHours()+":"+String(d.getMinutes()).padStart(2,"0");
+          setDeploySt(r.conclusion==="success" ? "✔ サイトに反映しました（"+hm+"）" : r.conclusion==="cancelled" ? "反映が中断されました（"+hm+"）。もう一度お試しください。" : "反映に失敗しました（"+hm+"）。時間をおいてもう一度お試しください。");
+        }).adminDeployStatus();
+      }, 15000);
+    }
+    $("th-deploy").onclick=function(){
+      if(!confirm("シートの出勤・プロフィールをサイトに反映します（数分かかります）。よろしいですか？")) return;
+      setDeploySt("反映を開始しています…");
+      google.script.run.withSuccessHandler(function(r){
+        if(r&&r.ok){ toast("サイトの反映を開始しました"); watchDeploy(); }
+        else { setDeploySt(""); alert((r&&r.reason)||"開始できませんでした。"); }
+      }).withFailureHandler(function(e){ setDeploySt(""); alert("エラー："+(e&&e.message?e.message:e)); }).adminDeployNow();
+    };
   })();
   </script>
 </body>
