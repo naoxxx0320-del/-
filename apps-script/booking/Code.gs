@@ -242,6 +242,7 @@ function schedSheet_() {
     label: col(["ラベル"]),
     name: col(["名前"]),
     time: col(["出勤時間", "時間"]),
+    start: col(["開始"]),
     end: col(["終了"]),
     status: col(["ステータス"]),
     present: col(["出勤"]),
@@ -262,6 +263,8 @@ function shiftRowInfo_(S, row) {
   var c = S.c;
   var dstr = c.date >= 0 ? dateCell_(row[c.date]) : "";
   var sCell = c.time >= 0 ? timeCell_(row[c.time]) : "";
+  // 「開始」「終了」の列に分かれている表（出勤時間は空）にも対応
+  if (!sCell && c.start >= 0) sCell = timeCell_(row[c.start]);
   var eCell = c.end >= 0 ? timeCell_(row[c.end]) : "";
   var startLabel = sCell,
     endLabel = eCell;
@@ -1260,6 +1263,31 @@ function findShiftRow_(S, row, name, dateStr) {
   return r;
 }
 
+/* 名前か日付が入っている最後の行（1始まり）。見出し行しかなければ見出しの行。 */
+function lastShiftRow_(S) {
+  var last = S.hi + 1;
+  for (var i = S.hi + 1; i < S.values.length; i++) {
+    var r = S.values[i];
+    if (String(r[S.c.name] == null ? "" : r[S.c.name]).trim() || (S.c.date >= 0 && String(r[S.c.date] == null ? "" : r[S.c.date]).trim())) last = i + 1;
+  }
+  return last;
+}
+/* 既存の「終了」に「翌」表記が使われているか（無ければ「2:00」のように翌を付けずに書く） */
+function endUsesYoku_(S) {
+  if (S.c.end < 0) return true;
+  for (var i = S.hi + 1; i < S.values.length; i++) {
+    if (/翌/.test(String(S.values[i][S.c.end] || ""))) return true;
+  }
+  return false;
+}
+/* 開始/終了の列がある表で、「出勤時間」列にも値が入っている運用か（空の運用なら触らない） */
+function timeColHasValues_(S) {
+  for (var i = S.hi + 1; i < S.values.length; i++) {
+    if (String(S.values[i][S.c.time] == null ? "" : S.values[i][S.c.time]).trim()) return true;
+  }
+  return false;
+}
+
 /* 出勤の登録・変更。p = {row?, origName?, origDate?, name, date, start, end, status?, kbn?}
    row 無し＝新規（同じ人・同じ日の行があればそれを更新）。 */
 function adminShiftSave(p) {
@@ -1280,8 +1308,8 @@ function adminShiftSave(p) {
   var res = withLock_(function () {
     var S = schedSheet_(),
       c = S.c;
-    if (c.date < 0 || c.name < 0 || c.time < 0)
-      return { ok: false, reason: "出勤情報シートに「日付」「名前」「出勤時間」の列が必要です。" };
+    if (c.date < 0 || c.name < 0 || (c.time < 0 && !(c.start >= 0 && c.end >= 0)))
+      return { ok: false, reason: "出勤情報シートに「日付」「名前」「出勤時間」（または「開始」「終了」）の列が必要です。" };
     var target = -1,
       orig = null;
     if (p.row) {
@@ -1297,30 +1325,35 @@ function adminShiftSave(p) {
         else return { ok: false, reason: name + "さんの" + dateLabel_(dstr) + "の出勤はすでに登録されています。" };
       }
     }
-    var width = Math.max(S.head.length, S.sh.getLastColumn());
-    var arr, before = null;
-    if (target > 0) {
-      arr = S.sh.getRange(target, 1, 1, width).getValues()[0];
-      before = arr.slice();
+    // 書き込みは「使う列のセルだけ」。行全体を書き戻すと、他の列の数式・チェックボックスを消してしまうため。
+    var before = target > 0 ? S.values[target - 1].slice() : null;
+    if (target < 0) target = lastShiftRow_(S) + 1; // 最後の出勤行のすぐ下（appendRow は書式や数式だけの行の下に行ってしまう）
+    var cur = before || [];
+    var put = {};
+    // 日付・時刻は手入力と同じく文字のまま渡し、シートに日付/時刻として解釈させる（既存の行と同じ型に揃える。
+    // 型が混ざるとサイトの取り込み（gviz）で値が空になり、その行がサイトに出ない）
+    put[c.date] = dstr;
+    if (c.label >= 0) put[c.label] = "'" + dateLabel_(dstr);
+    put[c.name] = name;
+    if (c.start >= 0 && c.end >= 0) {
+      put[c.start] = start;
+      // 既存の「終了」が「2:00」形式（翌なし）ならそれに合わせる（入力規則のリストに「翌」が無いため）
+      put[c.end] = endUsesYoku_(S) ? end : end.replace(/^翌/, "");
+      if (c.time >= 0 && timeColHasValues_(S)) put[c.time] = "'" + start + "〜" + end;
+    } else if (c.end >= 0) {
+      put[c.time] = start;
+      put[c.end] = end;
     } else {
-      arr = [];
-      for (var w = 0; w < width; w++) arr.push("");
+      put[c.time] = "'" + start + "〜" + end;
     }
-    arr[c.date] = "'" + dstr;
-    if (c.label >= 0) arr[c.label] = "'" + dateLabel_(dstr);
-    arr[c.name] = name;
-    if (c.end >= 0) {
-      arr[c.time] = "'" + start;
-      arr[c.end] = "'" + end;
-    } else {
-      arr[c.time] = "'" + start + "〜" + end;
-    }
-    if (c.status >= 0) arr[c.status] = String(p.status || "").trim() || String(arr[c.status] || "").trim() || "空きあり";
-    if (c.present >= 0) arr[c.present] = "○";
-    if (c.kbn >= 0) arr[c.kbn] = String(p.kbn || "").trim() || "確定";
-    if (c.area >= 0 && !String(arr[c.area] || "").trim()) arr[c.area] = "亀戸";
-    if (target > 0) S.sh.getRange(target, 1, 1, width).setValues([arr]);
-    else S.sh.appendRow(arr);
+    if (c.status >= 0) put[c.status] = String(p.status || "").trim() || String(cur[c.status] || "").trim() || "空きあり";
+    if (c.present >= 0) put[c.present] = "○";
+    if (c.kbn >= 0) put[c.kbn] = String(p.kbn || "").trim() || "確定";
+    if (c.area >= 0 && !String(cur[c.area] || "").trim()) put[c.area] = "亀戸";
+    Object.keys(put).forEach(function (j) {
+      S.sh.getRange(target, +j + 1).setValue(put[j]);
+    });
+    var arr = put;
     logHistory_("SHIFT", staff, "出勤" + (before ? "変更" : "登録") + " " + name + " " + dstr, before, arr);
     return { ok: true, orig: orig };
   });
@@ -2271,7 +2304,7 @@ function selfTest() {
    管理画面（Admin.html）は開いたときにこの版を確認し、Code.gs / lib.gs が古い・途中までしか
    貼られていない場合に警告を出す。※必ずファイルの「最後」に置く（途中で切れると無くなるので検出できる）。
    コードを変更したら Admin.html の APP_VERSION・lib.gs の LIB_VERSION と一緒に上げる。 */
-var CODE_VERSION = "2026-10-07-3";
+var CODE_VERSION = "2026-10-07-4";
 function adminVersion() {
   return { code: CODE_VERSION, lib: typeof LIB_VERSION === "undefined" ? "" : LIB_VERSION };
 }

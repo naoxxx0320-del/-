@@ -182,7 +182,27 @@ const isInactive = (v) =>
 const isDraft = (v) =>
   /^(申請|申請中|希望|希望休|未確定|保留|draft|下書き)$/i.test((v || "").trim());
 
-// 出勤情報: 列 = 日付, ラベル, 名前, 出勤時間, ステータス, 出勤(○/✖️), 区分(確定/申請中/希望休)
+// 「開始」「終了」に分かれた表の時間 → "13:00〜翌2:00"。終了が開始以前なら翌日（翌を補う）。
+function joinShiftTime(start, end) {
+  const t = (v) => String(v || "").trim().replace(/^(\d{1,2}:\d{2}):00$/, "$1");
+  const s = t(start), e = t(end);
+  if (!s) return "";
+  if (!e) return s;
+  const min = (x) => { const m = x.match(/^(翌)?(\d{1,2}):(\d{2})$/); return m ? (m[1] ? 1440 : 0) + +m[2] * 60 + +m[3] : null; };
+  const sm = min(s), em = min(e);
+  const e2 = sm != null && em != null && em <= sm && !e.startsWith("翌") ? "翌" + e : e;
+  return `${s}〜${e2}`;
+}
+
+// 「ラベル」が空の行の表示名（"2026/9/20" → "9/20(日)"）。読めない日付はそのまま。
+function autoDayLabel(date) {
+  const m = String(date).match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if (!m) return date;
+  const wd = "日月火水木金土"[new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay()];
+  return `${+m[2]}/${+m[3]}(${wd})`;
+}
+
+// 出勤情報: 列 = 日付, ラベル, 名前, 出勤時間（または 開始・終了）, ステータス, 出勤(○/✖️), 区分(確定/申請中/希望休)
 function buildSchedule(objs) {
   const daysMap = new Map();
   for (const o of objs) {
@@ -191,10 +211,10 @@ function buildSchedule(objs) {
     if (isAbsent(o["出勤"])) continue; // ✖️（欠勤）はサイトに出さない
     if (isDraft(o["区分"])) continue; // 申請中・希望休はサイトに出さない（確定のみ）
     if (!daysMap.has(date))
-      daysMap.set(date, { date, label: o["ラベル"] || date, list: [] });
+      daysMap.set(date, { date, label: o["ラベル"] || autoDayLabel(date), list: [] });
     daysMap.get(date).list.push({
       name: o["名前"] || "",
-      time: o["出勤時間"] || o["時間"] || "",
+      time: o["出勤時間"] || o["時間"] || joinShiftTime(o["開始"], o["終了"]),
       status: o["ステータス"] || "",
     });
   }
