@@ -22,15 +22,17 @@
     @keyframes glow{to{box-shadow:0 0 40px #e4b66744}}@keyframes float{to{transform:translateY(-7px)}}@keyframes blink{50%{opacity:.25}}@keyframes appear{from{opacity:0}to{opacity:1}}
     @media(max-width:350px){.game{margin-left:12px;margin-right:12px}.game-body{padding-left:12px;padding-right:12px}.choices{gap:6px}.choice svg{width:58px}.choice b{font-size:11px}h1{font-size:25px}.primary{font-size:15px}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
-  </style>
+
+.screenshot{margin:22px 0;padding:22px 14px;border:2px solid #d6ac5d;border-radius:12px;background:#f5dfad;color:#48182a;text-align:center;box-shadow:0 5px 20px #00000018}.screenshot strong{font-size:clamp(19px,5.3vw,24px);font-weight:800;line-height:1.8;letter-spacing:.025em}
+</style>
 </head>
 <body>
   <main class="phone">
     <div class="demo"><b>体験版</b>実際の応募・当選にはなりません</div>
     <header class="header"><div class="brand">AROMA DAIAMOND<small>KAMEIDO · PRIVATE SALON</small></div><a class="home" href="https://aroma-daiamond.com/" aria-label="サイトトップへ">↗</a></header>
-    <section class="hero" aria-labelledby="title"><p class="eyebrow">THE JEWEL DRAW</p><h1 id="title">運命の宝石を、ひとつ。</h1><p class="prize">1等は最大<strong>3</strong>名様に<b>施術90分無料</b></p><ul class="prize-list" aria-label="抽選の賞品"><li><b>1等</b><span>施術90分無料</span></li><li><b>2等</b><span>衣装チェンジ無料</span></li><li><b>3等</b><span>写真指名無料</span></li><li><b>4等</b><span>パウダートリートメント無料</span></li></ul><p class="hero-note">開催予定のキャンペーンです。今はゲームを体験できます。</p></section>
+    <section class="hero" aria-labelledby="title"><p class="eyebrow">THE JEWEL DRAW</p><h1 id="title">運命の宝石を、ひとつ。</h1><ul class="prize-list" aria-label="抽選の賞品"><li><b>1等</b><span>施術90分無料</span></li><li><b>2等</b><span>衣装チェンジ無料</span></li><li><b>3等</b><span>写真指名無料</span></li><li><b>4等</b><span>パウダートリートメント無料</span></li></ul><p class="hero-note">開催予定のキャンペーンです。今はゲームを体験できます。</p></section>
     <!-- campaign-terms:start -->
-    <section class="info campaign-terms" aria-label="本番キャンペーンの条件"><h2>本番キャンペーンの条件</h2><p>開催期限：2026年11月30日 23:59まで（日本時間）<br>特典の有効期限：無期限</p><p>1等の確率は0.1％（1,000分の1）、最大3名。2〜4等は各33.3％、人数上限なし。ハズレはありません。</p><p>1等が3名に達した後は、2〜4等を各3分の1で抽選します。必ず3名が1等に当選するものではありません。</p></section>
+    <aside class="screenshot" aria-label="当選結果の保存"><strong>当選した結果は<br>スクリーンショットを<br>撮ってください。</strong></aside>
     <!-- campaign-terms:end -->
     <section class="game" id="game" aria-label="宝石の抽選ゲーム体験版" aria-busy="false">
       <div class="game-label"><span>CHOOSE YOUR JEWEL</span><span class="pill">DEMO</span></div>
@@ -47,7 +49,7 @@
           <p class="fine">何度でも遊べます。実際の当選枠は消費しません。</p>
         </div>
         <div id="drawing" class="drawing" hidden><div id="drawing-gem" class="orbit" aria-hidden="true"></div><p class="eyebrow">A MOMENT OF MAGIC</p><h2>宝石が、きらめいています。</h2><p class="lead" role="status">抽選演出中です。まもなく結果が表示されます。</p><div class="dots" aria-hidden="true"><i></i><i></i><i></i></div></div>
-        <div id="result" class="result" hidden><div id="result-art" class="result-art" aria-hidden="true"></div><p id="result-label" class="eyebrow"></p><h2 id="result-title" tabindex="-1"></h2><p id="result-prize" class="result-prize" hidden></p><p id="result-message" class="result-message"></p><div class="notice"><b>これは体験版の結果です</b><p>無料特典の権利やクーポンは発行されません。<br>実際の当選者としては登録されません。</p></div><button id="reset" type="button" class="primary">もう一度体験する ↻</button><a href="https://line.me/R/ti/p/@284lfsqm" class="line" target="_blank" rel="noopener noreferrer">公式LINEを見る ↗</a><p class="fine">LINEを開いても、体験結果は送信されません。</p></div>
+        <div id="result" class="result" hidden><div id="result-art" class="result-art" aria-hidden="true"></div><p id="result-label" class="eyebrow"></p><h2 id="result-title" tabindex="-1"></h2><p id="result-prize" class="result-prize" hidden></p><aside id="result-screenshot" class="screenshot" aria-label="当選結果の保存"><strong>当選した結果は<br>スクリーンショットを<br>撮ってください。</strong></aside><p id="result-message" class="result-message"></p><div class="notice"><b>これは体験版の結果です</b><p>無料特典の権利やクーポンは発行されません。<br>実際の当選者としては登録されません。</p></div><button id="reset" type="button" class="primary">もう一度体験する ↻</button><a href="https://line.me/R/ti/p/@284lfsqm" class="line" target="_blank" rel="noopener noreferrer">公式LINEを見る ↗</a><p class="fine">LINEを開いても、体験結果は送信されません。</p></div>
       </div>
       <details class="controls"><summary>体験版の演出を選ぶ</summary><label for="outcome">次に表示する演出</label><select id="outcome"><option value="random">ランダム</option><option value="prize_1">1等：施術90分無料</option><option value="prize_2">2等：衣装チェンジ無料</option><option value="prize_3">3等：写真指名無料</option><option value="prize_4">4等：パウダートリートメント無料</option><option value="lose">落選の演出</option></select><p>画面の確認用です。賞品や当選枠には影響しません。</p></details>
       <noscript><p class="notice">ゲームにはJavaScriptが必要です。HTMLのプレビューではなく、ブラウザーで開いてください。</p></noscript>
@@ -78,7 +80,7 @@
           if(win){for(let i=0;i<10;i++){const spark=document.createElement('span');spark.className='spark';spark.textContent='✦';spark.style.setProperty('--angle',i*36+'deg');$('result-art').appendChild(spark);}}
           $('result-label').textContent=win?'DEMO · '+prize.id+'等':'DEMO · TRY AGAIN';
           $('result-title').textContent=win?prize.id+'等の当選演出です！':'今回は、落選の演出です。';
-          $('result-prize').textContent=win?prize.label:'';$('result-prize').hidden=!win;
+          $('result-prize').textContent=win?prize.label:'';$('result-prize').hidden=!win;$('result-screenshot').hidden=!win;
           $('result-message').textContent=win?'宝石が、特別なきらめきを届けました。':'選んでいただき、ありがとうございます。もう一度、別の宝石でもお楽しみください。';
           show('result');$('result-title').focus({preventScroll:true});
           $('game').scrollIntoView({behavior:reduced?'instant':'smooth',block:'start'});

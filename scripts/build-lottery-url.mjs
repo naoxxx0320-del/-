@@ -7,20 +7,17 @@ function replaceOnce(before, after) {
   if (!html.includes(before)) throw new Error("URL template marker missing: " + before.slice(0, 60));
   html = html.replace(before, after);
 }
-if (!html.includes(campaign.deadlineLabel)) throw new Error("Regenerate mobile campaign terms with build-lottery-line.mjs first");
 replaceOnce('スマホ体験版', 'URL参加ページ');
 replaceOnce('<meta charset="utf-8">', '<meta charset="utf-8"><meta name="lottery-campaign" content="' + campaign.campaignId + '">');
 replaceOnce('<b>体験版</b>実際の応募・当選にはなりません', '<b>URL抽選</b>同じブラウザーからの参加は1回');
 replaceOnce('開催予定のキャンペーンです。今はゲームを体験できます。', 'URLを開いてそのまま参加できます。LINEログインは不要です。');
 replaceOnce('<span class="pill">DEMO</span>', '<span class="pill">DRAW</span>');
-replaceOnce('本番キャンペーンの条件', 'キャンペーンの条件');
-replaceOnce('本番キャンペーンの条件', 'キャンペーンの条件');
 replaceOnce('宝石の抽選ゲーム体験版', '宝石のURL抽選');
 replaceOnce('宝石を選ぶと、抽選を始められます。', '参加記録と保存済みの結果を確認します。');
 replaceOnce('この宝石で抽選を体験する ↗', 'この宝石で抽選する ↗');
 replaceOnce('何度でも遊べます。実際の当選枠は消費しません。', '同じブラウザーでは保存した結果を表示します。');
 replaceOnce('抽選演出中です。まもなく結果が表示されます。', '抽選結果を確認しています。');
-replaceOnce('<b>これは体験版の結果です</b><p>無料特典の権利やクーポンは発行されません。<br>実際の当選者としては登録されません。</p>', '<b>保存された抽選結果</b><p id="draw-id"></p><p>特典の有効期限：無期限<br>ご予約時に受付番号をお伝えください。</p>');
+replaceOnce('<b>これは体験版の結果です</b><p>無料特典の権利やクーポンは発行されません。<br>実際の当選者としては登録されません。</p>', '<b>保存された抽選結果</b><p id="draw-id"></p><p>ご予約時に受付番号をお伝えください。</p>');
 replaceOnce('<button id="reset" type="button" class="primary">もう一度体験する ↻</button>', '');
 replaceOnce('公式LINEを見る ↗', '当選特典の利用について問い合わせる ↗');
 replaceOnce('LINEを開いても、体験結果は送信されません。', '問い合わせは任意です。抽選にはLINEログイン・友だち追加は必要ありません。');

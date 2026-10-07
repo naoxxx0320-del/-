@@ -7,9 +7,9 @@
   "benefitExpiryLabel": "無期限",
   "exhaustedPrizePolicy": "equal_lower",
   "prizeRules": [
-    { "id": 1, "probability": 0.001, "maxWinners": 3 },
-    { "id": 2, "probability": 0.333, "maxWinners": null },
-    { "id": 3, "probability": 0.333, "maxWinners": null },
-    { "id": 4, "probability": 0.333, "maxWinners": null }
+    { "id": 1, "probability": 0.0001, "maxWinners": 3 },
+    { "id": 2, "probability": 0.3333, "maxWinners": null },
+    { "id": 3, "probability": 0.3333, "maxWinners": null },
+    { "id": 4, "probability": 0.3333, "maxWinners": null }
   ]
 }

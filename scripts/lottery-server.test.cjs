@@ -208,18 +208,19 @@ function campaignDecision(s, sample, now = Date.parse(campaign.startsAt), rows =
   );
 }
 
-test('configured campaign gives first prize one interval in 1000 and equally divides the rest', () => {
+test('configured campaign gives first prize one interval in 10000 and equally divides the rest', () => {
   const s = campaignServer();
   const counts = [0, 0, 0, 0];
-  for (let i = 0; i < 1000; i++) {
-    const decision = campaignDecision(s, (i + 0.5) / 1000);
+  for (let i = 0; i < 10000; i++) {
+    const decision = campaignDecision(s, (i + 0.5) / 10000);
     assert.equal(decision.response.ok, true);
     assert.equal(decision.response.result.outcome, 'win');
     counts[decision.response.result.prizeId - 1]++;
   }
-  assert.deepEqual(counts, [1, 333, 333, 333]);
-  assert.equal(campaignDecision(s, 0.000999999).response.result.prizeId, 1);
-  assert.equal(campaignDecision(s, 0.001).response.result.prizeId, 2);
+  assert.deepEqual(counts, [1, 3333, 3333, 3333]);
+  assert.equal(campaignDecision(s, 0.000099999).response.result.prizeId, 1);
+  assert.equal(campaignDecision(s, 0.0001).response.result.prizeId, 2);
+  assert.equal(campaign.prizeRules.find(rule => rule.id === 1).probability, 0.0001);
 });
 
 test('after three first prizes, every remaining interval is divided equally among lower prizes', () => {

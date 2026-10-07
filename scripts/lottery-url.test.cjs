@@ -72,13 +72,13 @@ test('global first-prize inventory stops at three, with lower prizes continuing 
   const s = server();
   vm.runInContext('Math.random = () => 0', s.context);
   for (const key of ['a', 'b', 'c']) assert.equal(s.call('draw', key.repeat(64)).result.prizeId, 1);
-  assert.equal(s.call('draw', 'd'.repeat(64)).result.prizeId, 2);
+  assert.equal(s.call('draw', 'd'.repeat(64), { prizeId: 1, probability: 1 }).result.prizeId, 2);
   assert.equal(s.rows.filter(row => row[2] === 'prize_1').length, 3);
   assert.equal(s.call('status', 'c'.repeat(64)).repeated, true);
 });
 
 test('URL backend uses configured probability boundaries and accepts another browser as another entry', () => {
-  for (const [sample, rank] of [[0.000999, 1], [0.001, 2], [0.334, 3], [0.667, 4], [0.999999, 4]]) {
+  for (const [sample, rank] of [[0.000099999, 1], [0.0001, 2], [0.3334, 3], [0.6667, 4], [0.999999, 4]]) {
     const s = server(); vm.runInContext(`Math.random = () => ${sample}`, s.context);
     assert.equal(s.call().result.prizeId, rank);
   }
@@ -115,7 +115,9 @@ test('URL deployment serves the actual campaign page and bootstrap preserves exi
   const s = server(); s.call(); const original = JSON.stringify(s.rows);
   s.context.setupUrlLottery(); assert.equal(JSON.stringify(s.rows), original);
   const page = s.context.doGet();
-  assert.ok(page.html.includes(campaign.deadlineLabel));
+  assert.equal(page.html.includes('class="info campaign-terms"'), false);
+  assert.ok(page.html.includes('<li><b>1等</b>'));
+  assert.ok(page.html.includes('aria-label="当選結果の保存"'));
   assert.ok(page.html.includes('google.script.run'));
   assert.equal(page.html.includes('liff.init'), false);
   assert.equal(page.html.includes('id="outcome"'), false);
@@ -132,4 +134,15 @@ test('URL deployment serves the actual campaign page and bootstrap preserves exi
   assert.throws(() => remote.context.setupUrlLottery(), /spreadsheet editor/);
   assert.equal(JSON.stringify(remote.properties), before);
   assert.deepEqual(remote.calls, []);
+});
+
+test('changing probability does not alter a previously stored first-prize result', () => {
+  const s = server(); s.call(); s.rows[0][2] = 'prize_1';
+  const previous = s.call('status').result;
+  assert.equal(previous.prizeId, 1);
+  assert.equal(previous.prizeLabel, '施術90分無料');
+  assert.deepEqual(s.call().result, previous);
+  assert.equal(s.rows.length, 1);
+  vm.runInContext('Math.random = () => 0.5', s.context);
+  assert.equal(s.call('draw', 'b'.repeat(64)).result.prizeId, 3);
 });

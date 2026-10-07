@@ -22,15 +22,17 @@
     @keyframes glow{to{box-shadow:0 0 40px #e4b66744}}@keyframes float{to{transform:translateY(-7px)}}@keyframes blink{50%{opacity:.25}}@keyframes appear{from{opacity:0}to{opacity:1}}
     @media(max-width:350px){.game{margin-left:12px;margin-right:12px}.game-body{padding-left:12px;padding-right:12px}.choices{gap:6px}.choice svg{width:58px}.choice b{font-size:11px}h1{font-size:25px}.primary{font-size:15px}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
-  </style>
+
+.screenshot{margin:22px 0;padding:22px 14px;border:2px solid #d6ac5d;border-radius:12px;background:#f5dfad;color:#48182a;text-align:center;box-shadow:0 5px 20px #00000018}.screenshot strong{font-size:clamp(19px,5.3vw,24px);font-weight:800;line-height:1.8;letter-spacing:.025em}
+</style>
 </head>
 <body>
   <main class="phone">
     <div class="demo"><b>URL抽選</b>同じブラウザーからの参加は1回</div>
     <header class="header"><div class="brand">AROMA DAIAMOND<small>KAMEIDO · PRIVATE SALON</small></div><a class="home" href="https://aroma-daiamond.com/" aria-label="サイトトップへ">↗</a></header>
-    <section class="hero" aria-labelledby="title"><p class="eyebrow">THE JEWEL DRAW</p><h1 id="title">運命の宝石を、ひとつ。</h1><p class="prize">1等は最大<strong>3</strong>名様に<b>施術90分無料</b></p><ul class="prize-list" aria-label="抽選の賞品"><li><b>1等</b><span>施術90分無料</span></li><li><b>2等</b><span>衣装チェンジ無料</span></li><li><b>3等</b><span>写真指名無料</span></li><li><b>4等</b><span>パウダートリートメント無料</span></li></ul><p class="hero-note">URLを開いてそのまま参加できます。LINEログインは不要です。</p></section>
+    <section class="hero" aria-labelledby="title"><p class="eyebrow">THE JEWEL DRAW</p><h1 id="title">運命の宝石を、ひとつ。</h1><ul class="prize-list" aria-label="抽選の賞品"><li><b>1等</b><span>施術90分無料</span></li><li><b>2等</b><span>衣装チェンジ無料</span></li><li><b>3等</b><span>写真指名無料</span></li><li><b>4等</b><span>パウダートリートメント無料</span></li></ul><p class="hero-note">URLを開いてそのまま参加できます。LINEログインは不要です。</p></section>
     <!-- campaign-terms:start -->
-    <section class="info campaign-terms" aria-label="キャンペーンの条件"><h2>キャンペーンの条件</h2><p>開催期限：2026年11月30日 23:59まで（日本時間）<br>特典の有効期限：無期限</p><p>1等の確率は0.1％（1,000分の1）、最大3名。2〜4等は各33.3％、人数上限なし。ハズレはありません。</p><p>1等が3名に達した後は、2〜4等を各3分の1で抽選します。必ず3名が1等に当選するものではありません。</p></section>
+    <aside class="screenshot" aria-label="当選結果の保存"><strong>当選した結果は<br>スクリーンショットを<br>撮ってください。</strong></aside>
     <!-- campaign-terms:end -->
     <section class="game" id="game" aria-label="宝石のURL抽選" aria-busy="false">
       <div class="game-label"><span>CHOOSE YOUR JEWEL</span><span class="pill">DRAW</span></div>
@@ -47,7 +49,7 @@
           <p class="fine">同じブラウザーでは保存した結果を表示します。</p>
         </div>
         <div id="drawing" class="drawing" hidden><div id="drawing-gem" class="orbit" aria-hidden="true"></div><p class="eyebrow">A MOMENT OF MAGIC</p><h2>宝石が、きらめいています。</h2><p class="lead" role="status">抽選結果を確認しています。</p><div class="dots" aria-hidden="true"><i></i><i></i><i></i></div></div>
-        <div id="result" class="result" hidden><div id="result-art" class="result-art" aria-hidden="true"></div><p id="result-label" class="eyebrow"></p><h2 id="result-title" tabindex="-1"></h2><p id="result-prize" class="result-prize" hidden></p><p id="result-message" class="result-message"></p><div class="notice"><b>保存された抽選結果</b><p id="draw-id"></p><p>特典の有効期限：無期限<br>ご予約時に受付番号をお伝えください。</p></div><a href="https://line.me/R/ti/p/@284lfsqm" class="line" target="_blank" rel="noopener noreferrer">当選特典の利用について問い合わせる ↗</a><p class="fine">問い合わせは任意です。抽選にはLINEログイン・友だち追加は必要ありません。</p></div>
+        <div id="result" class="result" hidden><div id="result-art" class="result-art" aria-hidden="true"></div><p id="result-label" class="eyebrow"></p><h2 id="result-title" tabindex="-1"></h2><p id="result-prize" class="result-prize" hidden></p><aside id="result-screenshot" class="screenshot" aria-label="当選結果の保存"><strong>当選した結果は<br>スクリーンショットを<br>撮ってください。</strong></aside><p id="result-message" class="result-message"></p><div class="notice"><b>保存された抽選結果</b><p id="draw-id"></p><p>ご予約時に受付番号をお伝えください。</p></div><a href="https://line.me/R/ti/p/@284lfsqm" class="line" target="_blank" rel="noopener noreferrer">当選特典の利用について問い合わせる ↗</a><p class="fine">問い合わせは任意です。抽選にはLINEログイン・友だち追加は必要ありません。</p></div>
       </div>
       <div class="controls"><button id="retry" type="button" class="primary" hidden>参加記録・結果を再確認</button></div>
       <noscript><p class="notice">ゲームにはJavaScriptが必要です。HTMLのプレビューではなく、ブラウザーで開いてください。</p></noscript>

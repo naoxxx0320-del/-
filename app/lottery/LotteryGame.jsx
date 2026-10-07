@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import links from "../../data/links.json";
-import prizes from "../../data/lottery-prizes.json";
+import prizeCatalog from "../../data/lottery-prizes.json";
+import campaign from "../../data/lottery-campaign.json";
 import styles from "./lottery.module.css";
+const prizes = prizeCatalog.filter((prize) => campaign.prizeRules.some((rule) => rule.id === prize.id && rule.probability > 0));
 
 const GEMS = [
   { name: "ルビー", word: "PASSION", color: "#ef8caa", dark: "#8b2447" },
@@ -108,6 +110,7 @@ export default function LotteryGame() {
             <p className={styles.gameEyebrow}>{prize ? `DEMO · ${prize.rank}` : "DEMO · TRY AGAIN"}</p>
             <h2 ref={resultHeading} tabIndex={-1}>{prize ? `${prize.rank}の当選演出です！` : "今回は、落選の演出です。"}</h2>
             {prize && <p className={styles.resultPrize}>{prize.label}</p>}
+            {prize && <aside className={styles.screenshot} aria-label="当選結果の保存"><strong>当選した結果は<br />スクリーンショットを<br />撮ってください。</strong></aside>}
             <p className={styles.resultMessage}>{prize ? "宝石が、特別なきらめきを届けました。" : "選んでいただき、ありがとうございます。もう一度、別の宝石でもお楽しみください。"}</p>
             <div className={styles.resultNotice}><b>これは体験版の結果です</b><p>無料特典の権利やクーポンは発行されません。<br />実際の当選者としては登録されません。</p></div>
             <button type="button" className={styles.drawButton} onClick={reset}>もう一度体験する <span aria-hidden="true">↻</span></button>

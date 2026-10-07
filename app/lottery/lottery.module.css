@@ -147,3 +147,5 @@
   .page *, .page *::before, .page *::after { animation: none !important; transition: none !important; }
   .gemChoice:hover { transform: none; }
 }
+
+.screenshot{margin:22px 0;padding:22px 14px;border:2px solid #d6ac5d;border-radius:12px;background:#f5dfad;color:#48182a;text-align:center;box-shadow:0 5px 20px #00000018}.screenshot strong{font-size:clamp(19px,5.3vw,24px);font-weight:800;line-height:1.8;letter-spacing:.025em}

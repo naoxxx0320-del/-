@@ -3,6 +3,7 @@ import styles from "./lottery.module.css";
 import { SITE } from "../_lib/site";
 import prizes from "../../data/lottery-prizes.json";
 import campaign from "../../data/lottery-campaign.json";
+const activePrizes = prizes.filter((prize) => campaign.prizeRules.some((rule) => rule.id === prize.id && rule.probability > 0));
 
 export const metadata = {
   title: "宝石の抽選ゲーム｜体験版",
@@ -31,11 +32,9 @@ export default function LotteryPage() {
           <p className={styles.lead}>きらめく宝石を選んで、特別なひとときへ。<br />結果は、その場で。</p>
           <div className={styles.prize}>
             <p>CAMPAIGN PLAN</p>
-            <div>1等は最大 <strong>3</strong> 名様に</div>
-            <h2>施術90分無料</h2>
-            <ul className={styles.prizeList}>{prizes.map((item) => <li key={item.id}><b>{item.rank}</b><span>{item.label}</span></li>)}</ul>
-            <small>開催期限：{campaign.deadlineLabel}<br />特典の有効期限：{campaign.benefitExpiryLabel}</small>
-            <small>本番の確率：1等0.1％、2〜4等は各33.3％。ハズレなし。<br />1等は最大3名。上限到達後は2〜4等を各3分の1で抽選します。<br />2〜4等の人数上限はありません。必ず3名が1等に当選するものではありません。</small>
+            <h2>宝石が届ける特別なひととき</h2>
+            <ul className={styles.prizeList}>{activePrizes.map((item) => <li key={item.id}><b>{item.rank}</b><span>{item.label}</span></li>)}</ul>
+            <aside className={styles.screenshot} aria-label="当選結果の保存"><strong>当選した結果は<br />スクリーンショットを<br />撮ってください。</strong></aside>
             <small>開催予定のキャンペーンです。現在はゲームの体験版です。</small>
           </div>
           <a className={styles.jumpLink} href="#jewel-game">宝石を選んで体験する <span aria-hidden="true">↓</span></a>

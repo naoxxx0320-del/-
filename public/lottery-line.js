@@ -34,6 +34,7 @@
     $("result-title").textContent = result.outcome === "win" ? `おめでとうございます。${result.prizeId}等です！` : "今回は、落選となりました。";
     $("result-prize").textContent = result.outcome === "win" ? result.prizeLabel : "";
     $("result-prize").hidden = result.outcome !== "win";
+    $("result-screenshot").hidden = result.outcome !== "win";
     $("result-message").textContent = repeated ? "すでに抽選済みです。保存された結果を表示しています。再抽選はできません。" : "抽選結果を保存しました。このLINEアカウントでの参加は終了です。";
     $("draw-id").textContent = "受付番号：" + result.drawId;
     $("result-title").focus({ preventScroll: true });

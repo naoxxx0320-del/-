@@ -1,8 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 const campaign = JSON.parse(await readFile(new URL("../data/lottery-campaign.json", import.meta.url), "utf8"));
-const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
-const percent = (id) => Number((campaign.prizeRules.find((rule) => rule.id === id).probability * 100).toFixed(6));
 if (campaign.exhaustedPrizePolicy !== "equal_lower" || campaign.benefitExpiresAt !== null ||
     campaign.prizeRules.length !== 4 || campaign.prizeRules[0].maxWinners !== 3 ||
     campaign.prizeRules.slice(1).some((rule) => rule.maxWinners !== null || Math.abs(rule.probability - (1 - campaign.prizeRules[0].probability) / 3) > 1e-12)) {
@@ -11,9 +9,7 @@ if (campaign.exhaustedPrizePolicy !== "equal_lower" || campaign.benefitExpiresAt
 let source = await readFile(fileURLToPath(new URL("../public/lottery-mobile.html", import.meta.url)), "utf8");
 const termsPattern = /<!-- campaign-terms:start -->[\s\S]*?<!-- campaign-terms:end -->/;
 if (!termsPattern.test(source)) throw new Error("Mobile campaign terms markers missing");
-source = source.replace(termsPattern, `<!-- campaign-terms:start -->
-    <section class="info campaign-terms" aria-label="本番キャンペーンの条件"><h2>本番キャンペーンの条件</h2><p>開催期限：${escapeHtml(campaign.deadlineLabel)}<br>特典の有効期限：${escapeHtml(campaign.benefitExpiryLabel)}</p><p>1等の確率は${percent(1)}％（1,000分の1）、最大3名。2〜4等は各${percent(2)}％、人数上限なし。ハズレはありません。</p><p>1等が3名に達した後は、2〜4等を各3分の1で抽選します。必ず3名が1等に当選するものではありません。</p></section>
-    <!-- campaign-terms:end -->`);
+source = source.replace(termsPattern, '<!-- campaign-terms:start -->\n    <aside class="screenshot" aria-label="当選結果の保存"><strong>当選した結果は<br>スクリーンショットを<br>撮ってください。</strong></aside>\n    <!-- campaign-terms:end -->');
 await writeFile(new URL("../public/lottery-mobile.html", import.meta.url), source);
 const installProperties = {
   LINE_LOGIN_CHANNEL_ID: "", LOTTERY_SHEET_ID: "",
@@ -47,7 +43,7 @@ html = replaceOnce(html, '宝石を選ぶと、抽選を始められます。', 
 html = replaceOnce(html, 'この宝石で抽選を体験する ↗', 'この宝石で抽選する ↗');
 html = replaceOnce(html, '何度でも遊べます。実際の当選枠は消費しません。', '一度保存した抽選結果は変わりません。');
 html = replaceOnce(html, '抽選演出中です。まもなく結果が表示されます。', '抽選結果をサーバーで確認しています。');
-html = replaceOnce(html, '<b>これは体験版の結果です</b><p>無料特典の権利やクーポンは発行されません。<br>実際の当選者としては登録されません。</p>', '<b>保存された抽選結果</b><p id="draw-id"></p><p>特典の有効期限：無期限<br>当選時の利用方法は、公式LINEで店舗へお問い合わせください。</p>');
+html = replaceOnce(html, '<b>これは体験版の結果です</b><p>無料特典の権利やクーポンは発行されません。<br>実際の当選者としては登録されません。</p>', '<b>保存された抽選結果</b><p id="draw-id"></p><p>当選時の利用方法は、公式LINEで店舗へお問い合わせください。</p>');
 html = replaceOnce(html, '<button id="reset" type="button" class="primary">もう一度体験する ↻</button>', '');
 html = replaceOnce(html, 'LINEを開いても、体験結果は送信されません。', '公式LINEへの問い合わせ時は受付番号をお伝えください。');
 html = replaceOnce(html, '参加URLを<br>開く', 'LINEを<br>友だち追加');
