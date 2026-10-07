@@ -194,6 +194,15 @@ function joinShiftTime(start, end) {
   return `${s}〜${e2}`;
 }
 
+function dayKeyNum(date) {
+  const m = String(date || "").match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  return m ? +m[1] * 10000 + +m[2] * 100 + +m[3] : null;
+}
+function bizTodayKey(nowMs = Number(process.env.SCHEDULE_NOW_MS) || Date.now()) {
+  const j = new Date(nowMs + 9 * 3600e3 - 6 * 3600e3);
+  return j.getUTCFullYear() * 10000 + (j.getUTCMonth() + 1) * 100 + j.getUTCDate();
+}
+
 // 「ラベル」が空の行の表示名（"2026/9/20" → "9/20(日)"）。読めない日付はそのまま。
 function autoDayLabel(date) {
   const m = String(date).match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
@@ -218,7 +227,13 @@ function buildSchedule(objs) {
       status: o["ステータス"] || "",
     });
   }
-  return { area: objs[0]?.["エリア"] || "亀戸", days: [...daysMap.values()] };
+  // 過去の日（日本時間の営業日。朝6時までは前日扱い）はサイトに出さない。シートの行はそのまま。
+  // 表示側（出勤情報ページ）でも閲覧時点で同じ絞り込みをするので、次の更新までに日付が変わっても古い日は出ない。
+  const today = bizTodayKey();
+  const days = [...daysMap.values()]
+    .filter((d) => { const k = dayKeyNum(d.date); return k == null || k >= today; })
+    .sort((a, b) => (dayKeyNum(a.date) ?? 0) - (dayKeyNum(b.date) ?? 0));
+  return { area: objs[0]?.["エリア"] || "亀戸", days };
 }
 
 // セラピスト名簿（本日の出勤カード／出勤情報／セラピスト一覧・詳細ページの照合元）:

@@ -1,19 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SiteChrome from "../_components/SiteChrome";
 import NavGrid from "../_components/NavGrid";
 import StaffCard from "../_components/StaffCard";
 import schedule from "../../data/schedule.json";
 import roster from "../../data/roster.json";
+import { upcomingDays, dayKey, bizTodayKey } from "../_components/scheduleDays";
 
 // 名前 → プロフィール（写真・スペック等は「本日の出勤」シートで一元管理）
 const PROFILE = Object.fromEntries(roster.map((p) => [p.name, p]));
 
 export default function Schedule() {
-  const days = schedule.days || [];
+  // 公開時点で過去日は除いてあるが、次の更新までに日付が変わることがあるので、見た時点でも過去日を外す
+  const [days, setDays] = useState(schedule.days || []);
   const [active, setActive] = useState(0);
+  const [todayKey, setTodayKey] = useState(null);
+  useEffect(() => {
+    const u = upcomingDays(schedule.days || []);
+    if (u.length !== days.length) {
+      setDays(u);
+      setActive(0);
+    }
+    setTodayKey(bizTodayKey());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const day = days[active] || { list: [] };
+  const isToday = todayKey != null && dayKey(day.date) === todayKey;
 
   // 出勤情報の各行に、名前一致でプロフィールを合成（出勤時間・ステータスは行の値を使用）
   const cards = day.list.map((e) => {
@@ -25,6 +38,8 @@ export default function Schedule() {
       status: e.status || p.status || "",
       schedSub: "",
       absent: undefined,
+      // 今日以外の日は「本日出勤」ではなく「出勤予定」
+      ribbonOverride: isToday ? null : { label: "出勤予定", cls: "today" },
     };
   });
 
