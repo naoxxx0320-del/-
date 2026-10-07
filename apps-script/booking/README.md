@@ -361,6 +361,14 @@ LINE → Cloudflare Worker（X-Line-Signature検証）→ LINEボット(line-boo
 - 実装：`adminSettleGet` / `adminSettleSave` / `adminSettleDelete` / `adminSetBackRate` / `adminPayroll`。
   テスト：`node apps-script/booking/tests/settle.test.mjs`（計算は `logic.test.mjs`）。
 
+### 貼り替え漏れの検出（版の確認）
+
+管理画面は開いたときに、サーバー側の `Code.gs`（`CODE_VERSION`）と `lib.gs`（`LIB_VERSION`）の版が
+画面（`Admin.html` の `APP_VERSION`）と一致するかを確認し、古い・途中までしか貼られていない場合は
+画面上部に赤い警告を出します（「読み込み中」のまま止まらないように）。`adminVersion()` は
+`Code.gs` の**最後**に置いてあるため、コピーが途中で切れていても検出できます。
+コードを変えたら3か所の版を同じ値に上げます（`tests/logic.test.mjs` で一致を確認）。
+
 ### リピーター判定（電話番号で「◯回目」を表示）
 
 管理画面で、**電話番号から同一のお客様を判別し、来店が何回目か**を表示します。

@@ -237,4 +237,18 @@ t("bizDateOf: 翌2:00開始は前日の営業日・14:00は当日", () => {
   assert.equal(L.bizDateOf(L.parseJstDateTime("2026/10/6", "6:00")), "2026/10/6");
 });
 
+t("版：Code.gs・lib.gs・Admin.html の版が一致（貼り替え漏れ検出の基準）", () => {
+  const code = readFileSync(join(here, "..", "Code.gs"), "utf8");
+  const html = readFileSync(join(here, "..", "Admin.html"), "utf8");
+  const v = (re, s) => (s.match(re) || [])[1];
+  const lib = v(/var LIB_VERSION = "([^"]+)"/, src);
+  assert.ok(lib);
+  assert.equal(v(/var CODE_VERSION = "([^"]+)"/, code), lib);
+  assert.equal(v(/var APP_VERSION = "([^"]+)"/, html), lib);
+  // 途中で切れたコピーを検出できるよう、adminVersion は Code.gs の最後に置く
+  const tail = code.trimEnd();
+  assert.ok(tail.lastIndexOf("function adminVersion()") > tail.length - 300, "adminVersion が最後にない");
+  assert.ok(tail.endsWith("}"));
+});
+
 console.log(`\n✅ 全 ${passed} 件 パス`);
