@@ -19,6 +19,12 @@
  *   （店舗への予約通知は予約管理API側の STORE_EMAIL に一本化。OWNER_EMAIL は不要）
  *   PROXY_SHARED_SECRET        … Worker／予約管理APIと共有する秘密文字列（必須）
  *   BOOKING_API_URL            … 予約管理API（公開デプロイ）の /exec URL（必須）
+ *   SITE_URL（任意）           … セラピスト写真の置き場所。既定 https://aroma-daiamond.com/
+ *
+ * ■ 画面：各ステップをカード（Flex Message）と大きいボタンで表示（STEP 1〜6）。
+ *   日付 → セラピスト（写真カード）→ 開始時間（空いている時間だけ・30分刻み）→ コース（入るものだけ）
+ *   → お名前 → お電話 → 確認 → 確定。各ステップに「戻る」「最初から」「やめる」。
+ *   空き時間は予約管理APIの公開空き状況（名前・電話などは含まない）で判定。最終判定は台帳側。
  *
  * ■ デプロイ：デプロイ → 新しいデプロイ → 種類「ウェブアプリ」
  *   実行するユーザー = 自分 / アクセスできるユーザー = 全員
@@ -39,6 +45,8 @@ const SCHEDULE_SHEET = "出勤情報"; // 日付/ラベル/エリア/名前/出�
 // 予約は独自シートではなく共有台帳（予約管理API）へ一本化（旧 "LINE予約" シートは廃止）。
 const AREA = "亀戸";
 const TEL = "090-4391-8013";
+// セラピストの写真の置き場所（サイト）。スクリプトプロパティ SITE_URL で変更可
+const SITE_URL = SP.getProperty("SITE_URL") || "https://aroma-daiamond.com/";
 
 // コース（サイトの reserve-config.json と揃える）
 const COURSES = [
@@ -106,6 +114,7 @@ function handleEvent(ev) {
 
 /* =========================================================
    状態管理（ユーザーごと・CacheServiceに1時間保持）
+   step: date → th → time → course → name → tel → confirm
    ========================================================= */
 function getState(uid) {
   const c = CacheService.getScriptCache().get("st_" + uid);
@@ -119,120 +128,166 @@ function clearState(uid) {
 }
 
 /* =========================================================
-   テキスト受信
+   テキスト受信（お名前・お電話の入力、キーワード）
    ========================================================= */
 function handleText(uid, text, replyToken) {
   const st = getState(uid);
 
-  // 予約フローの「お名前入力」ステップ
+  if (/^(キャンセル|やめる|やめます|中止)$/.test(text)) {
+    clearState(uid);
+    return reply(replyToken, [cancelledMessage()]);
+  }
+
+  // お名前入力
   if (st && st.step === "name") {
-    st.name = text;
+    const name = text.replace(/\s+/g, " ").trim().slice(0, 30);
+    if (!name) return reply(replyToken, [nameMessage(uid)]);
+    st.name = name;
     st.step = "tel";
     setState(uid, st);
-    reply(replyToken, [
-      textMsg("お電話番号をご入力ください（例：090-1234-5678）。\n※ご予約内容の確認でご連絡することがあります。"),
-    ]);
-    return;
+    return reply(replyToken, [telMessage_(st)]);
   }
-  // 予約フローの「電話番号入力」ステップ
+  // お電話番号入力
   if (st && st.step === "tel") {
     const tel = normalizePhone(text);
-    if (tel) {
-      st.tel = tel;
-      st.step = "confirm";
-      setState(uid, st);
-      reply(replyToken, [confirmMessage(st)]);
-      return;
-    }
-    if (!/キャンセル|やめ|中止/.test(text)) {
-      reply(replyToken, [
-        textMsg("お電話番号を数字でご入力ください（例：090-1234-5678）。\nご予約をやめる場合は「キャンセル」と送ってください。"),
+    if (!tel) {
+      return reply(replyToken, [
+        textMsg("⚠ お電話番号を数字でお送りください（例：090-1234-5678）"),
+        telMessage_(st),
       ]);
-      return;
     }
-    // 「キャンセル」等は下のキーワード処理へ
+    st.tel = tel;
+    st.step = "confirm";
+    setState(uid, st);
+    return reply(replyToken, [confirmMessage(st)]);
   }
-  // 予約フローの「時間 自由入力」も許可
+  // 時間の直接入力（例「14:30」）
   if (st && st.step === "time") {
     const t = normalizeTime(text);
-    if (t) {
-      st.time = t;
-      st.step = "course";
-      setState(uid, st);
-      reply(replyToken, [courseMessage()]);
-      return;
-    }
+    if (t) return pickTime_(uid, st, t, replyToken);
   }
 
   // キーワード自動応答
   if (/予約|よやく/.test(text)) return startBooking(uid, replyToken);
   if (/料金|コース|値段|price/i.test(text)) return reply(replyToken, [priceMessage()]);
-  if (/出勤|本日|今日|だれ|誰/.test(text)) return reply(replyToken, [todayMessage()]);
+  if (/出勤|本日|今日|だれ|誰/.test(text)) return reply(replyToken, todayMessages());
   if (/アクセス|場所|住所|どこ/.test(text)) return reply(replyToken, [accessMessage()]);
-  if (/電話|でんわ|tel/i.test(text)) return reply(replyToken, [telMessage()]);
-  if (/キャンセル|やめ|中止/.test(text)) {
-    clearState(uid);
-    return reply(replyToken, [textMsg("ご予約の入力を中止しました。またいつでもどうぞ。")]);
-  }
+  if (/電話|でんわ|tel/i.test(text)) return reply(replyToken, [telInfoMessage()]);
 
-  // それ以外はメニュー案内
+  // 予約の途中なら、今のステップをもう一度表示
+  if (st && st.step) return reply(replyToken, stepMessages_(uid, st));
   reply(replyToken, [menuMessage()]);
 }
 
 /* =========================================================
-   ポストバック受信（ボタン選択）
+   ポストバック受信（ボタン）
    ========================================================= */
 function handlePostback(uid, data, replyToken) {
   const q = parseQuery(data);
   const a = q.a;
 
   if (a === "start") return startBooking(uid, replyToken);
+  if (a === "menu") return reply(replyToken, [menuMessage()]);
   if (a === "price") return reply(replyToken, [priceMessage()]);
-  if (a === "today") return reply(replyToken, [todayMessage()]);
+  if (a === "today") return reply(replyToken, todayMessages());
+  if (a === "cancel") {
+    clearState(uid);
+    return reply(replyToken, [cancelledMessage()]);
+  }
 
   let st = getState(uid) || {};
 
+  if (a === "back") return goBack_(uid, st, replyToken);
+
   if (a === "date") {
-    st = { step: "th", date: q.v, label: q.l || q.v };
+    st = { step: "th", date: q.v, label: q.l || dayLabel(q.v) };
     setState(uid, st);
-    return reply(replyToken, [therapistMessage(q.v)]);
+    return reply(replyToken, therapistMessages(st.date, st.label));
   }
+  // 「本日の出勤」カードから直接（日付＋セラピスト）
+  if (a === "pick") {
+    st = { step: "time", date: q.d, label: dayLabel(q.d), therapist: q.v };
+    setState(uid, st);
+    return reply(replyToken, [timeMessage(st)]);
+  }
+  if (!st.date) return startBooking(uid, replyToken); // 古いボタン等で状態が無い
+
   if (a === "th") {
     st.therapist = q.v;
     st.step = "time";
+    delete st.time;
+    delete st.course;
     setState(uid, st);
-    return reply(replyToken, [timeMessage(st.date, q.v)]);
+    return reply(replyToken, [timeMessage(st)]);
   }
-  if (a === "time") {
-    st.time = q.v;
-    st.step = "course";
-    setState(uid, st);
-    return reply(replyToken, [courseMessage()]);
-  }
+  if (!st.therapist) return reply(replyToken, therapistMessages(st.date, st.label));
+
+  if (a === "time") return pickTime_(uid, st, q.v, replyToken);
+  if (!st.time) return reply(replyToken, [timeMessage(st)]);
+
   if (a === "course") {
     const c = COURSES[Number(q.v)];
-    if (!c) return reply(replyToken, [courseMessage()]);
+    if (!c) return reply(replyToken, [courseMessage(st)]);
     if (c.honshimei && st.therapist === "おまかせ") {
-      return reply(replyToken, [
-        textMsg("150分以上のコースは本指名（セラピストご指名）のみご予約いただけます。セラピストを選び直してください。"),
-        therapistMessage(st.date),
-      ]);
+      return reply(replyToken, [textMsg("⚠ " + c.label + "は本指名（セラピストご指名）の方のみご予約いただけます。"), courseMessage(st)]);
+    }
+    if (courseOptions_(st).every((x) => x.i !== Number(q.v))) {
+      return reply(replyToken, [textMsg("⚠ その時間からは" + c.label + "をお取りできません。別のコースか時間をお選びください。"), courseMessage(st)]);
     }
     st.course = c.label;
     st.price = c.price;
     st.step = "name";
     setState(uid, st);
-    return reply(replyToken, [textMsg("お名前（ニックネーム可）をご入力ください。")]);
+    return reply(replyToken, [nameMessage(uid)]);
   }
-  if (a === "confirm") {
-    return finalizeBooking(uid, replyToken);
+  if (a === "name") {
+    st.name = String(q.v || "").slice(0, 30);
+    if (!st.course || !st.name) return reply(replyToken, stepMessages_(uid, st));
+    st.step = "tel";
+    setState(uid, st);
+    return reply(replyToken, [telMessage_(st)]);
   }
-  if (a === "cancel") {
-    clearState(uid);
-    return reply(replyToken, [textMsg("ご予約の入力を中止しました。")]);
+  if (a === "confirm") return finalizeBooking(uid, replyToken);
+
+  // 不明なボタン
+  return reply(replyToken, st.step ? stepMessages_(uid, st) : [menuMessage()]);
+}
+
+/* 時間を選んだとき（ボタン・直接入力の共通）。空いていなければ時間の選び直し。 */
+function pickTime_(uid, st, t, replyToken) {
+  const slots = timeSlots_(st);
+  if (slots.indexOf(t) < 0 && slots.indexOf("翌" + t) >= 0) t = "翌" + t; // 「1:00」→ 深夜の「翌1:00」
+  if (slots.indexOf(t) < 0) {
+    return reply(replyToken, [textMsg("⚠ " + t + " はご予約いただけません（埋まっている・時間外）。空いている時間からお選びください。"), timeMessage(st)]);
   }
-  // 不明なpostback
-  return reply(replyToken, [menuMessage()]);
+  st.time = t;
+  st.step = "course";
+  delete st.course;
+  setState(uid, st);
+  return reply(replyToken, [courseMessage(st)]);
+}
+
+/* ひとつ前のステップへ戻る */
+function goBack_(uid, st, replyToken) {
+  const prev = { th: "date", time: "th", course: "time", name: "course", tel: "name", confirm: "tel" };
+  const to = prev[st.step];
+  if (!to || to === "date") return startBooking(uid, replyToken);
+  st.step = to;
+  setState(uid, st);
+  return reply(replyToken, stepMessages_(uid, st));
+}
+
+/* 今のステップの画面 */
+function stepMessages_(uid, st) {
+  switch (st.step) {
+    case "th": return therapistMessages(st.date, st.label);
+    case "time": return [timeMessage(st)];
+    case "course": return [courseMessage(st)];
+    case "name": return [nameMessage(uid)];
+    case "tel": return [telMessage_(st)];
+    case "confirm": return [confirmMessage(st)];
+    default: return [dateMessage(getDays())];
+  }
 }
 
 /* =========================================================
@@ -241,12 +296,12 @@ function handlePostback(uid, data, replyToken) {
 function startBooking(uid, replyToken) {
   const days = getDays();
   if (days.length === 0) {
+    clearState(uid);
     return reply(replyToken, [
-      textMsg(
-        "申し訳ございません。ただ今オンライン予約枠の準備中です。お電話（" +
-          TEL +
-          "）でご連絡ください。"
-      ),
+      card_("ご予約", null, [
+        txt_("ただ今オンラインでご予約いただける日がありません。", { wrap: true }),
+        txt_("お手数ですが、お電話でお問い合わせください。", { wrap: true, size: "sm", color: C.sub, margin: "md" }),
+      ], [uriBtn_("📞 電話する（" + TEL + "）", "tel:" + TEL.replace(/-/g, ""))]),
     ]);
   }
   setState(uid, { step: "date" });
@@ -257,7 +312,7 @@ function finalizeBooking(uid, replyToken) {
   const st = getState(uid);
   if (!st || !st.date || !st.therapist || !st.time || !st.course || !st.name || !st.tel) {
     clearState(uid);
-    return reply(replyToken, [textMsg("入力が不完全でした。もう一度「予約」と送ってください。")]);
+    return reply(replyToken, [textMsg("入力が途中で切れてしまいました。お手数ですが、もう一度はじめからお願いします。"), menuMessage()]);
   }
   const name = getDisplayName(uid);
 
@@ -281,34 +336,17 @@ function finalizeBooking(uid, replyToken) {
   // バックエンド結果を確認してから完了を案内（＝未登録を完了と誤表示しない）。
   if (!res || !res.ok) {
     st.step = "time";
+    delete st.time;
     setState(uid, st);
     return reply(replyToken, [
-      textMsg(
-        (res && res.reason) ||
-          "申し訳ございません。その枠はご予約いただけませんでした。別の時間をお選びください。"
-      ),
-      timeMessage(st.date, st.therapist),
+      textMsg("⚠ " + ((res && res.reason) || "申し訳ございません。その時間はご予約いただけませんでした。") + "\n別の時間をお選びください。"),
+      timeMessage(st),
     ]);
   }
 
   // 店舗への通知は予約管理API側の「店舗控えメール」(STORE_EMAIL)に一本化（二重通知を防ぐ）
   clearState(uid);
-  reply(replyToken, [
-    textMsg(
-      [
-        "ご予約ありがとうございます。以下の内容で【ご予約が確定】しました。",
-        "",
-        "▼ご予約内容",
-        "日時: " + (st.label || st.date) + " " + st.time,
-        "セラピスト: " + st.therapist,
-        "コース: " + st.course + "（" + yen(st.price) + "）",
-        "お名前: " + st.name,
-        "お電話: " + st.tel,
-        "",
-        "ご来店をお待ちしております。変更・キャンセルはお電話（" + TEL + "）までご連絡ください。",
-      ].join("\n")
-    ),
-  ]);
+  reply(replyToken, [doneMessage(st)]);
 }
 
 /* 共有台帳API（予約管理 Code.gs の公開デプロイ）へ line_event をPOSTして登録する。
@@ -343,13 +381,19 @@ function createOnLedger_(payload) {
 }
 
 /* =========================================================
-   スプレッドシート
+   スプレッドシート（出勤・プロフィール）と空き状況
    ========================================================= */
 function ss() {
   return SpreadsheetApp.openById(SHEET_ID);
 }
 
-// 出勤情報を読み、[{date,label,name,time,status}] を返す（欠勤✖️・申請中は除外）
+function cellText_(v, fmt) {
+  if (Object.prototype.toString.call(v) === "[object Date]") return Utilities.formatDate(v, "Asia/Tokyo", fmt);
+  return String(v == null ? "" : v).trim();
+}
+
+// 出勤情報を読み、[{date,label,name,time,startMin,endMin,status}] を返す（欠勤✖️・申請中は除外）
+// 「出勤時間」列（"13:00〜翌2:00"）にも、「開始」「終了」に分かれた表（終了 "2:00" は翌日）にも対応。
 function readSchedule() {
   const sh = ss().getSheetByName(SCHEDULE_SHEET);
   if (!sh) return [];
@@ -357,7 +401,7 @@ function readSchedule() {
   if (values.length < 2) return [];
   // 見出し行（「名前」を含む行）を探す
   let hi = 0;
-  for (let i = 0; i < values.length; i++) {
+  for (let i = 0; i < Math.min(values.length, 10); i++) {
     if (values[i].map((c) => String(c).trim()).indexOf("名前") >= 0) {
       hi = i;
       break;
@@ -370,212 +414,472 @@ function readSchedule() {
     label: col("ラベル"),
     name: col("名前"),
     time: col("出勤時間") >= 0 ? col("出勤時間") : col("時間"),
+    start: col("開始"),
+    end: col("終了"),
     status: col("ステータス"),
     present: col("出勤"),
     kbn: col("区分"),
+    order: col("並び"),
   };
   const out = [];
-  const absent = (v) => /^(✖️|✖|✗|×|✕|x|欠|欠勤|休|no|false|非表示)$/i.test(String(v || "").trim());
+  const absent = (v) => /^(✖️|✖|✗|×|✕|x|欠|欠勤|休|休み|no|false|非表示)$/i.test(String(v || "").trim());
   const draft = (v) => /^(申請|申請中|希望|希望休|未確定|保留|draft|下書き)$/i.test(String(v || "").trim());
   for (let i = hi + 1; i < values.length; i++) {
     const r = values[i];
-    // 日付セルが日付型(Date)でも "2026/10/6" 形式に揃える
-    const dv = ci.date >= 0 ? r[ci.date] : "";
-    const date =
-      Object.prototype.toString.call(dv) === "[object Date]"
-        ? Utilities.formatDate(dv, "Asia/Tokyo", "yyyy/M/d")
-        : String(dv).trim();
+    const date = normalizeDate(ci.date >= 0 ? cellText_(r[ci.date], "yyyy/M/d") : "");
     const name = ci.name >= 0 ? String(r[ci.name]).trim() : "";
-    if (!date || !name) continue;
+    if (!date || !name || !/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(date)) continue;
     if (ci.present >= 0 && absent(r[ci.present])) continue;
     if (ci.kbn >= 0 && draft(r[ci.kbn])) continue;
+    let time = ci.time >= 0 ? cellText_(r[ci.time], "H:mm") : "";
+    if (!time && ci.start >= 0) {
+      const s = cellText_(r[ci.start], "H:mm"), e = ci.end >= 0 ? cellText_(r[ci.end], "H:mm") : "";
+      time = s && e ? s + "〜" + e : s;
+    }
+    const rng = shiftRange(time);
     out.push({
-      date: normalizeDate(date),
-      label: ci.label >= 0 && r[ci.label] ? String(r[ci.label]).trim() : normalizeDate(date),
+      date: date,
+      label: ci.label >= 0 && String(r[ci.label]).trim() ? String(r[ci.label]).trim() : dayLabel(date),
       name: name,
-      time: ci.time >= 0 ? String(r[ci.time]).trim() : "",
+      time: rng ? minLabel(rng[0]) + "〜" + minLabel(rng[1]) : time,
+      startMin: rng ? rng[0] : null,
+      endMin: rng ? rng[1] : null,
       status: ci.status >= 0 ? String(r[ci.status]).trim() : "",
+      order: ci.order >= 0 && String(r[ci.order]).trim() !== "" ? Number(r[ci.order]) || 0 : 1e9,
+      row: i,
     });
   }
+  out.sort((a, b) => dateKey(a.date) - dateKey(b.date) || a.order - b.order || a.row - b.row);
   return out;
 }
 
-// 予約可能な日（日本時間の今日以降）を日付順に最大10日返す。過去日は出さない。
+// 予約可能な日（日本時間の営業日。朝6時までは前日）以降を日付順に最大10日。
 function getDays() {
   const rows = readSchedule();
-  const today = Number(Utilities.formatDate(new Date(), "Asia/Tokyo", "yyyyMMdd"));
-  const key = (d) => {
-    const m = String(d).match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
-    return m ? Number(m[1]) * 10000 + Number(m[2]) * 100 + Number(m[3]) : 0;
-  };
+  const today = bizTodayKey();
   const seen = {};
   const days = [];
   rows.forEach((r) => {
-    const k = key(r.date);
-    if (!k || k < today || seen[r.date]) return;
-    seen[r.date] = true;
-    days.push({ date: r.date, label: r.label, k: k });
+    const k = dateKey(r.date);
+    if (!k || k < today) return;
+    if (!seen[r.date]) {
+      seen[r.date] = { date: r.date, label: r.label, k: k, count: 0 };
+      days.push(seen[r.date]);
+    }
+    seen[r.date].count++;
   });
   days.sort((a, b) => a.k - b.k);
-  return days.slice(0, 10).map((d) => ({ date: d.date, label: d.label }));
+  return days.slice(0, 10);
 }
 
 function getTherapistsOn(date) {
   const rows = readSchedule().filter((r) => r.date === date);
-  const names = [];
-  rows.forEach((r) => {
-    if (names.indexOf(r.name) < 0) names.push(r.name);
+  const seen = {};
+  return rows.filter((r) => (seen[r.name] ? false : (seen[r.name] = true)));
+}
+
+// 名簿（本日の出勤シート）：名前 → {photo, age, height, cup, tags}
+function readProfiles_() {
+  const out = {};
+  try {
+    const sh = ss().getSheetByName(SP.getProperty("THERAPIST_SHEET") || "本日の出勤");
+    if (!sh) return out;
+    const v = sh.getDataRange().getValues();
+    let hi = -1;
+    for (let i = 0; i < Math.min(v.length, 5); i++) {
+      if (v[i].map((c) => String(c).trim()).indexOf("名前") >= 0) { hi = i; break; }
+    }
+    if (hi < 0) return out;
+    const head = v[hi].map((c) => String(c).trim());
+    const g = (r, k) => (head.indexOf(k) >= 0 ? String(r[head.indexOf(k)] == null ? "" : r[head.indexOf(k)]).trim() : "");
+    for (let i = hi + 1; i < v.length; i++) {
+      const name = g(v[i], "名前");
+      if (!name) continue;
+      out[name] = {
+        photo: g(v[i], "写真").split(";").map((x) => x.trim()).filter(Boolean)[0] || "",
+        age: g(v[i], "年齢"),
+        height: g(v[i], "T"),
+        cup: g(v[i], "カップ"),
+        tags: g(v[i], "タグ").split(";").map((x) => x.trim()).filter(Boolean).slice(0, 2),
+      };
+    }
+  } catch (e) {}
+  // サイト側の写真の上書き設定（まだシートに写真が無い人の分）
+  try {
+    const ov = photoOverrides_();
+    Object.keys(ov).forEach((n) => {
+      out[n] = out[n] || {};
+      if (!out[n].photo) out[n].photo = [].concat(ov[n])[0] || "";
+    });
+  } catch (e) {}
+  return out;
+}
+function photoOverrides_() {
+  const cache = CacheService.getScriptCache();
+  const hit = cache.get("photo_ov");
+  if (hit) return JSON.parse(hit);
+  let ov = {};
+  try {
+    const r = UrlFetchApp.fetch("https://raw.githubusercontent.com/naoxxx0320-del/-/main/data/photo-overrides.json", { muteHttpExceptions: true });
+    if (r.getResponseCode() === 200) ov = JSON.parse(r.getContentText()) || {};
+  } catch (e) {}
+  cache.put("photo_ov", JSON.stringify(ov), 600);
+  return ov;
+}
+function photoUrl_(file) {
+  if (!file) return "";
+  if (/^https:\/\//.test(file)) return file;
+  if (/^http:/.test(file)) return "";
+  return SITE_URL.replace(/\/?$/, "/") + encodeURIComponent(file);
+}
+
+/* 予約済みの時間（共有台帳の公開空き状況API。名前・電話などは含まない）
+   その日の 0:00 からの分 [{th, s, e}]。翌日分（深夜）も含めて取得。 */
+function busyOn_(date) {
+  const url = SP.getProperty("BOOKING_API_URL") || "";
+  if (!url) return [];
+  const base = dayStartMs(date);
+  const out = [];
+  [date, addDay(date)].forEach((d) => {
+    try {
+      const r = UrlFetchApp.fetch(url + "?action=availability&date=" + encodeURIComponent(d), { muteHttpExceptions: true, followRedirects: true });
+      const j = JSON.parse(r.getContentText());
+      (j.busy || []).forEach((b) => out.push({ th: String(b.th), s: (b.s - base) / 60000, e: (b.e - base) / 60000 }));
+    } catch (e) {}
   });
-  return { names: names, rows: rows };
+  return out;
 }
 
-function getShiftOf(date, name) {
-  const r = readSchedule().find((x) => x.date === date && x.name === name);
-  return r ? r.time : "";
+/* 空いている開始時間（30分刻み）。最短コース（60分）が入る時間だけ。今日なら今から30分後以降。 */
+function timeSlots_(st, rowsArg, busyArg) {
+  const rows = rowsArg || getTherapistsOn(st.date);
+  const busy = busyArg || busyOn_(st.date);
+  const minDur = Math.min.apply(null, COURSES.map((c) => courseMin(c.label)));
+  const targets = st.therapist === "おまかせ" ? rows : rows.filter((r) => r.name === st.therapist);
+  const earliest = dateKey(st.date) === bizTodayKey() ? nowMinOf(st.date) + 30 : -1e9;
+  const slots = {};
+  targets.forEach((r) => {
+    if (r.startMin == null || r.endMin == null) return;
+    const mine = busy.filter((b) => b.th === r.name);
+    for (let t = Math.ceil(r.startMin / 30) * 30; t + minDur <= r.endMin; t += 30) {
+      if (t < earliest) continue;
+      if (mine.some((b) => t < b.e && b.s < t + minDur)) continue;
+      slots[t] = true;
+    }
+  });
+  return Object.keys(slots).map(Number).sort((a, b) => a - b).map(minLabel);
 }
 
-// ※ 予約の書き込み・重複チェックは共有台帳（予約管理API Code.gs）に一本化したため、
-//    旧 writeReservation / isTaken（独自 "LINE予約" シート）は廃止しました。
-//    登録は createOnLedger_()、重複/出勤外/満席の判定はバックエンド側で行います。
+/* 選んだ時間から入るコース（出勤終了・次の予約まで）。[{i, c}] */
+function courseOptions_(st, rowsArg, busyArg) {
+  const rows = rowsArg || getTherapistsOn(st.date);
+  const busy = busyArg || busyOn_(st.date);
+  const t = labelMin(st.time);
+  const targets = st.therapist === "おまかせ" ? rows : rows.filter((r) => r.name === st.therapist);
+  return COURSES.map((c, i) => ({ i: i, c: c })).filter((x) => {
+    if (x.c.honshimei && st.therapist === "おまかせ") return false;
+    const dur = courseMin(x.c.label);
+    return targets.some((r) => r.endMin != null && t >= r.startMin && t + dur <= r.endMin &&
+      !busy.some((b) => b.th === r.name && t < b.e && b.s < t + dur));
+  });
+}
 
 /* =========================================================
-   メッセージ（テキスト＆クイックリプライ）
+   メッセージ（カード＝Flex Message と大きいボタン）
    ========================================================= */
+const C = { wine: "#7A1F2B", wine2: "#9B2C3B", gold: "#B8975A", ink: "#2A2420", sub: "#7A6A4A", bg: "#FAF6EE", line: "#E8DFCC", ok: "#2E7D4F" };
+const STEPS = 6;
+
 function textMsg(text) {
   return { type: "text", text: text };
 }
-
-function qr(items) {
-  return { items: items.slice(0, 13) }; // LINEの上限13件
+function txt_(text, o) {
+  return Object.assign({ type: "text", text: String(text), color: C.ink, size: "md" }, o || {});
 }
-function qrPostback(label, data, displayText) {
+function postBtn_(label, data, style, displayText) {
   return {
-    type: "action",
-    action: {
-      type: "postback",
-      label: String(label).slice(0, 20),
-      data: data,
-      displayText: displayText || label,
+    type: "button",
+    style: style || "secondary",
+    height: "sm",
+    color: style === "primary" ? C.wine : style === "link" ? C.sub : "#F1EADB",
+    action: { type: "postback", label: String(label).slice(0, 40), data: data, displayText: displayText || String(label).slice(0, 40) },
+  };
+}
+function uriBtn_(label, uri) {
+  return { type: "button", style: "link", height: "sm", color: C.wine, action: { type: "uri", label: String(label).slice(0, 40), uri: uri } };
+}
+function stepHead_(n, title, sub) {
+  const c = [];
+  if (n) c.push(txt_("STEP " + n + " / " + STEPS, { size: "xs", color: C.gold, weight: "bold" }));
+  c.push(txt_(title, { size: "lg", weight: "bold", color: C.wine, wrap: true }));
+  if (sub) c.push(txt_(sub, { size: "sm", color: C.sub, wrap: true, margin: "sm" }));
+  return { type: "box", layout: "vertical", contents: c, paddingBottom: "md" };
+}
+// 「戻る」「最初から」「やめる」
+function navBox_(back) {
+  const items = [];
+  if (back) items.push(postBtn_("◀ 戻る", "a=back", "link", "戻る"));
+  items.push(postBtn_("最初から", "a=start", "link", "最初から"));
+  items.push(postBtn_("やめる", "a=cancel", "link", "やめる"));
+  return { type: "box", layout: "horizontal", contents: items, spacing: "sm", margin: "md" };
+}
+function card_(title, n, bodyContents, footerContents, sub) {
+  return {
+    type: "flex",
+    altText: (n ? "STEP " + n + "/" + STEPS + " " : "") + title,
+    contents: {
+      type: "bubble",
+      size: "mega",
+      header: stepHead_(n, title, sub),
+      body: { type: "box", layout: "vertical", contents: bodyContents, spacing: "sm" },
+      footer: footerContents && footerContents.length ? { type: "box", layout: "vertical", contents: footerContents, spacing: "sm" } : undefined,
+      styles: { header: { backgroundColor: C.bg }, footer: { separator: true } },
     },
+  };
+}
+// ボタンを n 列に並べる
+function grid_(buttons, cols) {
+  const rows = [];
+  for (let i = 0; i < buttons.length; i += cols) {
+    const row = buttons.slice(i, i + cols);
+    while (row.length < cols) row.push({ type: "filler" });
+    rows.push({ type: "box", layout: "horizontal", contents: row, spacing: "sm" });
+  }
+  return rows;
+}
+function kv_(k, v) {
+  return {
+    type: "box", layout: "baseline", spacing: "md",
+    contents: [txt_(k, { size: "sm", color: C.sub, flex: 3 }), txt_(v || "-", { size: "sm", wrap: true, flex: 7, weight: "bold" })],
   };
 }
 
 function welcomeMessage() {
-  return {
-    type: "text",
-    text:
-      "AROMA DAIAMOND（亀戸）へようこそ。\n「予約」と送るか下のボタンからご予約いただけます。\n料金・本日の出勤もお気軽にどうぞ。",
-    quickReply: qr([
-      qrPostback("📅 予約する", "a=start"),
-      qrPostback("💰 料金", "a=price"),
-      qrPostback("👩 本日の出勤", "a=today"),
-    ]),
-  };
+  return menuMessage("AROMA DAIAMOND（亀戸）へようこそ。\nご予約・本日の出勤・料金は下のボタンからどうぞ。");
 }
-
-function menuMessage() {
-  return {
-    type: "text",
-    text: "ご用件をお選びください。",
-    quickReply: qr([
-      qrPostback("📅 予約する", "a=start"),
-      qrPostback("💰 料金", "a=price"),
-      qrPostback("👩 本日の出勤", "a=today"),
-    ]),
-  };
+function menuMessage(lead) {
+  return card_("AROMA DAIAMOND 亀戸", null, [
+    txt_(lead || "ご用件をお選びください。", { wrap: true, size: "sm", color: C.sub }),
+  ], [
+    postBtn_("📅 予約する", "a=start", "primary", "予約する"),
+    postBtn_("👩 本日の出勤", "a=today", "secondary", "本日の出勤"),
+    postBtn_("💰 料金・コース", "a=price", "secondary", "料金・コース"),
+    uriBtn_("📞 電話する（" + TEL + "）", "tel:" + TEL.replace(/-/g, "")),
+  ]);
+}
+function cancelledMessage() {
+  return card_("ご予約の入力をやめました", null, [txt_("またいつでもどうぞ。", { size: "sm", color: C.sub })], [postBtn_("📅 もう一度予約する", "a=start", "primary", "予約する")]);
 }
 
 function priceMessage() {
-  const lines = COURSES.map(
-    (c) => "・" + c.label + " … " + yen(c.price) + (c.honshimei ? "（本指名のみ）" : "")
-  );
-  return textMsg("【コース料金】\n" + lines.join("\n") + "\n\nご予約は「予約」と送ってください。");
-}
-
-function todayMessage() {
-  const days = getDays();
-  if (days.length === 0) return textMsg("本日の出勤情報は準備中です。お電話（" + TEL + "）でご確認ください。");
-  const today = days[0];
-  const { rows } = getTherapistsOn(today.date);
-  const lines = rows.map(
-    (r) => "・" + r.name + "  " + (r.time || "") + (r.status ? "  【" + r.status + "】" : "")
-  );
-  return textMsg("【" + today.label + " の出勤】\n" + lines.join("\n") + "\n\nご予約は「予約」と送ってください。");
+  const rows = COURSES.map((c) => ({
+    type: "box", layout: "baseline", contents: [
+      txt_(c.label + (c.honshimei ? "（本指名のみ）" : ""), { size: "sm", flex: 7, wrap: true }),
+      txt_(yen(c.price), { size: "sm", flex: 3, align: "end", weight: "bold", color: C.wine }),
+    ],
+  }));
+  rows.push(txt_("指名料・オプションは料金表をご覧ください。", { size: "xs", color: C.sub, margin: "md", wrap: true }));
+  return card_("料金・コース", null, rows, [postBtn_("📅 予約する", "a=start", "primary", "予約する"), uriBtn_("料金表を見る（サイト）", SITE_URL.replace(/\/?$/, "/") + "system/")]);
 }
 
 function accessMessage() {
-  return textMsg(
-    "【アクセス】\nエリア：東京都・" + AREA + "\nお部屋の住所はご予約確定後にご案内いたします。\nお電話：" + TEL
-  );
+  return card_("アクセス", null, [
+    txt_("エリア：東京都・" + AREA, { size: "sm" }),
+    txt_("お部屋の住所は、ご予約の確定後にご案内いたします。", { size: "sm", wrap: true, color: C.sub }),
+  ], [uriBtn_("📞 電話する（" + TEL + "）", "tel:" + TEL.replace(/-/g, ""))]);
 }
-function telMessage() {
-  return textMsg("お電話：" + TEL + "\n[営業]10:00〜翌5:00 / [電話受付]9:30〜翌4:00");
+function telInfoMessage() {
+  return card_("お電話", null, [
+    txt_(TEL, { size: "xl", weight: "bold", color: C.wine }),
+    txt_("営業 10:00〜翌5:00 ／ 電話受付 9:30〜翌4:00", { size: "sm", color: C.sub, wrap: true }),
+  ], [uriBtn_("📞 電話をかける", "tel:" + TEL.replace(/-/g, ""))]);
 }
 
+// STEP1 日付
 function dateMessage(days) {
-  return {
-    type: "text",
-    text: "ご希望の日を選んでください。",
-    quickReply: qr(
-      days.map((d) => qrPostback(d.label, "a=date&v=" + enc(d.date) + "&l=" + enc(d.label), d.label))
-    ),
-  };
-}
-
-function therapistMessage(date) {
-  const { names } = getTherapistsOn(date);
-  const items = names.map((n) => qrPostback(n, "a=th&v=" + enc(n), n));
-  items.push(qrPostback("おまかせ（指名なし）", "a=th&v=" + enc("おまかせ"), "おまかせ"));
-  return {
-    type: "text",
-    text: "セラピストを選んでください。",
-    quickReply: qr(items),
-  };
-}
-
-function timeMessage(date, therapist) {
-  const shift = therapist === "おまかせ" ? "10:00〜翌5:00" : getShiftOf(date, therapist);
-  const slots = hourlySlots(shift);
-  const items = slots.map((s) => qrPostback(s, "a=time&v=" + enc(s), s));
-  return {
-    type: "text",
-    text:
-      "ご希望の開始時間を選んでください。\n（一覧に無い時間は直接ご入力いただけます／出勤 " +
-      (shift || "未設定") +
-      "）",
-    quickReply: qr(items),
-  };
-}
-
-function courseMessage() {
-  const items = COURSES.map((c, i) =>
-    qrPostback(c.label.replace("コース", ""), "a=course&v=" + i, c.label)
+  const btns = days.map((d) =>
+    postBtn_(d.label + "　出勤" + d.count + "名", "a=date&v=" + enc(d.date) + "&l=" + enc(d.label), "secondary", d.label)
   );
+  return card_("ご希望の日を選んでください", 1, btns, [navBox_(false)]);
+}
+
+// セラピストのカード（写真つき）
+function therapistBubble_(r, prof, opts) {
+  const p = prof || {};
+  const img = photoUrl_(p.photo);
+  const spec = [p.age ? p.age + "歳" : "", p.height ? "T" + p.height : "", p.cup ? p.cup + "カップ" : ""].filter(Boolean).join(" / ");
+  const body = [
+    txt_(r.name, { size: "xl", weight: "bold", color: C.wine }),
+  ];
+  if (spec) body.push(txt_(spec, { size: "xs", color: C.sub }));
+  if (p.tags && p.tags.length) body.push(txt_(p.tags.join("・"), { size: "xs", color: C.gold, wrap: true }));
+  body.push(txt_("🕐 " + (r.time || "時間未定"), { size: "sm", margin: "md" }));
+  if (opts.full) body.push(txt_("この日の空きはありません", { size: "sm", color: "#999999" }));
+  else if (r.status) body.push(txt_(r.status, { size: "sm", color: /満|終了/.test(r.status) ? "#999999" : C.ok, weight: "bold" }));
+  const b = {
+    type: "bubble",
+    size: "kilo",
+    body: { type: "box", layout: "vertical", contents: body, spacing: "xs" },
+    footer: {
+      type: "box", layout: "vertical", contents: [
+        opts.full
+          ? txt_("満員", { align: "center", color: "#999999", size: "sm" })
+          : postBtn_(opts.label || "この人を選ぶ", opts.data, "primary", r.name + "を選ぶ"),
+      ],
+    },
+  };
+  if (img) b.hero = { type: "image", url: img, size: "full", aspectRatio: "3:4", aspectMode: "cover" };
+  return b;
+}
+
+// STEP2 セラピスト（横にスライド）
+function therapistMessages(date, label) {
+  const rows = getTherapistsOn(date);
+  const prof = readProfiles_();
+  const busy = busyOn_(date);
+  const bubbles = rows.slice(0, 11).map((r) => {
+    const full = timeSlots_({ date: date, therapist: r.name }, rows, busy).length === 0;
+    return therapistBubble_(r, prof[r.name], { full: full, data: "a=th&v=" + enc(r.name) });
+  });
+  const anyFree = timeSlots_({ date: date, therapist: "おまかせ" }, rows, busy).length > 0;
+  bubbles.push({
+    type: "bubble", size: "kilo",
+    body: { type: "box", layout: "vertical", justifyContent: "center", contents: [
+      txt_("おまかせ", { size: "xl", weight: "bold", color: C.wine }),
+      txt_("指名なし。空いているセラピストがご案内します。", { size: "sm", color: C.sub, wrap: true, margin: "md" }),
+    ] },
+    footer: { type: "box", layout: "vertical", contents: [anyFree
+      ? postBtn_("おまかせで選ぶ", "a=th&v=" + enc("おまかせ"), "primary", "おまかせ")
+      : txt_("満員", { align: "center", color: "#999999", size: "sm" })] },
+  });
+  return [
+    {
+      type: "flex",
+      altText: "STEP 2/" + STEPS + " セラピストを選んでください",
+      contents: { type: "carousel", contents: bubbles },
+    },
+    card_("セラピストを選んでください", 2, [
+      txt_(label + "　出勤 " + rows.length + "名", { size: "sm", weight: "bold" }),
+      txt_("上のカードを横にスライドして、「この人を選ぶ」を押してください。", { size: "sm", color: C.sub, wrap: true }),
+    ], [navBox_(true)]),
+  ];
+}
+
+// STEP3 時間
+function timeMessage(st) {
+  const rows = getTherapistsOn(st.date);
+  const slots = timeSlots_(st, rows, busyOn_(st.date));
+  const r = rows.find((x) => x.name === st.therapist);
+  const sub = st.label + "　" + (st.therapist === "おまかせ" ? "おまかせ" : st.therapist + "（出勤 " + (r ? r.time : "未定") + "）");
+  if (!slots.length) {
+    return card_("空いている時間がありません", 3, [
+      txt_("申し訳ございません。この日はご予約いただける時間がありません。", { size: "sm", wrap: true }),
+      txt_("別のセラピスト・別の日をお選びいただくか、お電話でお問い合わせください。", { size: "sm", wrap: true, color: C.sub }),
+    ], [navBox_(true)], sub);
+  }
+  const btns = slots.map((t) => postBtn_(t, "a=time&v=" + enc(t), "secondary", t + "〜"));
+  return card_("開始時間を選んでください", 3, grid_(btns, 3).concat([
+    txt_("表示されているのは空いている時間です（30分ごと）。", { size: "xs", color: C.sub, wrap: true, margin: "md" }),
+  ]), [navBox_(true)], sub);
+}
+
+// STEP4 コース
+function courseMessage(st) {
+  const opts = courseOptions_(st);
+  const sub = st.label + " " + st.time + "〜　" + (st.therapist === "おまかせ" ? "おまかせ" : st.therapist);
+  if (!opts.length) {
+    return card_("この時間から入るコースがありません", 4, [
+      txt_("出勤終了や次のご予約までの時間が足りません。開始時間を選び直してください。", { size: "sm", wrap: true }),
+    ], [navBox_(true)], sub);
+  }
+  const btns = opts.map((x) =>
+    postBtn_(x.c.label + "　" + yen(x.c.price), "a=course&v=" + x.i, "secondary", x.c.label)
+  );
+  const notes = [];
+  if (st.therapist === "おまかせ") notes.push(txt_("※150分コースは本指名の方のみです。", { size: "xs", color: C.sub, wrap: true, margin: "md" }));
+  return card_("コースを選んでください", 4, btns.concat(notes), [navBox_(true)], sub);
+}
+
+// STEP5 お名前
+function nameMessage(uid) {
+  const dn = uid ? getDisplayName(uid) : "";
+  const footer = [];
+  if (dn) footer.push(postBtn_("「" + dn.slice(0, 20) + "」で登録", "a=name&v=" + enc(dn.slice(0, 30)), "secondary", dn.slice(0, 30)));
+  footer.push(navBox_(true));
+  return card_("お名前を送ってください", 5, [
+    txt_("このトークにお名前を入力して送信してください。ニックネームでも大丈夫です。", { size: "sm", wrap: true }),
+    txt_("✏️ 下の入力欄に文字を打って送信", { size: "sm", color: C.gold, weight: "bold", margin: "md" }),
+  ], footer);
+}
+
+// STEP6 お電話
+function telMessage_(st) {
+  return card_("お電話番号を送ってください", 6, [
+    txt_("例：090-1234-5678", { size: "md", weight: "bold" }),
+    txt_("ご予約内容の確認でご連絡することがあります。", { size: "sm", wrap: true, color: C.sub }),
+    txt_("✏️ 下の入力欄に番号を打って送信", { size: "sm", color: C.gold, weight: "bold", margin: "md" }),
+  ], [navBox_(true)], st && st.name ? st.name + " 様" : "");
+}
+
+// 確認
+function confirmMessage(st) {
+  return card_("ご予約内容の確認", null, [
+    kv_("日時", st.label + "　" + st.time + "〜"),
+    kv_("セラピスト", st.therapist === "おまかせ" ? "おまかせ（指名なし）" : st.therapist),
+    kv_("コース", st.course),
+    kv_("料金", yen(st.price)),
+    kv_("お名前", st.name + " 様"),
+    kv_("お電話", st.tel),
+    txt_("内容がよろしければ「この内容で予約する」を押してください。", { size: "xs", color: C.sub, wrap: true, margin: "lg" }),
+  ], [
+    postBtn_("✅ この内容で予約する", "a=confirm", "primary", "この内容で予約する"),
+    navBox_(true),
+  ], "まだ予約は確定していません");
+}
+
+// 完了
+function doneMessage(st) {
   return {
-    type: "text",
-    text: "コースを選んでください。",
-    quickReply: qr(items),
+    type: "flex",
+    altText: "ご予約が確定しました（" + st.label + " " + st.time + "〜）",
+    contents: {
+      type: "bubble",
+      header: { type: "box", layout: "vertical", backgroundColor: C.wine, contents: [
+        txt_("✅ ご予約が確定しました", { color: "#FFFFFF", weight: "bold", size: "lg" }),
+      ] },
+      body: { type: "box", layout: "vertical", spacing: "sm", contents: [
+        kv_("日時", st.label + "　" + st.time + "〜"),
+        kv_("セラピスト", st.therapist === "おまかせ" ? "おまかせ（指名なし）" : st.therapist),
+        kv_("コース", st.course + "（" + yen(st.price) + "）"),
+        kv_("お名前", st.name + " 様"),
+        kv_("お電話", st.tel),
+        txt_("ご来店をお待ちしております。お部屋のご案内は当日ご連絡いたします。変更・キャンセルはお電話でお願いいたします。", { size: "xs", color: C.sub, wrap: true, margin: "lg" }),
+      ] },
+      footer: { type: "box", layout: "vertical", contents: [uriBtn_("📞 電話する（" + TEL + "）", "tel:" + TEL.replace(/-/g, ""))] },
+    },
   };
 }
 
-function confirmMessage(st) {
-  return {
-    type: "text",
-    text:
-      [
-        "以下の内容でよろしいですか？",
-        "",
-        "日時: " + (st.label || st.date) + " " + st.time,
-        "セラピスト: " + st.therapist,
-        "コース: " + st.course + "（" + yen(st.price) + "）",
-        "お名前: " + st.name,
-        "お電話: " + (st.tel || ""),
-      ].join("\n"),
-    quickReply: qr([
-      qrPostback("✅ この内容で予約", "a=confirm", "予約を確定"),
-      qrPostback("✖️ キャンセル", "a=cancel", "キャンセル"),
-    ]),
-  };
+// 本日の出勤（写真カード → そのまま予約へ）
+function todayMessages() {
+  const days = getDays();
+  const today = days.find((d) => d.k === bizTodayKey());
+  if (!today) {
+    return [card_("本日の出勤", null, [txt_("本日の出勤情報は準備中です。", { size: "sm" })], [
+      days.length ? postBtn_("📅 ほかの日を予約する", "a=start", "primary", "予約する") : uriBtn_("📞 電話する（" + TEL + "）", "tel:" + TEL.replace(/-/g, "")),
+    ])];
+  }
+  const rows = getTherapistsOn(today.date);
+  const prof = readProfiles_();
+  const busy = busyOn_(today.date);
+  const bubbles = rows.slice(0, 12).map((r) => {
+    const full = timeSlots_({ date: today.date, therapist: r.name }, rows, busy).length === 0;
+    return therapistBubble_(r, prof[r.name], { full: full, label: "この人で予約", data: "a=pick&d=" + enc(today.date) + "&v=" + enc(r.name) });
+  });
+  return [
+    textMsg("【" + today.label + " 本日の出勤】" + rows.length + "名\nカードを横にスライドしてご覧ください。"),
+    { type: "flex", altText: "本日の出勤 " + rows.length + "名", contents: { type: "carousel", contents: bubbles } },
+  ];
 }
 
 /* =========================================================
@@ -583,11 +887,13 @@ function confirmMessage(st) {
    ========================================================= */
 function reply(replyToken, messages) {
   if (!replyToken) return;
+  // 未定義（footer なし等）のキーを落としてから送る
+  const clean = JSON.parse(JSON.stringify(messages.slice(0, 5)));
   UrlFetchApp.fetch("https://api.line.me/v2/bot/message/reply", {
     method: "post",
     contentType: "application/json",
     headers: { Authorization: "Bearer " + TOKEN },
-    payload: JSON.stringify({ replyToken: replyToken, messages: messages }),
+    payload: JSON.stringify({ replyToken: replyToken, messages: clean }),
     muteHttpExceptions: true,
   });
 }
@@ -606,7 +912,7 @@ function getDisplayName(uid) {
 }
 
 /* =========================================================
-   ユーティリティ
+   ユーティリティ（日付・時刻）
    ========================================================= */
 function enc(s) {
   return encodeURIComponent(String(s));
@@ -626,6 +932,58 @@ function normalizeDate(s) {
   if (m) return m[1] + "/" + Number(m[2]) + "/" + Number(m[3]);
   return String(s || "").trim();
 }
+function dateKey(d) {
+  const m = String(d || "").match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+  return m ? Number(m[1]) * 10000 + Number(m[2]) * 100 + Number(m[3]) : 0;
+}
+// "2026/10/8" → "10/8(木)"
+function dayLabel(d) {
+  const m = String(d || "").match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+  if (!m) return String(d || "");
+  const wd = "日月火水木金土"[new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay()];
+  return Number(m[2]) + "/" + Number(m[3]) + "(" + wd + ")";
+}
+function addDay(d) {
+  const m = String(d).match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+  const x = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] + 1));
+  return x.getUTCFullYear() + "/" + (x.getUTCMonth() + 1) + "/" + x.getUTCDate();
+}
+// その日の 0:00（日本時間）の epoch ms
+function dayStartMs(d) {
+  const m = String(d).match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+  return Date.UTC(+m[1], +m[2] - 1, +m[3]) - 9 * 3600 * 1000;
+}
+// 日本時間の営業日（朝6時までは前日）YYYYMMDD
+function bizTodayKey() {
+  const j = new Date(Date.now() + 9 * 3600e3 - 6 * 3600e3);
+  return j.getUTCFullYear() * 10000 + (j.getUTCMonth() + 1) * 100 + j.getUTCDate();
+}
+// その日の 0:00 から見た「今」の分（深夜は 24:00 以降）
+function nowMinOf(d) {
+  return Math.floor((Date.now() - dayStartMs(d)) / 60000);
+}
+// "翌2:30" → 1590、"14:00" → 840
+function labelMin(t) {
+  const m = String(t || "").match(/(翌)?\s*(\d{1,2})[:：](\d{2})/);
+  return m ? (m[1] ? 1440 : 0) + Number(m[2]) * 60 + Number(m[3]) : null;
+}
+function minLabel(min) {
+  const h = Math.floor(min / 60), mm = min % 60;
+  return (h >= 24 ? "翌" + (h - 24) : h) + ":" + (mm < 10 ? "0" : "") + mm;
+}
+// "13:00〜翌2:00" / "13:00〜2:00"（終了が開始以前なら翌日）→ [780, 1560]
+function shiftRange(time) {
+  const m = String(time || "").match(/(翌)?\s*(\d{1,2})[:：](\d{2})(?::\d{2})?\s*[〜~\-]\s*(翌)?\s*(\d{1,2})[:：](\d{2})/);
+  if (!m) return null;
+  const s = (m[1] ? 1440 : 0) + Number(m[2]) * 60 + Number(m[3]);
+  let e = (m[4] ? 1440 : 0) + Number(m[5]) * 60 + Number(m[6]);
+  if (e <= s) e += 1440;
+  return [s, e];
+}
+function courseMin(label) {
+  const m = String(label).match(/(\d+)\s*分/);
+  return m ? Number(m[1]) : 60;
+}
 // 電話番号を数字だけに正規化（全角・ハイフン・+81 に対応）。日本の番号として不正なら ""。
 function normalizePhone(s) {
   let t = String(s || "").replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0));
@@ -634,29 +992,10 @@ function normalizePhone(s) {
   return /^0\d{9,10}$/.test(d) ? d : "";
 }
 function normalizeTime(s) {
-  const m = String(s || "").match(/(翌)?\s*(\d{1,2})[:：](\d{2})/);
+  const t = String(s || "").replace(/[０-９：]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0));
+  const m = t.match(/(翌)?\s*(\d{1,2})[:：](\d{2})/);
   if (!m) return "";
   return (m[1] ? "翌" : "") + Number(m[2]) + ":" + m[3];
-}
-// 出勤時間 "13:00〜翌2:00" → 1時間刻みの開始候補（最大12件）
-function hourlySlots(shift) {
-  const m = String(shift || "").match(/(\d{1,2}):(\d{2})\s*[〜~\-]\s*(翌)?\s*(\d{1,2}):(\d{2})/);
-  let start, end;
-  if (m) {
-    start = Number(m[1]) * 60 + Number(m[2]);
-    end = Number(m[4]) * 60 + Number(m[5]) + (m[3] ? 1440 : 0);
-    if (end <= start) end += 1440;
-  } else {
-    start = 10 * 60;
-    end = 29 * 60;
-  }
-  const out = [];
-  for (let t = Math.ceil(start / 60) * 60; t <= end - 60 && out.length < 12; t += 60) {
-    const h = Math.floor((t % 1440) / 60);
-    const nextday = t >= 1440;
-    out.push((nextday ? "翌" : "") + h + ":00");
-  }
-  return out;
 }
 
 /* =========================================================
