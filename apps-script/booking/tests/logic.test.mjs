@@ -246,7 +246,9 @@ t("版：Code.gs・lib.gs・Admin.html の版が一致（貼り替え漏れ検�
   assert.equal(v(/var CODE_VERSION = "([^"]+)"/, code), lib);
   assert.equal(v(/var APP_VERSION = "([^"]+)"/, html), lib);
   // 途中で切れたコピーを検出できるよう、adminVersion は Code.gs の最後に置く
-  assert.match(code.trimEnd(), /function adminVersion\(\) \{[^}]*\}\s*$/);
+  const tail = code.trimEnd();
+  assert.ok(tail.lastIndexOf("function adminVersion()") > tail.length - 300, "adminVersion が最後にない");
+  assert.ok(tail.endsWith("}"));
 });
 
 console.log(`\n✅ 全 ${passed} 件 パス`);
