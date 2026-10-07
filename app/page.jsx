@@ -9,6 +9,7 @@ import { SITE, telHref } from "./_lib/site";
 import guideData from "../data/guide.json";
 import rosterData from "../data/roster.json";
 import links from "../data/links.json";
+import { HAS_TODAY, useTodayKey, keyLabel, todayList, todayCards, SCHEDULE_UPDATED, SCHEDULE_AREA } from "./_components/today";
 
 /* ---- data ---------------------------------------------------------- */
 
@@ -52,13 +53,9 @@ const SLIDES = [
   },
 ];
 
-// 只今の案内状況・本日の出勤（data/*.json 由来。GitHub Actions が
-// Googleスプレッドシートから自動更新します）
-const GUIDE_UPDATED = guideData.updated;
-const GUIDE_DATE = guideData.date;
-const GUIDE = guideData.areas;
-// 本日の出勤：欠勤(✖️)は除外して表示
-const THERAPISTS = rosterData.filter((t) => !t.absent);
+// 只今の案内状況・本日の出勤：週間出勤表（schedule.json）の今日の行から作る（管理画面の「本日」で
+// 空き状況・案内時刻・並び順を変更）。古いデータ（today 無し）のときは従来の guide.json / 名簿を使う。
+const LEGACY_THERAPISTS = rosterData.filter((t) => !t.absent);
 
 // ステータス表示の色分けクラス
 const STATUS_CLASS = {
@@ -71,6 +68,16 @@ const STATUS_CLASS = {
 /* ---- page ---------------------------------------------------------- */
 
 export default function Home() {
+  const todayKey = useTodayKey();
+  const THERAPISTS = HAS_TODAY ? todayCards(todayKey, rosterData) : LEGACY_THERAPISTS;
+  const todayRows = HAS_TODAY ? todayList(todayKey) : [];
+  const GUIDE = HAS_TODAY
+    ? todayRows.length
+      ? [{ area: SCHEDULE_AREA, list: todayRows.map((e) => ({ name: e.name, time: e.guideTime || "", status: e.status || "" })) }]
+      : []
+    : guideData.areas;
+  const GUIDE_DATE = HAS_TODAY ? keyLabel(todayKey) : guideData.date;
+  const GUIDE_UPDATED = HAS_TODAY ? SCHEDULE_UPDATED : guideData.updated;
   const [activeSlide, setActiveSlide] = useState(0);
   const slideTimer = useRef(null);
 
@@ -233,6 +240,7 @@ export default function Home() {
             只今の案内状況<small>（更新{GUIDE_UPDATED}）</small>
           </h2>
           <div className="guide-scroll">
+            {GUIDE.length === 0 && <p className="therapists-empty">本日の案内状況は準備中です。</p>}
             {GUIDE.map((g, i) => (
               <div className="guide-block" key={i}>
                 <div className="guide-area">{g.area}</div>

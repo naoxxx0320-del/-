@@ -248,6 +248,8 @@ function schedSheet_() {
     present: col(["出勤"]),
     kbn: col(["区分"]),
     area: col(["エリア"]),
+    guide: col(["案内時刻", "案内時間"]),
+    order: col(["並び", "並び順", "表示順"]),
   };
   return { sh: sh, values: v, hi: hi, head: head, c: c };
 }
@@ -1366,7 +1368,9 @@ function adminShiftSave(p) {
       "変更前（" + res.orig.name + " " + dateLabel_(res.orig.date) + "）に");
     warn = [warn, w2].filter(Boolean).join("\n");
   }
-  return { ok: true, warning: warn };
+  var dep = autoDeployIfToday_(dstr);
+  if (!dep.deployed && res.orig) dep = autoDeployIfToday_(keyToDate_(res.orig.dateKey));
+  return { ok: true, warning: warn, deployed: dep.deployed };
 }
 
 /* 休みにする／出勤に戻す。p = {row, name, date, absent:true|false} */
@@ -1385,9 +1389,11 @@ function adminShiftSetAbsent(p) {
     logHistory_("SHIFT", staff, (p.absent ? "休みに変更 " : "出勤に戻す ") + p.name + " " + p.date, { 出勤: before }, { 出勤: p.absent ? "✖️" : "○" });
     return { ok: true };
   });
-  if (!res.ok || !p.absent) return res;
+  if (!res.ok) return res;
   var dstr = keyToDate_(normDate_(p.date));
-  return { ok: true, warning: outsideWarning_(bookingsOutside_(readLedger_(), String(p.name).trim(), dstr, null, null), "この日に") };
+  var dep = autoDeployIfToday_(dstr);
+  if (!p.absent) return { ok: true, deployed: dep.deployed };
+  return { ok: true, deployed: dep.deployed, warning: outsideWarning_(bookingsOutside_(readLedger_(), String(p.name).trim(), dstr, null, null), "この日に") };
 }
 
 /* 出勤の削除（登録間違いなど）。p = {row, name, date} */
@@ -1405,7 +1411,114 @@ function adminShiftDelete(p) {
   });
   if (!res.ok) return res;
   var dstr = keyToDate_(normDate_(p.date));
-  return { ok: true, warning: outsideWarning_(bookingsOutside_(readLedger_(), String(p.name).trim(), dstr, null, null), "この日に") };
+  var dep = autoDeployIfToday_(dstr);
+  return { ok: true, deployed: dep.deployed, warning: outsideWarning_(bookingsOutside_(readLedger_(), String(p.name).trim(), dstr, null, null), "この日に") };
+}
+
+/* ==========================================================================
+ * 本日の出勤（トップページの「本日の出勤」「只今の案内状況」）
+ *   ・出る人は週間出勤表（出勤情報）の今日の行から自動（休み・申請中は出ない）
+ *   ・管理画面で 空き状況（ステータス）・次の案内時刻（案内時刻）・並び順（並び）を変更
+ *   ・保存するたびにサイトの作り直しを自動で開始（GITHUB_TOKEN がある場合）
+ *   「今日」は営業日（朝6時までは前日）。案内時刻・並び の列が無ければ出勤情報シートの右端に追加する。
+ * ========================================================================== */
+var TODAY_STATUSES_ = ["空きあり", "残りわずか", "満員", "受付終了"];
+
+function bizTodayStr_() {
+  return bizDateOf(nowMs_());
+}
+
+function adminToday() {
+  requireStaff_();
+  var today = bizTodayStr_(), key = normDate_(today);
+  var S = schedSheet_(), c = S.c;
+  var list = [];
+  for (var r = S.hi + 1; r < S.values.length; r++) {
+    var row = S.values[r];
+    var info = shiftRowInfo_(S, row);
+    if (!info.name || info.dateKey !== key) continue;
+    list.push({
+      row: r + 1, name: info.name, time: info.time, absent: info.absent, draft: info.draft,
+      status: c.status >= 0 ? String(row[c.status]).trim() : "",
+      guideTime: c.guide >= 0 ? timeCell_(row[c.guide]) : "",
+      order: c.order >= 0 && String(row[c.order]).trim() !== "" ? Number(row[c.order]) || 0 : null,
+    });
+  }
+  // 並び（数字）→ 未設定はシートの順で後ろ
+  list.forEach(function (x, i) { x._i = i; });
+  list.sort(function (a, b) {
+    var ao = a.order == null ? 1e9 : a.order, bo = b.order == null ? 1e9 : b.order;
+    return ao - bo || a._i - b._i;
+  });
+  list.forEach(function (x) { delete x._i; });
+  return jsonSafe_({ ok: true, date: today, label: dateLabel_(today), list: list, statuses: TODAY_STATUSES_, hasToken: !!ghToken_() });
+}
+
+/* 列が無ければ見出し行の右端に追加して、その列番号（0始まり）を返す。 */
+function ensureSchedCol_(S, key, title) {
+  if (S.c[key] >= 0) return S.c[key];
+  var j = Math.max(S.head.length, S.sh.getLastColumn());
+  S.sh.getRange(S.hi + 1, j + 1).setValue(title);
+  S.head[j] = title;
+  S.c[key] = j;
+  return j;
+}
+
+/* p = {date, items:[{row, name, status, guideTime}]}（items の順番＝並び順） */
+function adminTodaySave(p) {
+  var staff = requireStaff_();
+  p = p || {};
+  var items = [].concat(p.items || []);
+  if (!items.length) return { ok: false, reason: "保存する内容がありません。" };
+  var today = bizTodayStr_();
+  if (normDate_(p.date) !== normDate_(today)) return { ok: false, reason: "日付が変わりました。画面を更新してください。" };
+  for (var i = 0; i < items.length; i++) {
+    var st = String(items[i].status || "").trim();
+    if (st.length > 12 || /[\n\r]/.test(st)) return { ok: false, reason: "空き状況が長すぎます：" + st };
+    var gt = String(items[i].guideTime || "").trim();
+    if (gt && parseJstDateTime(today, gt) == null) return { ok: false, reason: "案内時刻が不正です：" + gt };
+  }
+  var res = withLock_(function () {
+    var S = schedSheet_();
+    var rows = [];
+    for (var k = 0; k < items.length; k++) {
+      var r = findShiftRow_(S, items[k].row, items[k].name, today);
+      if (!r) return { ok: false, reason: "出勤表がほかで更新されました。画面を更新してからやり直してください。" };
+      rows.push(r);
+    }
+    var gcol = ensureSchedCol_(S, "guide", "案内時刻");
+    var ocol = ensureSchedCol_(S, "order", "並び");
+    var changes = [];
+    items.forEach(function (it, idx) {
+      var r = rows[idx];
+      if (S.c.status >= 0) S.sh.getRange(r, S.c.status + 1).setValue(safeCell_(String(it.status || "").trim()));
+      // 案内時刻は「翌1:00」なども文字のまま
+      S.sh.getRange(r, gcol + 1).setValue(it.guideTime ? "'" + String(it.guideTime).trim() : "");
+      S.sh.getRange(r, ocol + 1).setValue(idx + 1);
+      changes.push(it.name + ":" + (it.status || "") + (it.guideTime ? " " + it.guideTime + "〜" : ""));
+    });
+    logHistory_("TODAY", staff, "本日の出勤を更新 " + today, null, { items: changes });
+    return { ok: true };
+  });
+  if (!res.ok) return res;
+  var d = autoDeploy_();
+  return { ok: true, deployed: d.deployed, note: d.note };
+}
+
+/* 保存後にサイトの作り直しを開始（鍵が無い・失敗しても保存自体は成功扱い）。 */
+function autoDeploy_() {
+  if (!ghToken_()) return { deployed: false, note: "シートに保存しました。サイトへは数時間おきの自動更新で反映されます（すぐ反映するにはGitHubの鍵の設定が必要です）。" };
+  try {
+    ghDispatchDeploy_();
+    return { deployed: true, note: "" };
+  } catch (e) {
+    return { deployed: false, note: "シートには保存しましたが、サイトへの反映の開始に失敗しました（" + e.message + "）。" };
+  }
+}
+/* 今日（営業日）の出勤を変えたときだけ自動反映（本日の出勤・案内状況が変わるため）。 */
+function autoDeployIfToday_(dateStr) {
+  if (normDate_(dateStr) !== normDate_(bizTodayStr_())) return { deployed: false, note: "" };
+  return autoDeploy_();
 }
 
 /* セラピスト個別ページ：プロフィール（名簿シートの値）・今後2週間の出勤・今後の予約・件数。 */
@@ -2304,7 +2417,7 @@ function selfTest() {
    管理画面（Admin.html）は開いたときにこの版を確認し、Code.gs / lib.gs が古い・途中までしか
    貼られていない場合に警告を出す。※必ずファイルの「最後」に置く（途中で切れると無くなるので検出できる）。
    コードを変更したら Admin.html の APP_VERSION・lib.gs の LIB_VERSION と一緒に上げる。 */
-var CODE_VERSION = "2026-10-07-4";
+var CODE_VERSION = "2026-10-07-5";
 function adminVersion() {
   return { code: CODE_VERSION, lib: typeof LIB_VERSION === "undefined" ? "" : LIB_VERSION };
 }

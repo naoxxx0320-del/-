@@ -210,4 +210,37 @@ t("開始・終了の列に分かれた表（出勤時間は空・終了は「2:
   assert.equal(sch.v[4][3], "花恋");
 });
 
+t("本日：今日（営業日）の行を並び順で返し、保存で ステータス・案内時刻・並び を書き込む（列が無ければ追加）", () => {
+  const head = ["日付", "ラベル", "エリア", "名前", "出勤時間", "開始", "終了", "ステータス", "出勤"];
+  const sch = makeSheet("出勤情報", [head,
+    ["2026/10/7", "", "亀戸", "あやか", "", "18:00", "2:00", "空きあり", "○"],
+    ["2026/10/7", "", "亀戸", "みお", "", "13:00", "2:00", "空きあり", "○"],
+    ["2026/10/7", "", "亀戸", "れな", "", "13:00", "2:00", "空きあり", "✖️"],
+    ["2026/10/8", "", "亀戸", "ゆな", "", "13:00", "2:00", "空きあり", "○"]]);
+  const g = load({ 出勤情報: sch });
+  g.nowMs_ = () => g.parseJstDateTime("2026/10/8", "3:00"); // 10/8 3:00 は 10/7 の営業日
+  const r = plain(g.adminToday());
+  assert.equal(r.date, "2026/10/7");
+  assert.deepEqual(r.list.map((x) => x.name), ["あやか", "みお", "れな"]);
+  assert.equal(r.list[2].absent, true);
+  const res = plain(g.adminTodaySave({ date: "2026/10/7", items: [
+    { row: 3, name: "みお", status: "残りわずか", guideTime: "翌0:30" },
+    { row: 2, name: "あやか", status: "満員", guideTime: "" },
+  ] }));
+  assert.equal(res.ok, true, res.reason);
+  assert.deepEqual(plain(sch.v[0].slice(9)), ["案内時刻", "並び"]);
+  assert.equal(sch.v[2][7], "残りわずか");
+  assert.equal(sch.v[2][9], "翌0:30");
+  assert.equal(sch.v[2][10], 1);
+  assert.equal(sch.v[1][10], 2);
+  assert.equal(sch.v[1][7], "満員");
+  const r2 = plain(g.adminToday());
+  assert.deepEqual(r2.list.map((x) => x.name), ["みお", "あやか", "れな"]);
+  assert.equal(r2.list[0].guideTime, "翌0:30");
+  // 行がずれていたら拒否・日付が変わったら拒否・不正な時刻は拒否
+  assert.equal(plain(g.adminTodaySave({ date: "2026/10/7", items: [{ row: 2, name: "みお" }] })).ok, false);
+  assert.equal(plain(g.adminTodaySave({ date: "2026/10/6", items: [{ row: 3, name: "みお" }] })).ok, false);
+  assert.equal(plain(g.adminTodaySave({ date: "2026/10/7", items: [{ row: 3, name: "みお", guideTime: "あとで" }] })).ok, false);
+});
+
 console.log(`\n✅ 全 ${passed} 件 パス`);

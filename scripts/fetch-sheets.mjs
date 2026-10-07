@@ -119,7 +119,8 @@ async function fetchCSV(url) {
 /** 生成結果が空か（days が空、または配列が空）。空なら既存データを保持する。 */
 function isEmptyBuilt(built) {
   if (Array.isArray(built)) return built.length === 0;
-  if (built && Array.isArray(built.days)) return built.days.length === 0;
+  // 出勤情報は過去日を除くと0日になり得る（今日以降の登録が無い）。その場合も空として上書きする
+  if (built && Array.isArray(built.days)) return built.days.length === 0 && !built.today;
   return false;
 }
 
@@ -170,6 +171,25 @@ function buildGuideFromRoster(roster) {
   };
 }
 
+// 週間出勤表の今日の行 → 名簿の absent（今日出ない人は absent:true）と本日の表示（時間・空き・案内時刻）
+function todayEntries(sched) {
+  const day = (sched.days || []).find((d) => dayKeyNum(d.date) === dayKeyNum(sched.today));
+  return day ? day.list : [];
+}
+function applyTodayFromSchedule(roster, sched) {
+  const list = todayEntries(sched);
+  const byName = new Map(list.map((e, i) => [e.name, { ...e, i }]));
+  return roster.map((t) => {
+    const e = byName.get(t.name);
+    if (!e) return { ...t, absent: true };
+    return { ...t, absent: false, sched: e.time ? `本日 ${e.time}` : t.sched, status: e.status || t.status, guideTime: e.guideTime || "", todayOrder: e.i };
+  });
+}
+function buildGuideFromSchedule(sched) {
+  const list = todayEntries(sched).map((e) => ({ name: e.name, time: e.guideTime || "", status: e.status || "" }));
+  return { date: sched.today, updated: sched.updated || jstNow().time, areas: list.length ? [{ area: sched.area || "亀戸", list }] : [] };
+}
+
 // 「出勤」列が欠勤（✖️ など）かどうか。○・空欄は出勤扱い（表示）。
 const isAbsent = (v) =>
   /^(✖️|✖|✗|×|✕|x|欠|欠勤|休|no|false|非表示)$/i.test((v || "").trim());
@@ -198,6 +218,9 @@ function dayKeyNum(date) {
   const m = String(date || "").match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
   return m ? +m[1] * 10000 + +m[2] * 100 + +m[3] : null;
 }
+function keyToSlash(k) {
+  return `${Math.floor(k / 10000)}/${Math.floor((k % 10000) / 100)}/${k % 100}`;
+}
 function bizTodayKey(nowMs = Number(process.env.SCHEDULE_NOW_MS) || Date.now()) {
   const j = new Date(nowMs + 9 * 3600e3 - 6 * 3600e3);
   return j.getUTCFullYear() * 10000 + (j.getUTCMonth() + 1) * 100 + j.getUTCDate();
@@ -221,11 +244,22 @@ function buildSchedule(objs) {
     if (isDraft(o["区分"])) continue; // 申請中・希望休はサイトに出さない（確定のみ）
     if (!daysMap.has(date))
       daysMap.set(date, { date, label: o["ラベル"] || autoDayLabel(date), list: [] });
+    const ord = String(o["並び"] || o["並び順"] || o["表示順"] || "").trim();
     daysMap.get(date).list.push({
       name: o["名前"] || "",
       time: o["出勤時間"] || o["時間"] || joinShiftTime(o["開始"], o["終了"]),
       status: o["ステータス"] || "",
+      // 本日の出勤の「次の案内時刻」（管理画面の「本日」で更新）
+      guideTime: String(o["案内時刻"] || o["案内時間"] || "").trim().replace(/^(\d{1,2}:\d{2}):00$/, "$1").replace(/[〜~\s]+$/, ""),
+      ...(ord !== "" && !isNaN(Number(ord)) ? { order: Number(ord) } : {}),
     });
+  }
+  // 並び（管理画面で指定）がある人を先に、その順で。無い人はシートの順のまま後ろへ。
+  for (const d of daysMap.values()) {
+    d.list = d.list
+      .map((e, i) => [e, i])
+      .sort((a, b) => (a[0].order ?? 1e9) - (b[0].order ?? 1e9) || a[1] - b[1])
+      .map(([e]) => e);
   }
   // 過去の日（日本時間の営業日。朝6時までは前日扱い）はサイトに出さない。シートの行はそのまま。
   // 表示側（出勤情報ページ）でも閲覧時点で同じ絞り込みをするので、次の更新までに日付が変わっても古い日は出ない。
@@ -233,7 +267,9 @@ function buildSchedule(objs) {
   const days = [...daysMap.values()]
     .filter((d) => { const k = dayKeyNum(d.date); return k == null || k >= today; })
     .sort((a, b) => (dayKeyNum(a.date) ?? 0) - (dayKeyNum(b.date) ?? 0));
-  return { area: objs[0]?.["エリア"] || "亀戸", days };
+  const now = jstNow();
+  // today: 公開時点の営業日（表示側は閲覧時点の営業日で選び直す）。updated: 取り込んだ時刻
+  return { area: objs[0]?.["エリア"] || "亀戸", today: keyToSlash(today), updated: now.time, days };
 }
 
 // セラピスト名簿（本日の出勤カード／出勤情報／セラピスト一覧・詳細ページの照合元）:
@@ -356,7 +392,7 @@ async function run() {
       file: "roster.json",
       build: buildRoster,
       marker: "スケジュール",
-      derive: (roster) => ["guide.json", buildGuideFromRoster(roster)],
+      // 案内状況は出勤情報（今日の行）から作る（下の applyTodayFromSchedule）
     },
   ];
   let updated = 0;
@@ -390,6 +426,17 @@ async function run() {
       process.exitCode = 1;
     }
   }
+  // 本日の出勤・只今の案内状況は、週間出勤表（schedule.json の今日の行）から作る
+  const sched = readJSON("schedule.json");
+  if (sched && sched.today) {
+    const r0 = readJSON("roster.json");
+    if (r0) {
+      const r1 = applyTodayFromSchedule(r0, sched);
+      if (JSON.stringify(r1) !== JSON.stringify(r0)) { writeJSON("roster.json", r1); updated++; }
+    }
+    writeJSON("guide.json", buildGuideFromSchedule(sched));
+    updated++;
+  }
   // 写真・詳細の上書きを roster.json に適用（シート取得の有無にかかわらず常に）
   const roster = readJSON("roster.json");
   if (roster) {
@@ -404,7 +451,7 @@ async function run() {
   console.log(`done. ${updated} file(s) updated.`);
 }
 
-export { parseCSV, toObjects, buildGuideFromRoster, buildSchedule, buildRoster };
+export { parseCSV, toObjects, buildGuideFromRoster, buildSchedule, buildRoster, applyTodayFromSchedule, buildGuideFromSchedule };
 
 // 直接実行時のみ処理を走らせる（テストからの import では走らせない）
 if (

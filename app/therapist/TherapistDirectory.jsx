@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import StaffCard from "../_components/StaffCard";
 import { readFavs } from "../_components/FavoriteHeart";
+import { HAS_TODAY, useTodayKey, todayList } from "../_components/today";
 
 const TABS = [
   { key: "all", label: "すべて" },
@@ -31,7 +32,11 @@ function match(t, key, favs) {
   }
 }
 
-export default function TherapistDirectory({ roster }) {
+export default function TherapistDirectory({ roster: baseRoster }) {
+  // 「本日出勤」は閲覧時点の週間出勤表（今日の行）で判定
+  const todayKey = useTodayKey();
+  const todayNames = HAS_TODAY ? new Set(todayList(todayKey).map((e) => e.name)) : null;
+  const roster = todayNames ? baseRoster.map((t) => ({ ...t, absent: !todayNames.has(t.name) })) : baseRoster;
   const [tab, setTab] = useState("all");
   const [favs, setFavs] = useState(new Set());
 
