@@ -96,7 +96,37 @@ function doPost(e) {
   }
 }
 
+/* 速さのための記憶：同じ処理の中では1回だけ読み、短時間はキャッシュも使う。
+   （シートの読み込み・予約APIの呼び出しは1回1〜3秒かかるため） */
+let MEMO = {};
+function memo_(key, ttlSec, fn) {
+  if (Object.prototype.hasOwnProperty.call(MEMO, key)) return MEMO[key];
+  const cache = CacheService.getScriptCache();
+  if (ttlSec) {
+    const hit = cache.get("m_" + key);
+    if (hit) return (MEMO[key] = JSON.parse(hit));
+  }
+  const v = fn();
+  if (ttlSec) {
+    try { cache.put("m_" + key, JSON.stringify(v), ttlSec); } catch (e) {}
+  }
+  return (MEMO[key] = v);
+}
+function forget_(key) {
+  delete MEMO[key];
+  CacheService.getScriptCache().remove("m_" + key);
+}
+
 function handleEvent(ev) {
+  MEMO = {};
+  const t0 = Date.now();
+  try {
+    handleEvent_(ev);
+  } finally {
+    console.log("LINE " + ev.type + " " + (ev.postback ? ev.postback.data : "") + " … " + (Date.now() - t0) + "ms");
+  }
+}
+function handleEvent_(ev) {
   const uid = ev.source && ev.source.userId;
   if (ev.type === "follow") {
     reply(ev.replyToken, [welcomeMessage()]);
@@ -335,6 +365,7 @@ function finalizeBooking(uid, replyToken) {
 
   // バックエンド結果を確認してから完了を案内（＝未登録を完了と誤表示しない）。
   if (!res || !res.ok) {
+    forget_("busy_" + st.date); // 埋まった可能性があるので空き状況を取り直す
     st.step = "time";
     delete st.time;
     setState(uid, st);
@@ -347,6 +378,7 @@ function finalizeBooking(uid, replyToken) {
   // 店舗への通知は予約管理API側の「店舗控えメール」(STORE_EMAIL)に一本化（二重通知を防ぐ）
   clearState(uid);
   reply(replyToken, [doneMessage(st)]);
+  forget_("busy_" + st.date); // 次の人には、この予約を反映した空き時間を出す
 }
 
 /* 共有台帳API（予約管理 Code.gs の公開デプロイ）へ line_event をPOSTして登録する。
@@ -395,6 +427,9 @@ function cellText_(v, fmt) {
 // 出勤情報を読み、[{date,label,name,time,startMin,endMin,status}] を返す（欠勤✖️・申請中は除外）
 // 「出勤時間」列（"13:00〜翌2:00"）にも、「開始」「終了」に分かれた表（終了 "2:00" は翌日）にも対応。
 function readSchedule() {
+  return memo_("sched", 60, readScheduleRaw_); // 出勤表の変更は最大1分で反映
+}
+function readScheduleRaw_() {
   const sh = ss().getSheetByName(SCHEDULE_SHEET);
   if (!sh) return [];
   const values = sh.getDataRange().getValues();
@@ -480,6 +515,9 @@ function getTherapistsOn(date) {
 
 // 名簿（本日の出勤シート）：名前 → {photo, age, height, cup, tags}
 function readProfiles_() {
+  return memo_("prof", 300, readProfilesRaw_);
+}
+function readProfilesRaw_() {
   const out = {};
   try {
     const sh = ss().getSheetByName(SP.getProperty("THERAPIST_SHEET") || "本日の出勤");
@@ -536,13 +574,19 @@ function photoUrl_(file) {
 /* 予約済みの時間（共有台帳の公開空き状況API。名前・電話などは含まない）
    その日の 0:00 からの分 [{th, s, e}]。翌日分（深夜）も含めて取得。 */
 function busyOn_(date) {
+  return memo_("busy_" + date, 45, () => fetchBusy_(date));
+}
+function fetchBusy_(date) {
   const url = SP.getProperty("BOOKING_API_URL") || "";
   if (!url) return [];
   const base = dayStartMs(date);
   const out = [];
-  [date, addDay(date)].forEach((d) => {
+  // その日と翌日（深夜分）を同時に取得
+  const reqs = [date, addDay(date)].map((d) => ({ url: url + "?action=availability&date=" + encodeURIComponent(d), muteHttpExceptions: true, followRedirects: true }));
+  let res = [];
+  try { res = UrlFetchApp.fetchAll(reqs); } catch (e) { return out; }
+  res.forEach((r) => {
     try {
-      const r = UrlFetchApp.fetch(url + "?action=availability&date=" + encodeURIComponent(d), { muteHttpExceptions: true, followRedirects: true });
       const j = JSON.parse(r.getContentText());
       (j.busy || []).forEach((b) => out.push({ th: String(b.th), s: (b.s - base) / 60000, e: (b.e - base) / 60000 }));
     } catch (e) {}
@@ -899,6 +943,9 @@ function reply(replyToken, messages) {
 }
 
 function getDisplayName(uid) {
+  return memo_("dn_" + uid, 21600, () => fetchDisplayName_(uid));
+}
+function fetchDisplayName_(uid) {
   try {
     const res = UrlFetchApp.fetch("https://api.line.me/v2/bot/profile/" + uid, {
       headers: { Authorization: "Bearer " + TOKEN },

@@ -15,6 +15,7 @@ const sheet = (rows) => ({ getDataRange: () => ({ getValues: () => rows }) });
 
 function boot({ busy = [], bookingResult = { ok: true, id: "BK1" } } = {}) {
   const replies = [], posts = [];
+  const calls = { sheet: 0, avail: 0 };
   const cache = new Map();
   const props = { LINE_CHANNEL_ACCESS_TOKEN: "x", SHEET_ID: "S", BOOKING_API_URL: "https://api.example/exec", PROXY_SHARED_SECRET: "sec" };
   const sheets = {
@@ -37,20 +38,22 @@ function boot({ busy = [], bookingResult = { ok: true, id: "BK1" } } = {}) {
     static now() { return NOW; }
   }
   const ctx = {
-    console, Date: FixedDate, JSON, Math, Number, String, Object, Array, encodeURIComponent, decodeURIComponent,
+    console: { log() {}, error: console.error }, Date: FixedDate, JSON, Math, Number, String, Object, Array, encodeURIComponent, decodeURIComponent,
     PropertiesService: { getScriptProperties: () => ({ getProperty: (k) => props[k] ?? null }) },
-    SpreadsheetApp: { openById: () => ({ getSheetByName: (n) => sheets[n] || null }) },
+    SpreadsheetApp: { openById: () => { calls.sheet++; return { getSheetByName: (n) => sheets[n] || null }; } },
     CacheService: { getScriptCache: () => ({ get: (k) => cache.get(k) ?? null, put: (k, v) => cache.set(k, v), remove: (k) => cache.delete(k) }) },
     Utilities: { formatDate: () => "", getUuid: () => "u" },
     ContentService: { createTextOutput: (s) => s },
     Logger: { log: () => {} },
     UrlFetchApp: {
+      fetchAll: (reqs) => reqs.map((r) => ctx.UrlFetchApp.fetch(r.url, r)),
       fetch: (url, opt = {}) => {
         const res = (code, body) => ({ getResponseCode: () => code, getContentText: () => (typeof body === "string" ? body : JSON.stringify(body)) });
         if (url.includes("/message/reply")) { replies.push(JSON.parse(opt.payload).messages); return res(200, {}); }
         if (url.includes("/bot/profile/")) return res(200, { displayName: "ゆうた" });
         if (url.includes("raw.githubusercontent.com")) return res(200, { 花恋: "therapist-karen.jpg" });
         if (url.startsWith("https://api.example/exec?action=availability")) {
+          calls.avail++;
           const d = decodeURIComponent(url.split("date=")[1]);
           return res(200, { ok: true, busy: busy.filter((b) => b.d === d).map((b) => ({ th: b.th, s: b.s, e: b.e, st: "confirmed" })) });
         }
@@ -63,7 +66,7 @@ function boot({ busy = [], bookingResult = { ok: true, id: "BK1" } } = {}) {
   vm.runInContext(src, ctx);
   const ev = (o) => vm.runInContext("handleEvent", ctx)(Object.assign({ replyToken: "r", source: { userId: "U1" } }, o));
   return {
-    ctx, replies, posts,
+    ctx, replies, posts, calls,
     pb: (data) => { ev({ type: "postback", postback: { data } }); return replies[replies.length - 1]; },
     say: (text) => { ev({ type: "message", message: { type: "text", text } }); return replies[replies.length - 1]; },
     follow: () => { ev({ type: "follow" }); return replies[replies.length - 1]; },
@@ -262,6 +265,23 @@ t("「やめる」でいつでも中止", () => {
   const m = b.say("やめる");
   assert.match(texts(m), /やめました/);
   assert.equal(b.state(), null);
+});
+
+t("速さ：次のステップではシート・予約APIを読み直さない（キャッシュ）・確定後は空きを取り直す", () => {
+  const b = boot();
+  b.pb("a=start");
+  b.pb("a=date&v=2026%2F10%2F9");
+  const s0 = { ...b.calls };
+  b.pb("a=th&v=" + encodeURIComponent("ゆな"));
+  b.pb("a=time&v=14%3A00");
+  b.pb("a=course&v=0");
+  assert.deepEqual({ ...b.calls }, s0); // 時間・コースの選択で読み込みゼロ
+  b.say("田中");
+  b.say("09012345678");
+  b.pb("a=confirm");
+  b.pb("a=start");
+  b.pb("a=date&v=2026%2F10%2F9");
+  assert.equal(b.calls.avail, s0.avail + 2); // 予約後は空き状況を取り直す（その日＋翌日）
 });
 
 console.log(`\n✅ 全 ${passed} 件 パス`);
