@@ -1439,6 +1439,315 @@ function adminTherapistDetail(name) {
   });
 }
 
+/* ===================== プロフィール編集・写真・サイトへの反映 =====================
+   ・プロフィールの正本は「本日の出勤」シート（サイトはこのシートを読み込む）。
+   ・写真ファイルはサイトのリポジトリ(public/)に置く必要があるため、GitHub API で登録する。
+   ・旧来の上書きファイル（data/therapist-details.json・data/photo-overrides.json）の値は
+     編集画面に表示し、保存時にシートへ移して上書きファイルから外す（以後はシートが正本）。
+   Script Properties:
+     GITHUB_TOKEN  … このリポジトリだけに「Contents」「Actions」の読み書き権限を持つトークン
+     GITHUB_REPO   … 既定 "naoxxx0320-del/-"   GITHUB_BRANCH … 既定 "main"
+     SITE_URL      … 既定 "https://aroma-daiamond.com/"（写真のプレビュー用） */
+var PROFILE_FIELDS_ = [
+  { key: "表示名", label: "表示名（フルネーム）", hint: "例：白花 かれん（空なら名前を表示）", group: "基本" },
+  { key: "年齢", group: "基本" },
+  { key: "T", label: "身長（T）", group: "基本" },
+  { key: "B", label: "バスト（B）", group: "基本" },
+  { key: "カップ", group: "基本" },
+  { key: "W", label: "ウエスト（W）", group: "基本" },
+  { key: "H", label: "ヒップ（H）", group: "基本" },
+  { key: "新人", type: "check", label: "新人（NEWマーク）", group: "基本" },
+  { key: "在籍", hint: "「退店」「休業」と入れるとサイトに表示されません（空欄＝在籍）", group: "基本" },
+  { key: "タグ", hint: "「;」区切り　例：癒し系;スレンダー;笑顔が素敵", group: "紹介" },
+  { key: "プロフィール", type: "textarea", label: "紹介文", group: "紹介" },
+  { key: "SNS", hint: "「;」区切り", group: "紹介" },
+  { key: "ハート", hint: "pink / diamond", group: "紹介" },
+  { key: "ラベル", hint: "ハートの中の文字", group: "紹介" },
+  { key: "出勤", hint: "✖️ で本日はお休み（サイトの「本日出勤」に出ません）。空欄・○＝本日出勤", group: "本日の出勤カード" },
+  { key: "案内時刻", group: "本日の出勤カード" },
+  { key: "出勤リボン", group: "本日の出勤カード" },
+  { key: "スケジュール", hint: "例：本日 13:00〜翌2:00", group: "本日の出勤カード" },
+  { key: "サブ", hint: "例：ご予約受付中", group: "本日の出勤カード" },
+  { key: "ステータス", hint: "例：空きあり", group: "本日の出勤カード" },
+];
+var DETAILS_PATH_ = "data/therapist-details.json";
+var PHOTO_OV_PATH_ = "data/photo-overrides.json";
+
+/* 上書きファイル（therapist-details.json の1人分）→ シートの列の値。consumed は移せた項目。 */
+function detailsToSheet_(ov) {
+  var v = {},
+    used = {};
+  ov = ov || {};
+  (ov.stats || []).forEach(function (x) {
+    var m = String(x).match(/^([TBWH])\.([^()]*)(?:\((.+)\))?$/);
+    if (!m) return;
+    if (m[2]) v[m[1]] = m[2];
+    if (m[1] === "B" && m[3]) v["カップ"] = m[3];
+  });
+  if (ov.stats) used.stats = 1;
+  var map = {
+    nameFull: "表示名", age: "年齢", height: "T", cup: "カップ", profile: "プロフィール",
+    heart: "ハート", heartLabel: "ラベル", ribbon: "出勤リボン", sched: "スケジュール",
+    schedSub: "サブ", status: "ステータス", guideTime: "案内時刻",
+  };
+  Object.keys(map).forEach(function (k) {
+    if (ov[k] == null) return;
+    v[map[k]] = String(ov[k]);
+    used[k] = 1;
+  });
+  if (ov.tags) { v["タグ"] = [].concat(ov.tags).join(";"); used.tags = 1; }
+  if (ov.sns) { v["SNS"] = [].concat(ov.sns).join(";"); used.sns = 1; }
+  if (ov.isNew != null) { v["新人"] = ov.isNew ? "○" : ""; used.isNew = 1; }
+  return { values: v, consumed: used };
+}
+
+/* ---- GitHub ---- */
+function ghToken_() { return cfg_("GITHUB_TOKEN", ""); }
+function ghRepo_() { return cfg_("GITHUB_REPO", "naoxxx0320-del/-"); }
+function ghBranch_() { return cfg_("GITHUB_BRANCH", "main"); }
+function ghRaw_(method, path, body) {
+  var tok = ghToken_();
+  if (!tok) throw new Error("GitHubの鍵（GITHUB_TOKEN）が設定されていません。");
+  var opt = {
+    method: method,
+    headers: { Authorization: "Bearer " + tok, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
+    muteHttpExceptions: true,
+  };
+  if (body) {
+    opt.contentType = "application/json";
+    opt.payload = JSON.stringify(body);
+  }
+  var res = UrlFetchApp.fetch("https://api.github.com/repos/" + ghRepo_() + path, opt);
+  var txt = res.getContentText();
+  var json = null;
+  try { json = txt ? JSON.parse(txt) : {}; } catch (e) { json = {}; }
+  return { code: res.getResponseCode(), json: json };
+}
+function gh_(method, path, body) {
+  var r = ghRaw_(method, path, body);
+  if (r.code >= 300) {
+    var why = r.code === 401 ? "GitHubの鍵が無効か、期限切れです"
+      : r.code === 403 || r.code === 404 ? "GitHubの鍵に必要な権限がありません（このリポジトリの Contents と Actions の読み書き）"
+      : "GitHubでエラーが発生しました";
+    throw new Error(why + "（" + r.code + "）");
+  }
+  return r.json;
+}
+function encPath_(path) {
+  return String(path).split("/").map(encodeURIComponent).join("/");
+}
+/* リポジトリ内のJSONを読む。鍵があればAPI（最新）、無ければ公開URL。無ければ {}。 */
+function readRepoJson_(path) {
+  var txt = "";
+  if (ghToken_()) {
+    var r = ghRaw_("GET", "/contents/" + encPath_(path) + "?ref=" + encodeURIComponent(ghBranch_()));
+    if (r.code === 404) return {};
+    if (r.code >= 300) gh_("GET", "/contents/" + encPath_(path)); // エラー内容を投げる
+    txt = Utilities.newBlob(Utilities.base64Decode(String(r.json.content || "").replace(/\s/g, ""))).getDataAsString("UTF-8");
+  } else {
+    var res = UrlFetchApp.fetch("https://raw.githubusercontent.com/" + ghRepo_() + "/" + ghBranch_() + "/" + encPath_(path), { muteHttpExceptions: true });
+    if (res.getResponseCode() !== 200) return {};
+    txt = res.getContentText();
+  }
+  try { return JSON.parse(txt || "{}") || {}; } catch (e) { return {}; }
+}
+/* 1回のコミットで複数ファイルを登録（main へ push → サイトが自動で作り直される）。
+   files は配列、または最新の内容を読み直して配列を返す関数（同時更新でやり直す場合に備える）。
+   要素: {path, content, encoding:"utf-8"|"base64"}。空配列なら何もしない。 */
+function ghCommit_(message, files) {
+  var br = ghBranch_();
+  for (var attempt = 0; attempt < 3; attempt++) {
+    var list = typeof files === "function" ? files() : files;
+    if (!list || !list.length) return null;
+    var baseSha = gh_("GET", "/git/ref/heads/" + encodeURIComponent(br)).object.sha;
+    var baseTree = gh_("GET", "/git/commits/" + baseSha).tree.sha;
+    var tree = list.map(function (f) {
+      var b = gh_("POST", "/git/blobs", { content: f.content, encoding: f.encoding || "utf-8" });
+      return { path: f.path, mode: "100644", type: "blob", sha: b.sha };
+    });
+    var t = gh_("POST", "/git/trees", { base_tree: baseTree, tree: tree });
+    var c = gh_("POST", "/git/commits", { message: message, tree: t.sha, parents: [baseSha] });
+    var r = ghRaw_("PATCH", "/git/refs/heads/" + encodeURIComponent(br), { sha: c.sha, force: false });
+    if (r.code < 300) return c.sha;
+    if (r.code !== 422) gh_("PATCH", "/git/refs/heads/" + encodeURIComponent(br), { sha: c.sha, force: false });
+  }
+  throw new Error("ほかの更新と重なりました。少し待ってからもう一度保存してください。");
+}
+function ghDispatchDeploy_() {
+  gh_("POST", "/actions/workflows/deploy.yml/dispatches", { ref: ghBranch_() });
+}
+/* シートに書く値：= + @ で始まる文字は数式として解釈されないよう ' を付ける。 */
+function safeCell_(v) {
+  var s = String(v == null ? "" : v);
+  return /^[=+@]/.test(s) ? "'" + s : s;
+}
+
+/* 編集画面用：シートの値＋旧上書きファイルの値（あれば優先）＋写真の一覧。 */
+function adminProfileGet(name) {
+  requireStaff_();
+  name = String(name || "").trim();
+  var P = profileSheet_();
+  if (!P) return { ok: false, reason: "「本日の出勤」シートが見つかりません。" };
+  var ni = P.head.indexOf("名前");
+  var row = null;
+  if (name) {
+    for (var i = P.hi + 1; i < P.values.length; i++) {
+      if (String(P.values[i][ni]).trim() === name) { row = P.values[i]; break; }
+    }
+  }
+  var values = {};
+  P.head.forEach(function (h, j) {
+    if (h) values[h] = row ? cellStr_(row[j]) : "";
+  });
+  var det = {}, pho = null, ovErr = "";
+  if (row) {
+    try {
+      det = readRepoJson_(DETAILS_PATH_)[name] || {};
+      pho = readRepoJson_(PHOTO_OV_PATH_)[name];
+    } catch (e) {
+      ovErr = "旧設定ファイルを読めませんでした（" + e.message + "）。";
+    }
+  }
+  // 新しく追加する人は「本日の出勤」に出ないよう、出勤を ✖️ で始める（サイトは ✖️ 以外を本日出勤と表示）
+  if (!row) values["出勤"] = "✖️";
+  var mapped = detailsToSheet_(det).values;
+  Object.keys(mapped).forEach(function (k) { values[k] = mapped[k]; });
+  if (/^(1|true|○|◯|〇|はい|yes|y)$/i.test(String(values["新人"] || "").trim())) values["新人"] = "○";
+  var photos = pho != null ? [].concat(pho) : String(values["写真"] || "").split(";");
+  photos = photos.map(function (x) { return String(x).trim(); }).filter(Boolean);
+  var known = PROFILE_FIELDS_.map(function (f) { return f.key; });
+  var fields = PROFILE_FIELDS_.slice();
+  P.head.forEach(function (h) {
+    if (h && h !== "名前" && h !== "写真" && known.indexOf(h) < 0) fields.push({ key: h, group: "その他" });
+  });
+  return jsonSafe_({
+    ok: true, name: name, exists: !!row, fields: fields, values: values, photos: photos,
+    siteUrl: cfg_("SITE_URL", "https://aroma-daiamond.com/"), hasToken: !!ghToken_(),
+    migrated: Object.keys(det).length > 0 || pho != null, warning: ovErr,
+  });
+}
+
+/* 保存：シートに書き込み、旧上書きファイルにあればそこから外し、サイトの作り直しを開始。
+   p = {name, isNew, values:{列名:値}, photos:[ファイル名…]} */
+function adminProfileSave(p) {
+  var staff = requireStaff_();
+  p = p || {};
+  var name = String(p.name || "").trim();
+  if (!name) return { ok: false, reason: "名前を入力してください。" };
+  if (/[;\n\r\t]/.test(name) || name.length > 30) return { ok: false, reason: "名前に使えない文字が含まれています。" };
+  var vals = p.values || {};
+  var photos = p.photos ? [].concat(p.photos).map(function (x) { return String(x).trim(); }).filter(Boolean) : null;
+  if (photos && photos.some(function (f) { return !/^[\w.\-]+\.(jpe?g|png|webp)$/i.test(f) && !/^https?:\/\//.test(f); }))
+    return { ok: false, reason: "写真のファイル名が不正です。" };
+
+  var needGit = false;
+  if (!p.isNew) {
+    var det = readRepoJson_(DETAILS_PATH_)[name], pho = readRepoJson_(PHOTO_OV_PATH_)[name];
+    needGit = (det && Object.keys(detailsToSheet_(det).consumed).length > 0) || pho != null;
+    if (needGit && !ghToken_())
+      return { ok: false, reason: "この方の情報は旧設定ファイルにも入っているため、保存にはGitHubの鍵（GITHUB_TOKEN）の設定が必要です。" };
+  }
+  if (p.isNew && !String(vals["出勤"] || "").trim()) vals["出勤"] = "✖️";
+  var allow = PROFILE_FIELDS_.map(function (f) { return f.key; }).concat(["写真"]);
+  var res = withLock_(function () {
+    var P = profileSheet_();
+    if (!P) return { ok: false, reason: "「本日の出勤」シートが見つかりません。" };
+    var head = P.head.slice(),
+      ni = head.indexOf("名前");
+    var rowNum = -1;
+    for (var i = P.hi + 1; i < P.values.length; i++) {
+      if (String(P.values[i][ni]).trim() === name) { rowNum = i + 1; break; }
+    }
+    if (rowNum < 0 && !p.isNew) return { ok: false, reason: "名簿に見つかりません。画面を更新してください。" };
+    if (rowNum > 0 && p.isNew) return { ok: false, reason: "同じ名前のセラピストがすでにいます。" };
+    // 値がある項目で、シートに列が無いもの（表示名・紹介文・写真など）は列を追加
+    var addCols = Object.keys(vals).filter(function (k) {
+      return allow.indexOf(k) >= 0 && head.indexOf(k) < 0 && String(vals[k] || "").trim() !== "";
+    });
+    if (photos && photos.length && head.indexOf("写真") < 0) addCols.push("写真");
+    addCols.forEach(function (k) {
+      head.push(k);
+      P.sh.getRange(P.hi + 1, head.length).setValue(k);
+    });
+    var width = Math.max(head.length, P.sh.getLastColumn());
+    var arr;
+    if (rowNum > 0) arr = P.sh.getRange(rowNum, 1, 1, width).getValues()[0];
+    else { arr = []; for (var w = 0; w < width; w++) arr.push(""); }
+    arr[ni] = name;
+    Object.keys(vals).forEach(function (k) {
+      var j = head.indexOf(k);
+      if (j < 0 || k === "名前" || k === "写真") return;
+      arr[j] = safeCell_(vals[k]);
+    });
+    if (photos) arr[head.indexOf("写真")] = photos.join(";");
+    if (rowNum > 0) P.sh.getRange(rowNum, 1, 1, width).setValues([arr]);
+    else P.sh.appendRow(arr);
+    logHistory_("PROFILE", staff, (rowNum > 0 ? "プロフィール更新 " : "セラピスト追加 ") + name, null, null);
+    return { ok: true };
+  });
+  if (!res.ok) return res;
+
+  var deployed = false, note = "";
+  try {
+    if (needGit) {
+      var sha = ghCommit_("管理画面: " + name + " のプロフィールをシートへ移行", function () {
+        var d = readRepoJson_(DETAILS_PATH_), q = readRepoJson_(PHOTO_OV_PATH_), files = [];
+        if (d[name]) {
+          var used = detailsToSheet_(d[name]).consumed, rest = {};
+          Object.keys(d[name]).forEach(function (k) { if (!used[k]) rest[k] = d[name][k]; });
+          if (Object.keys(rest).length) d[name] = rest; else delete d[name];
+          files.push({ path: DETAILS_PATH_, content: JSON.stringify(d, null, 2) + "\n" });
+        }
+        if (q[name] != null) {
+          delete q[name];
+          files.push({ path: PHOTO_OV_PATH_, content: JSON.stringify(q, null, 2) + "\n" });
+        }
+        return files;
+      });
+      deployed = !!sha; // push でサイトの作り直しが始まる
+    }
+    if (!deployed && ghToken_()) { ghDispatchDeploy_(); deployed = true; }
+  } catch (e) {
+    note = "シートには保存しましたが、サイトへの反映の開始に失敗しました（" + e.message + "）。";
+  }
+  if (!ghToken_()) note = "シートに保存しました。サイトには次の自動更新（数時間おき）で反映されます。すぐ反映するにはGitHubの鍵の設定が必要です。";
+  return { ok: true, deployed: deployed, note: note };
+}
+
+/* 写真の登録：ブラウザで縮小した画像（dataURL）をサイトのリポジトリ public/ に追加。
+   返したファイル名を編集画面の写真一覧に加え、「保存」でシートの写真列に書き込む。 */
+function adminPhotoUpload(p) {
+  requireStaff_();
+  p = p || {};
+  if (!ghToken_()) return { ok: false, reason: "写真の登録には、GitHubの鍵（GITHUB_TOKEN）の設定が必要です。" };
+  var m = String(p.dataUrl || "").match(/^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+\/=]+)$/);
+  if (!m) return { ok: false, reason: "画像の形式が読み取れませんでした（JPEG・PNG・WebPに対応）。" };
+  if (m[2].length > 4 * 1024 * 1024) return { ok: false, reason: "画像が大きすぎます。" };
+  var file = "therapist-" + Utilities.formatDate(new Date(), "Asia/Tokyo", "yyyyMMddHHmmss") + "-" +
+    Math.random().toString(36).slice(2, 6) + "." + (m[1] === "jpeg" ? "jpg" : m[1]);
+  ghCommit_("管理画面: 写真を追加（" + String(p.name || "").slice(0, 20) + "）", [
+    { path: "public/" + file, content: m[2], encoding: "base64" },
+  ]);
+  return { ok: true, file: file };
+}
+
+/* 「今すぐサイトに反映」：サイトの作り直しを開始（出勤やプロフィールをシートから取り込み直す）。 */
+function adminDeployNow() {
+  requireStaff_();
+  if (!ghToken_()) return { ok: false, reason: "すぐに反映するには、GitHubの鍵（GITHUB_TOKEN）の設定が必要です。設定するまでは数時間おきの自動更新で反映されます。" };
+  ghDispatchDeploy_();
+  return { ok: true };
+}
+/* 直近のサイト更新の状況（反映中か・完了か）。 */
+function adminDeployStatus() {
+  requireStaff_();
+  if (!ghToken_()) return { ok: false };
+  var r = gh_("GET", "/actions/workflows/deploy.yml/runs?per_page=1");
+  var run = (r.workflow_runs || [])[0];
+  if (!run) return { ok: true, status: "none" };
+  return { ok: true, status: run.status, conclusion: run.conclusion, startedAt: run.run_started_at || run.created_at };
+}
+
 /* ---------- 出力ヘルパー ---------- */
 function json_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(

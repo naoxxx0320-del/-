@@ -232,6 +232,9 @@ LINE → Cloudflare Worker（X-Line-Signature検証）→ LINEボット(line-boo
   コード・公開JSON・`NEXT_PUBLIC_*` には入れません
 - お客様情報は公開リポジトリやログに出しません（履歴はスプレッドシート内のみ）
 - LINEは**Workerで署名検証**した正規Webhookのみ通します
+- GitHubトークン（`GITHUB_TOKEN`）はスクリプトプロパティのみ。権限はこのリポジトリの Contents/Actions に限定
+- 予約台帳・予約履歴はリンク共有していない別ファイル（`LEDGER_SHEET_ID`）に置き、
+  サイトが読む公開タブ（本日の出勤・出勤情報など）と分離しています
 
 ---
 
@@ -293,7 +296,7 @@ LINE → Cloudflare Worker（X-Line-Signature検証）→ LINEボット(line-boo
   緑＝出勤、斜線＝休み（出勤列 ✖️）、黄色＝申請中・希望休（区分。サイト非表示・予約不可）。
 - **出勤の登録・変更**：開始〜終了（10:00〜翌5:00、30分刻み）、サイトの空き表示、区分を選んで保存。
   既存の「出勤情報」シートに書き込むので、サイトの出勤表示・WEB/LINE予約とそのまま連動します
-  （サイトの表示への反映は、15分ごとの自動更新のタイミング）。
+  （サイトの表示への反映は、数時間おきの自動更新、または「今すぐサイトに反映」ボタン）。
 - **休みにする／出勤に戻す／削除**：休みは行を残して出勤列を ✖️ にします（削除は登録間違い用）。
 - **予約との整合チェック**：出勤時間を縮めた・休みにした等で、時間外になる予約があれば警告します
   （予約は自動では動かしません）。
@@ -305,6 +308,36 @@ LINE → Cloudflare Worker（X-Line-Signature検証）→ LINEボット(line-boo
 - 実装：`schedSheet_()`（見出し行を自動検出）・`adminShifts` / `adminShiftSave` /
   `adminShiftSetAbsent` / `adminShiftDelete` / `adminTherapistDetail`。
   テスト：`node apps-script/booking/tests/shift.test.mjs`（模擬シートで実際の Code.gs を実行）。
+
+### プロフィール編集・写真の登録・今すぐサイトに反映
+
+セラピストの個別ページの「**プロフィール編集**」、出勤表の上の「**＋ セラピストを追加**」から、
+サイトに載るプロフィールを管理画面だけで編集できます。
+
+- **保存先は「本日の出勤」シート**（サイトが読み込んでいる名簿）。項目：表示名（フルネーム）・年齢・
+  T/B/カップ/W/H・新人・在籍（「退店」「休業」で非表示）・タグ・紹介文・SNS・ハート・ラベル・
+  本日の出勤カードの表示（出勤/案内時刻/リボン/スケジュール/サブ/ステータス）。
+  シートに無い項目（表示名・紹介文など）は、値を入れたときだけ列を末尾に追加します。
+- **新しく追加した人は「出勤」が ✖️ で始まります**（サイトは ✖️ 以外を「本日出勤」と表示するため、
+  追加した瞬間に本日出勤として載らないように）。並びは末尾に追加するので既存の詳細ページURLは変わりません。
+- **旧設定ファイルからの引き継ぎ**：これまでサイト側のファイル（`data/therapist-details.json`・
+  `data/photo-overrides.json`）に入っていた人は、編集画面にその値を表示し、保存するとシートへ移して
+  ファイルから外します（以後はシートが正本。知らない項目は消しません）。
+- **写真**：「＋ 写真を追加」で選んだ画像をブラウザで長辺1400pxのJPEGに縮小し、サイトの `public/` に
+  追加します。並べ替え（左がメイン）・外す、は「保存」で写真列に反映。
+- **今すぐサイトに反映**：サイトの作り直し（GitHub Actions の deploy）を開始し、完了まで状況を表示します
+  （数分）。設定しない場合も、数時間おきの自動更新で反映されます。
+- 変更は「予約履歴」に `PROFILE` として記録されます。
+
+**必要な設定（写真・すぐ反映を使う場合のみ）**：スクリプトプロパティ `GITHUB_TOKEN` に、
+**このリポジトリだけ**を対象にした fine-grained トークン（権限：Contents 読み書き・Actions 読み書き）を入れます。
+トークンはコード・公開ファイル・チャットには書きません。任意で `GITHUB_REPO`（既定 `naoxxx0320-del/-`）・
+`GITHUB_BRANCH`（既定 `main`）・`SITE_URL`（既定 `https://aroma-daiamond.com/`、写真の表示用）。
+外部通信（UrlFetchApp）を使うため、デプロイ時に権限の再承認が求められます。
+
+- 実装：`adminProfileGet` / `adminProfileSave` / `adminPhotoUpload` / `adminDeployNow` / `adminDeployStatus`、
+  GitHub は `ghCommit_`（Git Data API で1コミット・同時更新は読み直してやり直し）・`ghDispatchDeploy_`。
+  テスト：`node apps-script/booking/tests/profile.test.mjs`（模擬シート＋模擬GitHubで実際の Code.gs を実行）。
 
 ### リピーター判定（電話番号で「◯回目」を表示）
 
