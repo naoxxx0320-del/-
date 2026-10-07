@@ -115,6 +115,16 @@
     .calc b { text-align:right; } .calc .big { font-size:15px; color:var(--wine); }
     .opt-list label { display:inline-flex; align-items:center; gap:4px; margin:2px 10px 2px 0; font-size:13px; color:var(--ink); }
     .ver-warn { display:none; background:#fdecea; color:#8a1f1f; border-bottom:2px solid #e5a3a3; padding:10px 16px; font-size:13px; line-height:1.6; }
+    .tdy-card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin:0 0 8px; }
+    .tdy-card .hd { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+    .tdy-card .nm { font-weight:700; font-size:15px; }
+    .tdy-card .tm { color:#6b5d44; font-size:12.5px; }
+    .tdy-card .mv { margin-left:auto; display:flex; gap:4px; }
+    .tdy-card .mv button { padding:3px 9px; font-size:13px; }
+    .tdy-card .row2 { display:grid; grid-template-columns:1fr 1fr auto; gap:6px; align-items:end; }
+    .tdy-card .row2 label { font-size:11px; color:#6b5d44; display:flex; flex-direction:column; gap:2px; }
+    .tdy-card.off { opacity:.6; background:#f6f3ee; }
+    .tdy-save { position:sticky; bottom:0; background:linear-gradient(180deg,rgba(244,239,231,0),#f4efe7 30%); padding:12px 0 8px; display:flex; gap:8px; align-items:center; }
     .settled { display:inline-block; font-size:11px; padding:1px 7px; border-radius:10px; background:#e7f6ec; color:#1f6b3a; border:1px solid #bfe3cb; }
   </style>
 </head>
@@ -123,6 +133,7 @@
     <h1>予約管理 ｜ AROMA DAIAMOND</h1>
     <nav class="ptabs">
       <button class="ptab on" id="tab-bk">予約</button>
+      <button class="ptab" id="tab-tdy">本日</button>
       <button class="ptab" id="tab-th">セラピスト</button>
       <button class="ptab" id="tab-pr">実績</button>
     </nav>
@@ -188,6 +199,19 @@
     </main>
   </div>
 
+  <!-- 本日の出勤 -->
+  <div id="page-tdy" style="display:none">
+    <div class="bar">
+      <button class="ghost" id="tdy-reload">更新</button>
+      <button class="ghost" id="tdy-goth">週間出勤表へ</button>
+      <span class="deploy-st" id="tdy-deploy-st"></span>
+    </div>
+    <main>
+      <div id="tdy-body"><div class="loading">読み込み中…</div></div>
+      <p class="tt-hint">トップページの「本日の出勤」「只今の案内状況」に出る人は、週間出勤表の今日の出勤から自動で決まります（休み・申請中は出ません）。ここでは空き状況・次の案内時刻・並び順を変えられます。保存するとサイトに自動で反映されます（数分）。今日は朝6時に切り替わります。</p>
+    </main>
+  </div>
+
   <!-- 実績・バック -->
   <div id="page-pr" style="display:none">
     <div class="bar">
@@ -211,7 +235,7 @@
       <div class="field"><label>出勤時間（開始〜終了）</label><div class="two"><select id="sh-start"></select><select id="sh-end"></select></div></div>
       <div class="field"><label>サイトの空き表示／区分</label>
         <div class="two">
-          <select id="sh-status"><option>空きあり</option><option>残りわずか</option><option>満了</option><option>受付終了</option></select>
+          <select id="sh-status"><option>空きあり</option><option>残りわずか</option><option>満員</option><option>受付終了</option></select>
           <select id="sh-kbn"><option>確定</option><option>申請中</option><option>希望休</option></select>
         </div>
       </div>
@@ -344,7 +368,7 @@
       { label: "延長30分", price: 6000 },
     ];
     var STAFF_EMAIL = "<?= staffEmail ?>";
-    var APP_VERSION = "2026-10-07-4"; // Code.gs の CODE_VERSION・lib.gs の LIB_VERSION と同じ値
+    var APP_VERSION = "2026-10-07-5"; // Code.gs の CODE_VERSION・lib.gs の LIB_VERSION と同じ値
 
     // 画面の不具合を「読み込み中」のまま止めず、理由を表示する
     function showVerWarn(msg){ var b=document.getElementById("ver-warn"); b.innerHTML=msg; b.style.display="block"; }
@@ -617,13 +641,16 @@
 
     // ---- ページ切替 ----
     function showPage(pg){
-      ["bk","th","pr"].forEach(function(k){ $("page-"+k).style.display = k===pg?"block":"none"; $("tab-"+k).classList.toggle("on", k===pg); });
+      ["bk","tdy","th","pr"].forEach(function(k){ $("page-"+k).style.display = k===pg?"block":"none"; $("tab-"+k).classList.toggle("on", k===pg); });
       if(pg==="th" && !shData) loadShifts();
       if(pg==="pr" && window.loadPayroll) window.loadPayroll(true);
+      if(pg==="tdy" && window.loadToday) window.loadToday();
     }
     $("tab-bk").onclick=function(){ showPage("bk"); };
     $("tab-th").onclick=function(){ showPage("th"); };
     $("tab-pr").onclick=function(){ showPage("pr"); };
+    $("tab-tdy").onclick=function(){ showPage("tdy"); };
+    window.showPage=showPage;
 
     // ---- 週間出勤表 ----
     $("th-from").value = todayStr();
@@ -696,6 +723,7 @@
       return function(res){
         if(res&&res.ok){
           toast(msg); $("sh-bg").classList.remove("on"); loadShifts();
+          if(res.deployed) watchDeploy();
           if(tdName && $("td-bg").classList.contains("on")) openTherapist(tdName);
           if(res.warning) setTimeout(function(){ alert("⚠ "+res.warning); }, 50);
         } else alert("できませんでした："+((res&&res.reason)||"不明"));
@@ -885,7 +913,7 @@
 
     // ---- 今すぐサイトに反映 ----
     var dpTimer=null, dpSince=0;
-    function setDeploySt(t){ $("th-deploy-st").textContent=t; }
+    function setDeploySt(t){ $("th-deploy-st").textContent=t; var x=document.getElementById("tdy-deploy-st"); if(x) x.textContent=t; }
     function watchDeploy(){
       dpSince=Date.now()-60000; // 反映開始の少し前から始まったものを対象にする
       var tries=0;
@@ -903,6 +931,7 @@
         }).adminDeployStatus();
       }, 15000);
     }
+    window.watchDeploy=watchDeploy;
     $("th-deploy").onclick=function(){
       if(!confirm("シートの出勤・プロフィールをサイトに反映します（数分かかります）。よろしいですか？")) return;
       setDeploySt("反映を開始しています…");
@@ -1084,6 +1113,91 @@
     $("pr-next").onclick=function(){ shiftMonth(1); };
     $("pr-reload").onclick=function(){ loadPayroll(); };
     $("pr-month").addEventListener("change",function(){ loadPayroll(); });
+  })();
+  </script>
+
+  <script>
+  /* ===== 本日の出勤（空き状況・次の案内時刻・並び順） ===== */
+  (function(){
+    var td=null, dirty=false;
+    var GUIDE_TIMES=(function(){ var a=[]; for(var m=600;m<=1740;m+=15){ var h=Math.floor(m/60), mm=m%60; a.push((h>=24?"翌"+(h-24):h)+":"+(mm<10?"0":"")+mm); } return a; })();
+    function opts(list, val, blank){
+      var a=list.slice(); if(val && a.indexOf(val)<0) a.unshift(val);
+      return (blank!=null?'<option value="">'+esc(blank)+'</option>':'')+a.map(function(x){ return '<option'+(x===val?' selected':'')+'>'+esc(x)+'</option>'; }).join("");
+    }
+    window.loadToday=function(){
+      var err=function(m){ $("tdy-body").innerHTML='<div class="err">'+esc(m)+'</div>'; };
+      if(!hasServer("adminToday")){ err("サーバー側のコード（Code.gs）に本日の出勤の機能がありません。Code.gs・lib.gs を最新に貼り替え、「新バージョン」でデプロイしてください。"); return; }
+      $("tdy-body").innerHTML='<div class="loading">読み込み中…</div>';
+      google.script.run.withSuccessHandler(function(res){
+        if(!res||!res.ok){ err((res&&res.reason)||"取得に失敗しました"); return; }
+        td=res; td.active=res.list.filter(function(x){ return !x.absent&&!x.draft; }); td.off=res.list.filter(function(x){ return x.absent||x.draft; });
+        dirty=false;
+        try{ render(); }catch(e){ err("表示に失敗しました："+(e&&e.message?e.message:e)); }
+      }).withFailureHandler(function(e){ err(e&&e.message?e.message:e); }).adminToday();
+    };
+    function render(){
+      var h='<div class="sec-h" style="margin-top:0">'+esc(td.label)+' の出勤（'+td.active.length+'名）</div>';
+      if(!td.active.length) h+='<div class="empty">今日の出勤が登録されていません。<br>「週間出勤表へ」から今日の出勤を登録すると、ここに出ます。</div>';
+      td.active.forEach(function(x,i){
+        h+='<div class="tdy-card" data-i="'+i+'"><div class="hd"><span class="nm">'+(i+1)+'. '+esc(x.name)+'</span><span class="tm">'+esc(x.time)+'</span>'
+          +'<span class="mv"><button class="ghost" data-up="'+i+'"'+(i===0?' disabled':'')+' aria-label="上へ">▲</button><button class="ghost" data-down="'+i+'"'+(i===td.active.length-1?' disabled':'')+' aria-label="下へ">▼</button></span></div>'
+          +'<div class="row2"><label>空き状況<select data-st="'+i+'">'+opts(td.statuses, x.status||"空きあり")+'</select></label>'
+          +'<label>次の案内時刻<select data-gt="'+i+'">'+opts(GUIDE_TIMES, x.guideTime, "（表示しない）")+'</select></label>'
+          +'<button class="ghost" data-off="'+i+'">休みに</button></div></div>';
+      });
+      if(td.off.length){
+        h+='<div class="sec-h">出ない人（休み・申請中）</div>';
+        td.off.forEach(function(x,i){
+          h+='<div class="tdy-card off"><div class="hd"><span class="nm">'+esc(x.name)+'</span><span class="tm">'+esc(x.time)+' ・ '+(x.absent?"休み":"申請中・希望休")+'</span>'
+            +(x.absent?'<span class="mv"><button class="ghost" data-on="'+i+'">出勤に戻す</button></span>':'')+'</div></div>';
+        });
+      }
+      if(td.active.length) h+='<div class="tdy-save"><button class="primary" id="tdy-save">保存してサイトに反映</button><span class="note" id="tdy-dirty">'+(dirty?"未保存の変更があります":"")+'</span></div>';
+      $("tdy-body").innerHTML=h;
+      var sv=$("tdy-save"); if(sv) sv.onclick=save;
+    }
+    function markDirty(){ dirty=true; var d=$("tdy-dirty"); if(d) d.textContent="未保存の変更があります"; }
+    $("tdy-body").addEventListener("change",function(ev){
+      var t=ev.target, i;
+      if(t.hasAttribute("data-st")){ i=+t.getAttribute("data-st"); td.active[i].status=t.value; markDirty(); }
+      else if(t.hasAttribute("data-gt")){ i=+t.getAttribute("data-gt"); td.active[i].guideTime=t.value; markDirty(); }
+    });
+    $("tdy-body").addEventListener("click",function(ev){
+      var b=ev.target.closest("button"); if(!b||!td) return;
+      var a=td.active, i;
+      if(b.hasAttribute("data-up")){ i=+b.getAttribute("data-up"); if(i>0){ var x=a[i]; a[i]=a[i-1]; a[i-1]=x; dirty=true; render(); } }
+      else if(b.hasAttribute("data-down")){ i=+b.getAttribute("data-down"); if(i<a.length-1){ var y=a[i]; a[i]=a[i+1]; a[i+1]=y; dirty=true; render(); } }
+      else if(b.hasAttribute("data-off")){ setAbsent(a[+b.getAttribute("data-off")], true); }
+      else if(b.hasAttribute("data-on")){ setAbsent(td.off[+b.getAttribute("data-on")], false); }
+    });
+    function setAbsent(x, absent){
+      if(dirty && !confirm("未保存の変更は失われます。続けますか？")) return;
+      if(absent && !confirm(x.name+"さんを今日は「休み」にします（本日の出勤から外れます）。よろしいですか？")) return;
+      google.script.run.withSuccessHandler(function(res){
+        if(!res||!res.ok){ alert("できませんでした："+((res&&res.reason)||"不明")); return; }
+        toast(absent?"休みにしました":"出勤に戻しました");
+        if(res.deployed && window.watchDeploy) window.watchDeploy();
+        if(res.warning) setTimeout(function(){ alert("⚠ "+res.warning); },50);
+        loadToday();
+      }).withFailureHandler(function(e){ alert("エラー："+(e&&e.message?e.message:e)); })
+        .adminShiftSetAbsent({ row:x.row, name:x.name, date:td.date, absent:absent });
+    }
+    function save(){
+      var items=td.active.map(function(x){ return { row:x.row, name:x.name, status:x.status||"空きあり", guideTime:x.guideTime||"" }; });
+      var btn=$("tdy-save"); btn.disabled=true; btn.textContent="保存中…";
+      google.script.run.withSuccessHandler(function(res){
+        btn.disabled=false; btn.textContent="保存してサイトに反映";
+        if(!res||!res.ok){ alert("保存できませんでした："+((res&&res.reason)||"不明")); return; }
+        dirty=false; toast("保存しました");
+        if(res.deployed && window.watchDeploy) window.watchDeploy();
+        if(res.note) setTimeout(function(){ alert(res.note); },50);
+        loadToday();
+      }).withFailureHandler(function(e){ btn.disabled=false; btn.textContent="保存してサイトに反映"; alert("エラー："+(e&&e.message?e.message:e)); })
+        .adminTodaySave({ date:td.date, items:items });
+    }
+    $("tdy-reload").onclick=function(){ if(dirty && !confirm("未保存の変更は失われます。更新しますか？")) return; loadToday(); };
+    $("tdy-goth").onclick=function(){ window.showPage("th"); };
   })();
   </script>
 </body>
