@@ -114,6 +114,7 @@
     .calc { background:#faf6ee; border:1px solid var(--line); border-radius:10px; padding:8px 12px; margin:8px 0; font-size:13px; display:grid; grid-template-columns:1fr auto; gap:3px 12px; }
     .calc b { text-align:right; } .calc .big { font-size:15px; color:var(--wine); }
     .opt-list label { display:inline-flex; align-items:center; gap:4px; margin:2px 10px 2px 0; font-size:13px; color:var(--ink); }
+    .ver-warn { display:none; background:#fdecea; color:#8a1f1f; border-bottom:2px solid #e5a3a3; padding:10px 16px; font-size:13px; line-height:1.6; }
     .settled { display:inline-block; font-size:11px; padding:1px 7px; border-radius:10px; background:#e7f6ec; color:#1f6b3a; border:1px solid #bfe3cb; }
   </style>
 </head>
@@ -127,6 +128,7 @@
     </nav>
     <span class="me" id="me"></span>
   </header>
+  <div class="ver-warn" id="ver-warn"></div>
 
   <div id="page-bk">
   <div class="bar">
@@ -342,6 +344,21 @@
       { label: "延長30分", price: 6000 },
     ];
     var STAFF_EMAIL = "<?= staffEmail ?>";
+    var APP_VERSION = "2026-10-07-3"; // Code.gs の CODE_VERSION・lib.gs の LIB_VERSION と同じ値
+
+    // 画面の不具合を「読み込み中」のまま止めず、理由を表示する
+    function showVerWarn(msg){ var b=document.getElementById("ver-warn"); b.innerHTML=msg; b.style.display="block"; }
+    window.addEventListener("error", function(ev){ showVerWarn("⚠ 画面でエラーが発生しました："+esc(ev.message||"")+"<br>Code.gs・lib.gs・Admin.html の3つを最新に貼り替え、「新バージョン」でデプロイしてください。"); });
+    // サーバー側の関数が無い（Code.gs が古い／途中で切れている）ときに分かるように
+    function hasServer(name){ return typeof google.script.run[name]==="function"; }
+    function checkVersion(){
+      var fix="GitHub の「Copy raw file」で全文をコピーし直して貼り替え、保存 →「デプロイを管理」→ 管理画面と公開APIを「新バージョン」でデプロイしてください。";
+      if(!hasServer("adminVersion")){ showVerWarn("⚠ Code.gs が古いか、途中までしか貼り付けられていません（最後の部分がありません）。<br>"+fix); return; }
+      google.script.run.withSuccessHandler(function(v){
+        if(!v||v.code!==APP_VERSION) showVerWarn("⚠ Code.gs の版が画面と合っていません（Code.gs："+esc(v&&v.code||"不明")+"／画面："+APP_VERSION+"）。<br>"+fix);
+        else if(v.lib!==APP_VERSION) showVerWarn("⚠ lib.gs が古いか、途中までしか貼り付けられていません（lib.gs："+esc(v.lib||"不明")+"／画面："+APP_VERSION+"）。<br>"+fix);
+      }).withFailureHandler(function(e){ showVerWarn("⚠ 版の確認に失敗しました："+esc(e&&e.message?e.message:e)); }).adminVersion();
+    }
     var therapists = [];
     var current = {}; // id -> row
 
@@ -363,6 +380,7 @@
     }
 
     $("me").textContent = STAFF_EMAIL || "";
+    checkVersion();
 
     // 初期化
     $("f-date").value = todayStr();
@@ -911,12 +929,14 @@
     // ---- 精算 ----
     var st=null; // adminSettleGet の結果
     window.openSettle=function(id){
-      $("st-info").innerHTML='<div class="loading">読み込み中…</div>';
       $("st-save").disabled=true;
       $("st-bg").classList.add("on");
+      if(!hasServer("adminSettleGet")){ $("st-info").innerHTML='<div class="err">サーバー側のコード（Code.gs）に精算の機能がありません。Code.gs・lib.gs を最新に貼り替え、「新バージョン」でデプロイしてください。</div>'; return; }
+      $("st-info").innerHTML='<div class="loading">読み込み中…</div>';
       google.script.run.withSuccessHandler(function(res){
         if(!res||!res.ok){ $("st-info").innerHTML='<div class="err">'+esc((res&&res.reason)||"取得に失敗しました")+'</div>'; return; }
-        st=res; fillSettle(); $("st-save").disabled=false;
+        st=res;
+        try{ fillSettle(); $("st-save").disabled=false; }catch(e){ $("st-info").innerHTML='<div class="err">表示に失敗しました：'+esc(e&&e.message?e.message:e)+'</div>'; }
       }).withFailureHandler(function(e){ $("st-info").innerHTML='<div class="err">'+esc(e&&e.message?e.message:e)+'</div>'; })
         .adminSettleGet(id);
     };
@@ -999,9 +1019,13 @@
     function shiftMonth(n){ var m=$("pr-month").value.match(/^(\d{4})-(\d{2})$/); if(!m) return; var d=new Date(+m[1], +m[2]-1+n, 1); $("pr-month").value=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); loadPayroll(); }
     window.loadPayroll=function(onlyFirst){
       if(onlyFirst && prLoaded) return; prLoaded=true;
+      var err=function(m){ $("pr-body").innerHTML='<div class="err">'+esc(m)+'</div>'; };
+      if(!hasServer("adminPayroll")){ err("サーバー側のコード（Code.gs）に実績の機能がありません。Code.gs・lib.gs を最新に貼り替え、「新バージョン」でデプロイしてください。"); return; }
       $("pr-body").innerHTML='<div class="loading">読み込み中…</div>';
-      google.script.run.withSuccessHandler(renderPayroll)
-        .withFailureHandler(function(e){ $("pr-body").innerHTML='<div class="err">'+esc(e&&e.message?e.message:e)+'</div>'; })
+      google.script.run.withSuccessHandler(function(res){
+          try{ renderPayroll(res); }catch(e){ err("表示に失敗しました："+(e&&e.message?e.message:e)); }
+        })
+        .withFailureHandler(function(e){ err(e&&e.message?e.message:e); })
         .adminPayroll(monthSlash());
     };
     function renderPayroll(res){
