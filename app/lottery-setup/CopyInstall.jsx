@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import styles from "./page.module.css";
-export default function CopyInstall() {
+export default function CopyInstall({ copyLabel = "設定用コードをコピー" }) {
+  const codeField = useRef(null);
   const [source, setSource] = useState("");
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
@@ -25,10 +26,10 @@ export default function CopyInstall() {
     finally { setBusy(false); }
   }
   return <div className={styles.copy}>
-    <button className={styles.primary} type="button" disabled={busy} onClick={() => load(true)}>{busy ? "読み込み中…" : "設定用コードをコピー"}</button>
+    <button className={styles.primary} type="button" disabled={busy} onClick={() => load(true)}>{busy ? "読み込み中…" : copyLabel}</button>
     <button className={styles.secondary} type="button" disabled={busy} onClick={() => load(false)}>コードを表示する</button>
     <p role="status">{status}</p>
-    {source && <details open><summary>設定用コード</summary><textarea aria-label="Apps Scriptに貼り付ける設定用コード" readOnly value={source} onFocus={(event) => event.currentTarget.select()} /></details>}
+    {source && <details open><summary>設定用コード</summary><textarea ref={codeField} aria-label="Apps Scriptに貼り付ける設定用コード" readOnly value={source} onFocus={(event) => event.currentTarget.select()} /><button className={styles.secondary} type="button" onClick={() => { codeField.current.focus(); codeField.current.select(); }}>コード全文を選択</button></details>}
     <a className={styles.download} href="../lottery-url-install.gs.txt" download="lottery-url-install.gs">設定用ファイルをダウンロード ↓</a>
   </div>;
 }
