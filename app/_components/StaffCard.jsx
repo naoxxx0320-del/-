@@ -8,6 +8,7 @@ import FavoriteHeart from "./FavoriteHeart";
 // 表示するリボン（優先度：本日出勤 > 人気 > おすすめ）。新人は名前横のNEWバッジで表示。
 export function ribbonOf(t) {
   const tags = t.tags || [];
+  if (t.ribbonOverride) return t.ribbonOverride;
   if (!t.absent) return { label: "本日出勤", cls: "today" };
   if (tags.includes("人気")) return { label: "人気", cls: "pop" };
   if (tags.includes("おすすめ")) return { label: "おすすめ", cls: "rec" };
