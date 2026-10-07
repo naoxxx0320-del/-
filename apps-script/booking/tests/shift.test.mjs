@@ -181,4 +181,33 @@ t("非公開ファイルへの移動：コピー→LEDGER_SHEET_ID設定→台�
   assert.ok(pub["出勤情報"]); // サイト用は残る
 });
 
+t("開始・終了の列に分かれた表（出勤時間は空・終了は「2:00」形式）を読み書きできる", () => {
+  const head = ["日付", "ラベル", "エリア", "名前", "出勤時間", "開始", "終了", "ステータス", "出勤", "チェック"];
+  const rows = [head,
+    ["2026/9/16", "", "亀戸", "あやか", "", "18:00", "2:00", "空きあり", "○", false],
+    ["2026/10/2", "", "亀戸", "みお", "", "13:00", "2:00", "空きあり", "○", false]];
+  for (let i = 0; i < 30; i++) rows.push(["", "", "", "", "", "", "", "", "", false]); // チェックボックスだけの行
+  const sch = makeSheet("出勤情報", rows);
+  const g = load({ 出勤情報: sch });
+  const r = g.readShift_("みお", "2026/10/2");
+  assert.ok(r);
+  assert.equal(g.fmtJst(r.endMs), "2026/10/03 02:00"); // 2:00 は翌日として読む
+  const res = g.adminShiftSave({ name: "ゆな", date: "2026/10/8", start: "13:00", end: "翌2:00" });
+  assert.equal(res.ok, true, res.reason);
+  const row = sch.v[3]; // 最後の出勤行のすぐ下（チェックボックスだけの行の下ではない）
+  assert.equal(row[3], "ゆな");
+  assert.equal(row[0], "2026/10/8");
+  assert.equal(row[4], ""); // 出勤時間は空の運用なので触らない
+  assert.equal(row[5], "13:00");
+  assert.equal(row[6], "2:00"); // 既存に合わせて「翌」なし
+  assert.equal(row[8], "○");
+  assert.equal(row[9], false); // 他の列（チェックボックス）は消さない
+  assert.equal(sch.v.length, rows.length);
+  const r2 = g.readShift_("ゆな", "2026/10/8");
+  assert.equal(g.fmtJst(r2.endMs), "2026/10/09 02:00");
+  // 2件目はその下に
+  g.adminShiftSave({ name: "花恋", date: "2026/10/8", start: "16:00", end: "翌3:00" });
+  assert.equal(sch.v[4][3], "花恋");
+});
+
 console.log(`\n✅ 全 ${passed} 件 パス`);
