@@ -53,6 +53,13 @@ function sheetId_() {
 function book_() {
   return SpreadsheetApp.openById(sheetId_());
 }
+/* 予約台帳・予約履歴など「お客様情報を含むシート」を置くブック。
+   LEDGER_SHEET_ID が設定されていればその（共有しない）ファイル、無ければ SHEET_ID と同じ。
+   サイト用のデータ（出勤情報・本日の出勤）は公開用の SHEET_ID 側に残す。 */
+function ledgerBook_() {
+  var id = cfg_("LEDGER_SHEET_ID", "");
+  return id ? SpreadsheetApp.openById(id) : book_();
+}
 function nowMs_() {
   return Date.now();
 }
@@ -75,7 +82,7 @@ function genId_(prefix) {
 
 /* ---------- シート準備 ---------- */
 function ledger_() {
-  var b = book_();
+  var b = ledgerBook_();
   var sh = b.getSheetByName(LEDGER_SHEET);
   if (!sh) {
     sh = b.insertSheet(LEDGER_SHEET);
@@ -85,7 +92,7 @@ function ledger_() {
   return sh;
 }
 function history_() {
-  var b = book_();
+  var b = ledgerBook_();
   var sh = b.getSheetByName(HISTORY_SHEET);
   if (!sh) {
     sh = b.insertSheet(HISTORY_SHEET);
@@ -1143,9 +1150,11 @@ function todayJst_() {
    Script Properties の THERAPIST_SHEET でシート名を指定することも可。見つからなければ null。 */
 function profileSheet_() {
   var b = book_();
-  var named = cfg_("THERAPIST_SHEET", "");
-  var sheets = named ? [b.getSheetByName(named)] : b.getSheets();
-  var skip = [SCHEDULE_SHEET, LEDGER_SHEET, HISTORY_SHEET];
+  // 既定はサイトが読んでいる「本日の出勤」。無い場合だけ、名前・年齢・タグ等の見出しで探す。
+  var named = cfg_("THERAPIST_SHEET", "本日の出勤");
+  var first = b.getSheetByName(named);
+  var sheets = first ? [first] : b.getSheets();
+  var skip = [SCHEDULE_SHEET, LEDGER_SHEET, HISTORY_SHEET, "応募", "予約", "LINE予約"];
   for (var k = 0; k < sheets.length; k++) {
     var sh = sheets[k];
     if (!sh || skip.indexOf(sh.getName()) >= 0 || sh.getLastRow() < 1) continue;
@@ -1154,7 +1163,8 @@ function profileSheet_() {
       var head = top[i].map(function (x) {
         return String(x).trim();
       });
-      if (head.indexOf("名前") >= 0 && head.indexOf("年齢") >= 0) {
+      if (head.indexOf("名前") >= 0 && head.indexOf("年齢") >= 0 &&
+          (first || head.indexOf("タグ") >= 0 || head.indexOf("スケジュール") >= 0 || head.indexOf("T") >= 0)) {
         return { sh: sh, hi: i, head: head, values: sh.getDataRange().getValues() };
       }
     }
@@ -1470,7 +1480,7 @@ function migrateFromLegacy(opts) {
 }
 
 function _migrateSheet_(sheetName, source, existingKeys, report, dryRun) {
-  var sh = book_().getSheetByName(sheetName);
+  var sh = ledgerBook_().getSheetByName(sheetName) || book_().getSheetByName(sheetName);
   if (!sh || sh.getLastRow() < 2) return;
   var v = sh.getDataRange().getValues();
   var head = v[0].map(function (x) {
@@ -1570,6 +1580,62 @@ function normalizeLegacyDate_(s) {
   return y + "/" + (+m[1]) + "/" + (+m[2]);
 }
 
+/* ---------- お客様情報を非公開ファイルへ移す（エディタから実行） ----------
+   サイトはスプレッドシートを「リンクを知っている全員」に共有して読み込んでいるため、
+   同じファイルにある予約台帳などのお客様情報も、ファイルIDを知る人に読めてしまう。
+   そこで、お客様情報を含むシートだけを、誰とも共有しない別ファイルへ移す。
+   手順1 privateBookStep1_copy  : 新しい非公開ファイルを作ってコピーし、LEDGER_SHEET_ID を設定
+   手順2 privateBookStep2_remove: コピーを確認したあと、元ファイルからそのシートを削除 */
+var PRIVATE_TABS_ = [LEDGER_SHEET, HISTORY_SHEET, "予約", "LINE予約"];
+function privateBookStep1_copy() {
+  requireStaff_();
+  var src = book_();
+  if (cfg_("LEDGER_SHEET_ID", "")) {
+    Logger.log("すでに LEDGER_SHEET_ID が設定済みです: " + ledgerBook_().getUrl());
+    return;
+  }
+  var dst = SpreadsheetApp.create("AROMA DAIAMOND 予約台帳（非公開・共有しない）");
+  var report = [];
+  PRIVATE_TABS_.forEach(function (name) {
+    var sh = src.getSheetByName(name);
+    if (!sh) return;
+    var copy = sh.copyTo(dst);
+    copy.setName(name);
+    var ok = copy.getLastRow() === sh.getLastRow() && copy.getLastColumn() === sh.getLastColumn();
+    report.push(name + ": " + sh.getLastRow() + "行 → コピー" + (ok ? "OK" : "【行数が一致しません】"));
+    if (!ok) throw new Error("コピーの行数が一致しません: " + name);
+  });
+  // 新規作成時の空シート「シート1」を削除
+  dst.getSheets().forEach(function (sh) {
+    if (PRIVATE_TABS_.indexOf(sh.getName()) < 0 && dst.getSheets().length > 1) dst.deleteSheet(sh);
+  });
+  props_().setProperty("LEDGER_SHEET_ID", dst.getId());
+  report.forEach(function (x) {
+    Logger.log(x);
+  });
+  Logger.log("新しい非公開ファイル: " + dst.getUrl());
+  Logger.log("以降、予約台帳・予約履歴はこのファイルに読み書きします。中身を確認したら privateBookStep2_remove を実行してください。");
+}
+function privateBookStep2_remove() {
+  requireStaff_();
+  var lid = cfg_("LEDGER_SHEET_ID", "");
+  if (!lid || lid === sheetId_()) throw new Error("先に privateBookStep1_copy を実行してください。");
+  var src = book_(),
+    dst = ledgerBook_();
+  PRIVATE_TABS_.forEach(function (name) {
+    var a = src.getSheetByName(name),
+      b = dst.getSheetByName(name);
+    if (!a) return;
+    if (!b) throw new Error("非公開ファイルに「" + name + "」がありません。削除を中止しました。");
+    // 移動後に元ファイルへ書かれた行（旧システム等）があれば、削除せず止める
+    if (a.getLastRow() > b.getLastRow())
+      throw new Error("元ファイルの「" + name + "」に、コピー後の追記があります（" + a.getLastRow() + "行 > " + b.getLastRow() + "行）。削除を中止しました。");
+    src.deleteSheet(a);
+    Logger.log("元ファイルから削除: " + name);
+  });
+  Logger.log("完了。公開用ファイルには、お客様情報のシートは残っていません。");
+}
+
 /* エディタの「実行」から呼ぶための移行ラッパー（引数を渡せないため）。
    migrateDry: 書き込みなしで件数を確認 / migrateRun: バックアップ後に移行（再実行しても重複しない）。 */
 function migrateDry() {
@@ -1581,10 +1647,16 @@ function migrateRun() {
 
 /* ブック全体を複製してバックアップ（移行前の安全策）。 */
 function backupBook_() {
-  var f = DriveApp.getFileById(sheetId_());
-  var name = f.getName() + " バックアップ " + Utilities.formatDate(new Date(), "Asia/Tokyo", "yyyyMMdd_HHmmss");
-  var copy = f.makeCopy(name);
-  return { id: copy.getId(), name: name, url: copy.getUrl() };
+  var ids = [sheetId_()];
+  var lid = cfg_("LEDGER_SHEET_ID", "");
+  if (lid && lid !== ids[0]) ids.push(lid);
+  var out = ids.map(function (id) {
+    var f = DriveApp.getFileById(id);
+    var name = f.getName() + " バックアップ " + Utilities.formatDate(new Date(), "Asia/Tokyo", "yyyyMMdd_HHmmss");
+    var copy = f.makeCopy(name);
+    return { id: copy.getId(), name: name, url: copy.getUrl() };
+  });
+  return out.length === 1 ? out[0] : out;
 }
 
 /* ---------- セットアップ・検証補助 ---------- */
