@@ -215,6 +215,29 @@ function ApplySec({ c, role }) {
         ))}
       </ol>
       <RecruitForm role={role} />
+      {role === "therapist" && (
+        <div className="rec-extapply">
+          <div className="rec-extapply-h">求人サイトからもご応募いただけます</div>
+          <a
+            href="https://mensesthe.cocoa-job.jp/8/shop/43761/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              className="rec-extapply-img"
+              src="https://cocoa-job.jp/assets/img/user/pc/link/64080_cocoa_mensesthe_cp.gif"
+              width={640}
+              height={80}
+              alt="「アロマダイヤモンド」への応募はココア求人！ココアご利用でもらえるお仕事応援キャンペーン中♪"
+              loading="lazy"
+            />
+          </a>
+          <p className="rec-note-small">
+            ココア求人では「お仕事応援キャンペーン」を実施中です（内容・条件はココア求人のページでご確認ください）。
+          </p>
+        </div>
+      )}
     </section>
   );
 }
