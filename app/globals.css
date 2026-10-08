@@ -4865,6 +4865,31 @@ body.menu-open {
   color: #8a7a66;
   margin: 10px 0 0;
 }
+/* 求人サイト（ココア求人）からの応募バナー：応募フォームの下 */
+.rec-extapply {
+  margin: 18px 0 0;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(122, 16, 32, 0.2);
+  text-align: center;
+}
+.rec-extapply-h {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #7a1020;
+  letter-spacing: 0.04em;
+  margin: 0 0 8px;
+}
+.rec-extapply a {
+  display: block;
+}
+.rec-extapply-img {
+  display: block;
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 4px;
+}
 /* もう一方の求人へ */
 .rec-otherlink {
   position: relative;
