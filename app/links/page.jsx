@@ -36,6 +36,14 @@ const LINKS = [
     h: 40,
     label: "メンズエステ求人SNS 02",
   },
+  {
+    href: "https://mensesthe.cocoa-job.jp/8/area36/",
+    banner: "https://cocoa-job.jp/assets/img/user/pc/link/2020img-bnr-mensesthe5.jpg",
+    w: 640,
+    h: 80,
+    label: "ココア求人(錦糸町のメンズエステアルバイト求人情報)",
+    wide: true, // 横長バナー：バナーを上に全幅で表示
+  },
 ];
 
 export default function Links() {
@@ -62,7 +70,7 @@ export default function Links() {
           </p>
           <ul className="links-list">
             {LINKS.map((l, i) => (
-              <li className="link-item" key={i}>
+              <li className={`link-item${l.wide ? " wide" : ""}`} key={i}>
                 <a href={l.href} target="_blank" rel="noopener noreferrer">
                   {l.banner && (
                     // eslint-disable-next-line @next/next/no-img-element

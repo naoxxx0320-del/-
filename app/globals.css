@@ -5512,6 +5512,14 @@ body:has(.rec-page) .aichat-fab {
   border: 1px solid #eadfca;
   border-radius: 3px;
 }
+.link-item.wide a {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+.link-item.wide .link-banner {
+  width: 100%;
+}
 .link-label {
   font-size: 14px;
   font-weight: 500;
