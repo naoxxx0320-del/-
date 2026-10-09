@@ -1,0 +1,11 @@
+{
+  "_note": "会員制度ページの表示用（日付・定員）。実際の受付可否・人数は予約管理APIの vip_status（スクリプトプロパティ VIP_OPEN_AT / VIP_CLOSE_AT / VIP_CAPACITY / VIP_VALID_UNTIL）で判定。変更時は両方そろえる。",
+  "capacity": 100,
+  "openAt": "2026-10-10T00:00:00+09:00",
+  "closeAt": "2026-11-14T23:59:59+09:00",
+  "benefitFrom": "2026-11-15",
+  "validUntil": "2026-12-31",
+  "openLabel": "2026年10月10日",
+  "closeLabel": "2026年11月14日",
+  "benefitLabel": "2026年11月15日〜12月31日"
+}

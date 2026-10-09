@@ -177,7 +177,7 @@ function bizDateOf(epochMs) {
 }
 
 /* 版（Code.gs の CODE_VERSION・Admin.html の APP_VERSION と同じ値。貼り替え漏れの検出用） */
-var LIB_VERSION = "2026-10-07-5";
+var LIB_VERSION = "2026-10-09-1";
 
 // Node テスト用のエクスポート（GASでは typeof module === 'undefined' で無視される）
 if (typeof module !== "undefined" && module.exports) {

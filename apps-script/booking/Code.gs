@@ -772,6 +772,7 @@ function adminList(params) {
   var vinfo = visitInfoMap_(rows); // 全履歴からリピーター回数を算出
   var st = {};
   try { st = settlements_(); } catch (e) {} // 精算済みの表示用（失敗しても一覧は出す）
+  var minfo = memberInfoMap_(rows); // 来店ランク・会員番号（直近6か月の精算済み来店）
   var out = rows
     .filter(function (r) {
       if (want && normDate_(fmtJst(r.startAt)) !== want) return false;
@@ -794,6 +795,7 @@ function adminList(params) {
         staffMemo: r.staffMemo, updatedAt: r.updatedAt, updatedBy: r.updatedBy,
         visitNo: vi.visitNo || null, visitCount: vi.visitCount || null,
         settled: st[String(r.id)] ? { total: yenNum_(st[String(r.id)]["お支払い合計"]), back: yenNum_(st[String(r.id)]["バック"]) } : null,
+        member: minfo[r.id] || null,
       };
     });
   return jsonSafe_({ ok: true, rows: out });
@@ -989,6 +991,8 @@ function doGet(e) {
   var p = (e && e.parameter) || {};
   if (p.action === "availability") return availabilityResponse_(p);
   if (p.action === "confirm") return confirmPage_(p.token);
+  if (p.action === "vip_status") return vipStatusResponse_(p);
+  if (p.action === "member_card") return memberCardResponse_(p);
   // それ以外は管理画面（管理デプロイで配信・要ログイン）
   return serveAdmin_();
 }
@@ -1062,6 +1066,8 @@ function doPost(e) {
       });
       return json_(rr);
     }
+
+    if (action === "member_register") return json_(memberRegister_(body));
 
     return json_({ ok: false, reason: "unknown action" });
   } catch (err) {
@@ -2169,6 +2175,298 @@ function adminPayroll(month) {
   return jsonSafe_({ ok: true, month: +m[1] + "/" + +m[2], therapists: list, totals: tot, unsettled: unsettled });
 }
 
+/* ==========================================================================
+ * 会員制度（DIAMOND MEMBERSHIP）
+ *   ・OPENING VIP：先着 VIP_CAPACITY 名（既定100）。募集 VIP_OPEN_AT〜VIP_CLOSE_AT、特典は VIP_VALID_UNTIL まで。
+ *     会員番号 001〜100 を登録完了順に発行（LockService で同時登録でも定員を超えない）。
+ *   ・VIP募集の終了後（満員・期間終了）は、通常会員（番号 M0001〜）として無料登録を受け付ける。
+ *   ・来店ランク：直近6か月の「精算」済み来店（有料施術の完了）を数える。予約のみ・キャンセルは含めない。
+ *       0回=未付与 / 1〜2回=SILVER / 3〜5回=GOLD / 6回以上=DIAMOND。お客様は電話番号・メールで照合。
+ *   ・会員情報は非公開ファイル（ledgerBook_）の「会員」シート。公開APIは人数（集計）と、
+ *     本人だけが知る会員証キーでの照会のみ。メール・電話は返さない。
+ *   Script Properties（任意）：VIP_OPEN_AT（既定 2026/10/10 00:00）VIP_CLOSE_AT（既定 2026/11/14 23:59）
+ *     VIP_CAPACITY（既定 100）VIP_VALID_UNTIL（既定 2026/12/31）SITE_URL（会員証URL用）
+ * ========================================================================== */
+var MEMBER_SHEET = "会員";
+var MEMBER_HEADER = [
+  "会員番号", "種別", "登録日時(JST)", "ニックネーム", "メール", "電話", "規約同意", "お知らせ同意",
+  "会員証キー", "状態", "冪等キー", "メモ", "更新日時(JST)", "最終操作者", "誕生月",
+];
+
+function vipCfg_() {
+  var at = function (k, d) {
+    var v = String(cfg_(k, d));
+    var m = v.match(/(\d{4})\/(\d{1,2})\/(\d{1,2})(?:\s+(\d{1,2}):(\d{2}))?/);
+    if (!m) return null;
+    return parseJstDateTime(m[1] + "/" + m[2] + "/" + m[3], (m[4] || "0") + ":" + (m[5] || "00"));
+  };
+  var until = String(cfg_("VIP_VALID_UNTIL", "2026/12/31"));
+  return {
+    openAt: at("VIP_OPEN_AT", "2026/10/10 00:00"),
+    closeAt: at("VIP_CLOSE_AT", "2026/11/14 23:59"),
+    capacity: Math.max(1, parseInt(cfg_("VIP_CAPACITY", "100"), 10) || 100),
+    validUntil: until,
+    validUntilMs: at("VIP_VALID_UNTIL", until) + 24 * 3600 * 1000 - 1, // その日の終わりまで
+  };
+}
+function memberSheet_() {
+  return privSheet_(MEMBER_SHEET, MEMBER_HEADER);
+}
+function members_() {
+  return sheetObjs_(memberSheet_()).filter(function (o) { return String(o["会員番号"] || "").trim(); });
+}
+function vipCount_(list) {
+  return (list || members_()).filter(function (o) { return o["種別"] === "VIP"; }).length;
+}
+/* 受付の状態：before（募集前）/ open（VIP受付中）/ full（満員）/ closed（期間終了） */
+function vipPhase_(cfg, count, now) {
+  if (now < cfg.openAt) return "before";
+  if (now > cfg.closeAt) return "closed";
+  if (count >= cfg.capacity) return "full";
+  return "open";
+}
+function normEmail_(s) {
+  return String(s || "").trim().toLowerCase();
+}
+
+/* 公開：VIPの受付状況（人数の集計のみ。個人情報なし）。30秒キャッシュ。 */
+function vipStatusResponse_(p) {
+  try {
+    var cache = CacheService.getScriptCache();
+    var hit = cache.get("vip_status");
+    var s;
+    if (hit) s = JSON.parse(hit);
+    else {
+      var cfg = vipCfg_(), count = vipCount_();
+      s = {
+        ok: true, count: count, capacity: cfg.capacity, remaining: Math.max(0, cfg.capacity - count),
+        openAt: fmtJst(cfg.openAt), closeAt: fmtJst(cfg.closeAt), validUntil: cfg.validUntil,
+      };
+      cache.put("vip_status", JSON.stringify(s), 30);
+    }
+    var c2 = vipCfg_();
+    s.phase = vipPhase_(c2, s.count, nowMs_());
+    s.vipActive = nowMs_() <= c2.validUntilMs;
+    return jsonp_(p.callback, s);
+  } catch (err) {
+    return jsonp_(p.callback, { ok: false, reason: "status error" });
+  }
+}
+
+/* 公開：会員登録（VIP受付中はVIP、募集終了後は通常会員）。
+   b = {nickname, email, tel?, agreeTerms:true, agreeMarketing:bool, idempotencyKey, website(ボット対策・空のはず)} */
+function memberRegister_(b) {
+  b = b || {};
+  if (String(b.website || "").trim()) return { ok: false, reason: "送信できませんでした。" }; // ボット
+  var nickname = String(b.nickname || "").replace(/\s+/g, " ").trim().slice(0, 20);
+  var email = normEmail_(b.email);
+  var tel = normTel_(fixTel_(b.tel));
+  if (!nickname) return { ok: false, reason: "ニックネームを入力してください。" };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 120) return { ok: false, reason: "メールアドレスを正しく入力してください。" };
+  if (b.tel && !/^0\d{9,10}$/.test(tel)) return { ok: false, reason: "電話番号を正しく入力してください（任意）。" };
+  if (b.agreeTerms !== true && b.agreeTerms !== "true") return { ok: false, reason: "利用規約・プライバシーポリシーへの同意が必要です。" };
+  var bm = b.birthMonth == null || b.birthMonth === "" ? "" : parseInt(b.birthMonth, 10);
+  if (bm !== "" && !(bm >= 1 && bm <= 12)) return { ok: false, reason: "誕生月が不正です。" };
+  var idem = String(b.idempotencyKey || "").slice(0, 80);
+
+  var cfg = vipCfg_();
+  var res = withLock_(function () {
+    var now = nowMs_();
+    var list = members_();
+    // 同じ送信の再送（二度押し等）は同じ結果を返す
+    if (idem) {
+      var same = list.filter(function (o) { return o["冪等キー"] === idem; })[0];
+      if (same) return { ok: true, again: true, row: same };
+    }
+    var dup = list.filter(function (o) {
+      if (o["状態"] === "取消") return false;
+      if (normEmail_(o["メール"]) === email) return true;
+      return tel && normTel_(fixTel_(o["電話"])) === tel;
+    })[0];
+    if (dup) return { ok: false, reason: "このメールアドレス（または電話番号）は、すでにご登録があります。会員証はご登録時のメールからご覧いただけます。", dupRow: dup };
+    var count = vipCount_(list);
+    var phase = vipPhase_(cfg, count, now);
+    if (phase === "before") return { ok: false, reason: "会員登録の受付は " + fmtJst(cfg.openAt) + " から開始します。" };
+    var kind = phase === "open" ? "VIP" : "MEMBER";
+    var no;
+    if (kind === "VIP") no = ("00" + (count + 1)).slice(-3);
+    else {
+      var n = list.filter(function (o) { return o["種別"] === "MEMBER"; }).length + 1;
+      no = "M" + ("000" + n).slice(-4);
+    }
+    var key = Utilities.getUuid().replace(/-/g, "") + Utilities.getUuid().replace(/-/g, "").slice(0, 8);
+    var ts = Utilities.formatDate(new Date(now), "Asia/Tokyo", "yyyy/MM/dd HH:mm:ss");
+    var row = [
+      "'" + no, kind, ts, safeCell_(nickname), email, tel ? "'" + tel : "", "同意", b.agreeMarketing === true || b.agreeMarketing === "true" ? "同意" : "",
+      key, "有効", idem, "", ts, "web", bm,
+    ];
+    memberSheet_().appendRow(row);
+    logHistory_("MEMBER", "web", (kind === "VIP" ? "VIP登録 No." : "会員登録 No.") + no, null, { no: no, kind: kind });
+    var o = {};
+    MEMBER_HEADER.forEach(function (h, i) { o[h] = String(row[i]).replace(/^'/, ""); });
+    return { ok: true, row: o };
+  });
+  try { CacheService.getScriptCache().remove("vip_status"); } catch (e) {}
+  if (!res.ok) return { ok: false, reason: res.reason, duplicate: !!res.dupRow };
+  var r = res.row;
+  var out = { ok: true, memberNo: String(r["会員番号"]).replace(/^'/, ""), kind: r["種別"], cardKey: r["会員証キー"], nickname: r["ニックネーム"], validUntil: cfg.validUntil };
+  if (!res.again) sendMemberMail_(r, cfg);
+  return out;
+}
+
+function cardUrl_(key) {
+  return String(cfg_("SITE_URL", "https://aroma-daiamond.com/")).replace(/\/?$/, "/") + "membership/card/?k=" + encodeURIComponent(key);
+}
+function sendMemberMail_(r, cfg) {
+  var vip = r["種別"] === "VIP";
+  var no = String(r["会員番号"]).replace(/^'/, "");
+  var lines = [
+    r["ニックネーム"] + " 様",
+    "",
+    "AROMA DAIAMOND の" + (vip ? "OPENING VIP 会員" : "会員") + "にご登録いただき、ありがとうございます。",
+    "",
+    "■ 会員番号：" + (vip ? "No." : "") + no,
+  ];
+  if (vip) {
+    lines.push("■ VIP特典の利用期間：2026年11月15日〜" + cfg.validUntil.replace(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/, "$1年$2月$3日"));
+  }
+  lines.push(
+    "■ デジタル会員証（ご本人専用のURLです。他の方には教えないでください）",
+    cardUrl_(r["会員証キー"]),
+    "",
+    "ご来店時に会員証の画面をご提示ください。来店回数に応じて会員ランク（SILVER／GOLD／DIAMOND）が上がります。",
+    "",
+    "お問い合わせ：" + cfg_("STORE_TEL", "09043918013"),
+    senderName_()
+  );
+  sendMail_(r["メール"], "【AROMA DAIAMOND】" + (vip ? "VIP会員" : "会員") + "登録完了（No." + no + "）", lines.join("\n"));
+  var store = storeEmail_();
+  if (store) sendMail_(store, "[控え]" + (vip ? "VIP" : "会員") + "登録 No." + no, "ニックネーム: " + r["ニックネーム"] + "\n種別: " + r["種別"]);
+}
+
+/* 来店回数（直近6か月の精算済み＝有料施術の完了）。電話番号またはメールで照合。 */
+function visitsByContact_(tel, email, nowMs) {
+  tel = normTel_(fixTel_(tel));
+  email = normEmail_(email);
+  if (!tel && !email) return 0;
+  var since = (nowMs || nowMs_()) - 183 * 24 * 3600 * 1000;
+  var st = settlements_();
+  var n = 0;
+  readLedger_().forEach(function (r) {
+    if (!st[String(r.id)] || !r.startAt || r.startAt < since) return;
+    if ((tel && normTel_(r.tel) === tel) || (email && normEmail_(r.email) === email)) n++;
+  });
+  return n;
+}
+function rankOf_(visits) {
+  if (visits >= 6) return "DIAMOND";
+  if (visits >= 3) return "GOLD";
+  if (visits >= 1) return "SILVER";
+  return "";
+}
+
+/* 公開：会員証（本人だけが知るキーで照会）。メール・電話は返さない。 */
+function memberCardResponse_(p) {
+  try {
+    var key = String(p.k || "");
+    if (!/^[0-9a-f]{32,48}$/.test(key)) return jsonp_(p.callback, { ok: false, reason: "会員証が見つかりません。" });
+    var m = members_().filter(function (o) { return o["会員証キー"] === key; })[0];
+    if (!m || m["状態"] === "取消") return jsonp_(p.callback, { ok: false, reason: "会員証が見つかりません。" });
+    var cfg = vipCfg_();
+    var visits = visitsByContact_(m["電話"], m["メール"]);
+    return jsonp_(p.callback, {
+      ok: true,
+      memberNo: String(m["会員番号"]).replace(/^'/, ""),
+      kind: m["種別"],
+      nickname: m["ニックネーム"],
+      validUntil: cfg.validUntil,
+      vipActive: m["種別"] === "VIP" && nowMs_() <= cfg.validUntilMs,
+      visits: visits,
+      rank: rankOf_(visits),
+    });
+  } catch (err) {
+    return jsonp_(p.callback, { ok: false, reason: "会員証を読み込めませんでした。" });
+  }
+}
+
+/* 管理：会員一覧（来店回数・ランクつき） */
+function adminMembers() {
+  requireStaff_();
+  var cfg = vipCfg_();
+  var list = members_();
+  var st = settlements_();
+  var since = nowMs_() - 183 * 24 * 3600 * 1000;
+  var ledger = readLedger_().filter(function (r) { return st[String(r.id)] && r.startAt >= since; });
+  var rows = list.map(function (m) {
+    var tel = normTel_(fixTel_(m["電話"])), email = normEmail_(m["メール"]);
+    var v = ledger.filter(function (r) { return (tel && normTel_(r.tel) === tel) || (email && normEmail_(r.email) === email); }).length;
+    return {
+      no: String(m["会員番号"]).replace(/^'/, ""), kind: m["種別"], registeredAt: cellStr_(m["登録日時(JST)"]),
+      nickname: m["ニックネーム"], email: m["メール"], tel: fixTel_(m["電話"]), marketing: m["お知らせ同意"] === "同意",
+      status: m["状態"] || "有効", memo: m["メモ"] || "", visits: v, rank: rankOf_(v), birthMonth: m["誕生月"] || "",
+    };
+  });
+  var count = vipCount_(list);
+  return jsonSafe_({
+    ok: true, rows: rows,
+    vip: { count: count, capacity: cfg.capacity, phase: vipPhase_(cfg, count, nowMs_()), openAt: fmtJst(cfg.openAt), closeAt: fmtJst(cfg.closeAt), validUntil: cfg.validUntil },
+  });
+}
+
+/* 管理：会員の取消・復帰・メモ（履歴に記録）。p = {no, status?: "有効"|"取消", memo?} */
+function adminMemberUpdate(p) {
+  var staff = requireStaff_();
+  p = p || {};
+  return withLock_(function () {
+    var sh = memberSheet_();
+    var m = members_().filter(function (o) { return String(o["会員番号"]).replace(/^'/, "") === String(p.no); })[0];
+    if (!m) return { ok: false, reason: "会員が見つかりません。" };
+    var col = function (h) { return MEMBER_HEADER.indexOf(h) + 1; };
+    var before = { status: m["状態"], memo: m["メモ"] };
+    if (p.status) {
+      if (["有効", "取消"].indexOf(p.status) < 0) return { ok: false, reason: "状態が不正です。" };
+      sh.getRange(m._row, col("状態")).setValue(p.status);
+    }
+    if (p.memo != null) sh.getRange(m._row, col("メモ")).setValue(safeCell_(String(p.memo).slice(0, 300)));
+    sh.getRange(m._row, col("更新日時(JST)")).setValue(Utilities.formatDate(new Date(), "Asia/Tokyo", "yyyy/MM/dd HH:mm:ss"));
+    sh.getRange(m._row, col("最終操作者")).setValue(staff);
+    logHistory_("MEMBER", staff, "会員情報の変更 No." + p.no, before, { status: p.status, memo: p.memo });
+    try { CacheService.getScriptCache().remove("vip_status"); } catch (e) {}
+    return { ok: true };
+  });
+}
+
+/* 管理画面の予約一覧用：電話・メール → {visits, rank, vipNo}（直近6か月の精算済み来店） */
+function memberInfoMap_(rows) {
+  var out = {};
+  try {
+    var st = settlements_();
+    var since = nowMs_() - 183 * 24 * 3600 * 1000;
+    var cnt = {};
+    rows.forEach(function (r) {
+      if (!st[String(r.id)] || !r.startAt || r.startAt < since) return;
+      var t = normTel_(r.tel), e = normEmail_(r.email);
+      if (t) cnt["t:" + t] = (cnt["t:" + t] || 0) + 1;
+      else if (e) cnt["e:" + e] = (cnt["e:" + e] || 0) + 1;
+    });
+    var vip = {};
+    members_().forEach(function (m) {
+      if (m["状態"] === "取消") return;
+      var no = String(m["会員番号"]).replace(/^'/, "");
+      var t = normTel_(fixTel_(m["電話"])), e = normEmail_(m["メール"]);
+      if (t) vip["t:" + t] = { no: no, kind: m["種別"] };
+      if (e) vip["e:" + e] = { no: no, kind: m["種別"] };
+    });
+    rows.forEach(function (r) {
+      var t = normTel_(r.tel), e = normEmail_(r.email);
+      var v = (t && cnt["t:" + t]) || (e && cnt["e:" + e]) || 0;
+      var mem = (t && vip["t:" + t]) || (e && vip["e:" + e]) || null;
+      out[r.id] = { visits: v, rank: rankOf_(v), memberNo: mem ? mem.no : "", memberKind: mem ? mem.kind : "" };
+    });
+  } catch (e) {}
+  return out;
+}
+
 /* ---------- 出力ヘルパー ---------- */
 function json_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(
@@ -2417,7 +2715,7 @@ function selfTest() {
    管理画面（Admin.html）は開いたときにこの版を確認し、Code.gs / lib.gs が古い・途中までしか
    貼られていない場合に警告を出す。※必ずファイルの「最後」に置く（途中で切れると無くなるので検出できる）。
    コードを変更したら Admin.html の APP_VERSION・lib.gs の LIB_VERSION と一緒に上げる。 */
-var CODE_VERSION = "2026-10-07-5";
+var CODE_VERSION = "2026-10-09-1";
 function adminVersion() {
   return { code: CODE_VERSION, lib: typeof LIB_VERSION === "undefined" ? "" : LIB_VERSION };
 }

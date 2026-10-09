@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import vm from "node:vm";
+import crypto from "node:crypto";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const lib = readFileSync(join(here, "..", "lib.gs"), "utf8");
@@ -43,10 +44,13 @@ export function load(sheets, props = {}, extra = {}) {
         return fmt.replace("yyyyMMddHHmmss", `${Y}${pad(M)}${pad(D)}${pad(h)}${pad(m)}${pad(s)}`).replace("yyyy", Y).replace("MM", pad(M)).replace("dd", pad(D)).replace("HH", pad(h)).replace("mm", pad(m)).replace("ss", pad(s)).replace(/\bM\b/, M).replace(/\bd\b/, D).replace(/\bH\b/, h);
       },
       base64Decode: (b64) => [...Buffer.from(b64, "base64")],
+      getUuid: () => crypto.randomUUID(),
       newBlob: (bytes) => ({ getDataAsString: () => Buffer.from(bytes).toString("utf8") }),
     },
     PropertiesService: { getScriptProperties: () => ({ getProperty: (k) => props[k] ?? null }) },
     LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
+    CacheService: (() => { const m = new Map(); return { getScriptCache: () => ({ get: (k) => m.get(k) ?? null, put: (k, v) => m.set(k, v), remove: (k) => m.delete(k) }) }; })(),
+    ContentService: { createTextOutput: (s) => ({ s, setMimeType() { return this; } }), MimeType: { JSON: "json", JAVASCRIPT: "js" } },
     ...extra,
   };
   vm.createContext(ctx);

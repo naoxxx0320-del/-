@@ -5959,3 +5959,208 @@ body:has(.rec-page) .aichat-fab {
   color: #3a2d1c;
   letter-spacing: 0.02em;
 }
+
+/* =========================================================
+   会員制度（/membership/）DIAMOND MEMBERSHIP
+   白・黒・グレー基調＋ゴールドのアクセント。スマホ優先。
+   ========================================================= */
+.mb-hero,
+.mb-sec {
+  position: relative;
+  z-index: 2;
+  margin: 14px 14px 0;
+  background: #fff;
+  border: 1px solid #e6e2da;
+  border-radius: 22px;
+  padding: 26px 16px 22px;
+  text-align: center;
+  color: #1e1e1e;
+}
+.mb-hero-icon { display: flex; justify-content: center; margin-bottom: 8px; }
+.mb-brand {
+  margin: 0;
+  font-family: var(--font-serif-en);
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  color: #555;
+}
+.mb-title {
+  margin: 6px 0 0;
+  font-family: var(--font-serif-en);
+  font-size: clamp(25px, 7.6vw, 34px);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #111;
+  line-height: 1.15;
+}
+.mb-sub { margin: 8px 0 0; font-family: var(--font-serif-jp); font-size: 15px; color: #555; letter-spacing: 0.06em; }
+.mb-rule { border: 0; border-top: 1px solid #e3e0da; margin: 20px 4px 18px; }
+.mb-vip {
+  background: linear-gradient(180deg, #f4f4f3, #ededec);
+  border: 1px solid #e4dfd3;
+  border-radius: 16px;
+  padding: 18px 12px 16px;
+}
+.mb-vip-name { margin: 6px 0 0; font-family: var(--font-serif-en); font-size: 25px; font-weight: 700; letter-spacing: 0.04em; color: #111; }
+.mb-vip-cond { margin: 6px 0 0; font-size: 13.5px; color: #666; }
+.mb-vip-perks { margin: 8px 0 0; font-size: 14.5px; color: #1e1e1e; font-weight: 600; line-height: 1.6; }
+.mb-arrow { display: flex; justify-content: center; margin: 12px 0 2px; }
+.mb-join { margin: 0 0 12px; font-size: 15px; font-weight: 600; color: #1e1e1e; letter-spacing: 0.04em; }
+.mb-ranks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.mb-rank {
+  background: #f2f2f1;
+  border: 1px solid #e6e3dc;
+  border-radius: 14px;
+  padding: 14px 4px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.mb-rank-name { margin: 6px 0 0; font-family: var(--font-serif-en); font-size: clamp(14px, 4.5vw, 19px); font-weight: 700; color: #111; letter-spacing: 0.02em; }
+.mb-rank-visits { margin: 4px 0 0; font-size: 12px; color: #6a6a6a; }
+.mb-rank-perk { margin: 6px 0 0; font-size: 12px; color: #1e1e1e; line-height: 1.5; word-break: keep-all; overflow-wrap: anywhere; }
+.mb-rank-gold { border-color: #e2d3ad; }
+.mb-rank-diamond { border-color: #cfdde8; background: linear-gradient(180deg, #f4f7f9, #eef1f3); }
+.mb-note { margin: 14px 2px 0; font-size: 12px; line-height: 1.75; color: #6f6f6f; text-align: left; }
+@media (max-width: 299px) {
+  .mb-ranks { grid-template-columns: 1fr; }
+}
+@media (max-width: 360px) {
+  .mb-rank { padding: 12px 2px 10px; }
+  .mb-rank-perk, .mb-rank-visits { font-size: 11px; }
+}
+
+/* セクション共通 */
+.mb-sec-en { margin: 0; font-family: var(--font-serif-en); font-size: 13px; letter-spacing: 0.22em; color: var(--gold-deep); }
+.mb-sec-h { margin: 6px 0 0; font-family: var(--font-serif-jp); font-size: 19px; line-height: 1.6; color: #111; letter-spacing: 0.04em; }
+.mb-sec-lead { margin: 8px 0 0; font-size: 13px; color: #666; line-height: 1.7; }
+
+/* VIP 5大特典 */
+.mb-perks { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; text-align: left; }
+.mb-perk { display: flex; gap: 12px; align-items: flex-start; background: #f7f6f3; border: 1px solid #ebe6da; border-radius: 14px; padding: 14px 14px; }
+.mb-perk-icon { flex: 0 0 44px; height: 44px; border-radius: 50%; background: #fff; border: 1px solid #e3d6b5; display: flex; align-items: center; justify-content: center; }
+.mb-perk-no { margin: 0; font-family: var(--font-serif-en); font-size: 12px; letter-spacing: 0.14em; color: var(--gold-deep); }
+.mb-perk-t { margin: 2px 0 0; font-size: 15px; color: #111; }
+.mb-perk-d { margin: 4px 0 0; font-size: 12.5px; line-height: 1.7; color: #555; }
+.mb-terms { margin: 16px 0 0; text-align: left; border-top: 1px solid #ece8e0; }
+.mb-terms > div { display: flex; gap: 10px; padding: 9px 2px; border-bottom: 1px solid #ece8e0; font-size: 13px; }
+.mb-terms dt { flex: 0 0 8.5em; color: #777; }
+.mb-terms dd { margin: 0; color: #1e1e1e; font-weight: 600; }
+
+/* ランク比較表 */
+.mb-table-wrap { margin-top: 16px; overflow-x: auto; }
+.mb-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12.5px; }
+.mb-table th, .mb-table td { padding: 10px 4px; border-bottom: 1px solid #ece8e0; text-align: center; }
+.mb-table tbody th, .mb-table-cond th { text-align: left; font-weight: 500; color: #333; padding-left: 2px; }
+.mb-table thead th { font-family: var(--font-serif-en); font-size: 14px; letter-spacing: 0.04em; color: #111; }
+.mb-th-silver { color: #7f868d !important; }
+.mb-th-gold { color: var(--gold-deep) !important; }
+.mb-th-diamond { color: #4f7c9c !important; }
+.mb-table-cond td, .mb-table-cond th { font-size: 11.5px; color: #777; background: #f7f6f3; }
+.mb-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--gold); }
+.mb-dash { color: #c9c4ba; }
+.mb-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* 仕組み 3ステップ */
+.mb-steps { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; text-align: left; }
+.mb-steps li { background: #f7f6f3; border: 1px solid #ebe6da; border-radius: 14px; padding: 14px 16px; }
+.mb-step-no { font-family: var(--font-serif-en); font-size: 12px; letter-spacing: 0.16em; color: var(--gold-deep); }
+.mb-steps h3 { margin: 2px 0 0; font-size: 15px; color: #111; }
+.mb-steps p { margin: 4px 0 0; font-size: 12.5px; line-height: 1.7; color: #555; }
+
+/* 登録 */
+.mb-phase { margin: 10px 0 0; font-size: 13.5px; line-height: 1.7; color: #333; }
+.mb-remaining { margin: 8px auto 0; display: inline-block; padding: 6px 14px; border-radius: 999px; background: #111; color: #e8cf8f; font-size: 13px; letter-spacing: 0.04em; }
+.mb-cta {
+  display: block;
+  width: 100%;
+  margin: 18px 0 0;
+  padding: 16px 12px;
+  min-height: 54px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #2a2a2a, #111);
+  color: #f0d79a;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+}
+.mb-cta:disabled { background: #cfcac0; color: #fff; box-shadow: none; cursor: default; }
+.mb-form { margin-top: 16px; text-align: left; display: flex; flex-direction: column; gap: 12px; }
+.mb-field { display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: #333; font-weight: 600; }
+.mb-field input, .mb-field select { font-size: 16px; padding: 11px 12px; border: 1px solid #d9d4c9; border-radius: 10px; background: #fff; color: #111; font-weight: 400; }
+.mb-field small { font-size: 11.5px; color: #888; font-weight: 400; }
+.mb-req, .mb-opt { margin-left: 6px; font-size: 10.5px; padding: 1px 6px; border-radius: 4px; vertical-align: 1px; }
+.mb-req { background: #111; color: #e8cf8f; }
+.mb-opt { background: #eee; color: #777; }
+.mb-check { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 1.6; color: #333; }
+.mb-check input { margin-top: 3px; width: 18px; height: 18px; flex: 0 0 auto; }
+.mb-check a { color: var(--gold-deep); }
+.mb-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.mb-error { margin: 6px 0 0; padding: 10px 12px; border-radius: 10px; background: #fbeeee; color: #8a1f1f; font-size: 13px; line-height: 1.6; text-align: left; }
+.mb-done { margin-top: 16px; }
+.mb-done-h { margin: 0 0 12px; font-size: 16px; font-weight: 700; color: #111; }
+.mb-card-link { display: inline-block; margin-top: 14px; color: var(--gold-deep); font-size: 13.5px; text-decoration: underline; }
+
+/* デジタル会員証 */
+.mb-card {
+  position: relative;
+  margin: 0 auto;
+  max-width: 360px;
+  aspect-ratio: 1.586 / 1;
+  border-radius: 16px;
+  padding: 18px 20px;
+  background: radial-gradient(120% 140% at 0% 0%, #2c2a26 0%, #121212 55%, #0a0a0a 100%);
+  border: 1px solid #6f5a2e;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(217, 191, 134, 0.18);
+  color: #e8cf8f;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+}
+.mb-card-top { display: flex; align-items: center; gap: 8px; }
+.mb-card-brand { font-family: var(--font-serif-en); font-size: 14px; letter-spacing: 0.18em; color: #d9bf86; }
+.mb-card-kind { margin: auto 0 0; font-family: var(--font-serif-en); font-size: 13px; letter-spacing: 0.2em; color: #bfa265; }
+.mb-card-no { margin: 4px 0 0; font-family: var(--font-serif-en); font-size: clamp(22px, 7vw, 28px); font-weight: 700; letter-spacing: 0.06em; color: #f0d79a; }
+.mb-card-foot { margin-top: 10px; display: flex; justify-content: space-between; gap: 8px; font-size: 11.5px; color: #cdb37a; }
+.mb-myrank { margin: 18px 0 0; padding: 16px; border-radius: 14px; background: #f7f6f3; border: 1px solid #ebe6da; }
+.mb-myrank-label { margin: 0; font-size: 12px; color: #777; }
+.mb-myrank-name { margin: 4px 0 0; font-family: var(--font-serif-en); font-size: 26px; font-weight: 700; color: #111; }
+.mb-rk-silver { color: #7f868d; } .mb-rk-gold { color: var(--gold-deep); } .mb-rk-diamond { color: #4f7c9c; }
+.mb-rk-none { font-family: var(--font-serif-jp); font-size: 16px; color: #555; }
+.mb-myrank-visits { margin: 4px 0 0; font-size: 13.5px; color: #333; }
+
+/* FAQ */
+.mb-faq { margin-top: 14px; text-align: left; }
+.mb-faq-item { border-bottom: 1px solid #ece8e0; }
+.mb-faq-item summary { list-style: none; cursor: pointer; padding: 14px 26px 14px 2px; font-size: 14px; font-weight: 600; color: #111; position: relative; line-height: 1.6; }
+.mb-faq-item summary::-webkit-details-marker { display: none; }
+.mb-faq-item summary::after { content: "+"; position: absolute; right: 4px; top: 12px; font-size: 18px; color: var(--gold-deep); }
+.mb-faq-item[open] summary::after { content: "−"; }
+.mb-faq-item p { margin: 0 0 14px; padding: 0 2px; font-size: 13px; line-height: 1.85; color: #444; }
+.mb-q, .mb-a { font-family: var(--font-serif-en); font-weight: 700; margin-right: 6px; color: var(--gold-deep); }
+.mb-reserve-link { position: relative; z-index: 2; display: block; margin: 16px 14px 0; padding: 14px; text-align: center; border-radius: 12px; background: rgba(255, 253, 248, 0.85); border: 1px solid #e3d6bf; color: #5a4a3c; font-size: 14px; text-decoration: none; }
+
+/* トップページの会員制度バナー */
+.mb-topbanner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 14px 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #1a1a1a, #0d0d0d);
+  border: 1px solid #6f5a2e;
+  color: #e8cf8f;
+  text-decoration: none;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+.mb-topbanner-txt { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-width: 0; }
+.mb-topbanner-en { font-family: var(--font-serif-en); font-size: 12px; letter-spacing: 0.18em; color: #bfa265; }
+.mb-topbanner-t { font-size: 15px; font-weight: 700; color: #f0d79a; letter-spacing: 0.04em; }
+.mb-topbanner-s { font-size: 11.5px; color: #cdb37a; }
+.mb-topbanner-go { font-size: 18px; color: #d9bf86; }
