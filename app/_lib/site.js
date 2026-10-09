@@ -17,9 +17,9 @@ export const SITE_URL = `${ORIGIN}${BASE_PATH}/`;
 export const abs = (path = "") => `${SITE_URL}${String(path).replace(/^\/+/, "")}`;
 
 export const SITE = {
-  name: "AROMA DAIAMOND",
+  name: "AROMA DIAMOND",
   nameJa: "アロマダイヤモンド",
-  legalName: "AROMA DAIAMOND（アロマダイヤモンド）",
+  legalName: "AROMA DIAMOND（アロマダイヤモンド）",
   area: "亀戸",
   addressLocality: "亀戸",
   addressRegion: "東京都",
@@ -34,7 +34,7 @@ export const SITE = {
   hoursPhone: "9:30〜翌4:00", // 表示用（電話受付）
   priceRange: "¥13,000〜",
   description:
-    "宝石のように美しいセラピスト達。極上の癒しと刺激の空間 men's esthetic AROMA DAIAMOND（アロマダイヤモンド）亀戸。",
+    "宝石のように美しいセラピスト達。極上の癒しと刺激の空間 men's esthetic AROMA DIAMOND（アロマダイヤモンド）亀戸。",
   ogImage: "hero-banner.jpg",
   locale: "ja_JP",
 };

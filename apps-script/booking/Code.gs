@@ -13,7 +13,7 @@
  *   PROXY_SHARED_SECRET   … LINE署名検証プロキシから受け取る共有シークレット
  *   OWNER_EMAIL           … 店舗通知メール（STORE_EMAIL 未設定時の控え先）
  *   STORE_EMAIL           … 予約控えメールの送り先（例 aromadiamond00@gmail.com）
- *   MAIL_SENDER_NAME      … 送信者表示名。既定 "AROMA DAIAMOND"
+ *   MAIL_SENDER_NAME      … 送信者表示名。既定 "AROMA DIAMOND"
  *   STORE_TEL             … 文面に載せる電話番号。既定 "09043918013"
  *   PUBLIC_EXEC_URL       … 公開API /exec のURL（確認リンク生成用。未設定なら自動取得）
  *   TEST_MODE             … メール送信ガード。"false" で実送信、それ以外(既定)は送らずログのみ
@@ -553,7 +553,7 @@ function expireTentatives() {
    ・宛先メールが無い予約（電話・LINEなど）は自動スキップ（＝必須にしない）。
    ・TEST_MODE 中は実送信せずログのみ（本番前の検証用）。 */
 function senderName_() {
-  return cfg_("MAIL_SENDER_NAME", "AROMA DAIAMOND");
+  return cfg_("MAIL_SENDER_NAME", "AROMA DIAMOND");
 }
 function storeEmail_() {
   return cfg_("STORE_EMAIL", "") || cfg_("OWNER_EMAIL", "");
@@ -1105,7 +1105,7 @@ function confirmPage_(token) {
   var html =
     '<meta name="viewport" content="width=device-width,initial-scale=1">' +
     '<div style="font-family:sans-serif;max-width:420px;margin:40px auto;padding:0 20px;text-align:center;color:#333">' +
-    '<h2 style="color:#5a4a33;letter-spacing:.08em">AROMA DAIAMOND</h2>' +
+    '<h2 style="color:#5a4a33;letter-spacing:.08em">AROMA DIAMOND</h2>' +
     "<p style=\"font-size:15px;line-height:1.9\">" + msg + "</p></div>";
   return HtmlService.createHtmlOutput(html);
 }
@@ -1124,7 +1124,7 @@ function serveAdmin_() {
   t.staffEmail = email;
   return t
     .evaluate()
-    .setTitle("予約管理 | AROMA DAIAMOND")
+    .setTitle("予約管理 | AROMA DIAMOND")
     .addMetaTag("viewport", "width=device-width, initial-scale=1")
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
 }
@@ -2323,7 +2323,7 @@ function sendMemberMail_(r, cfg) {
   var lines = [
     r["ニックネーム"] + " 様",
     "",
-    "AROMA DAIAMOND の" + (vip ? "OPENING VIP 会員" : "会員") + "にご登録いただき、ありがとうございます。",
+    "AROMA DIAMOND の" + (vip ? "OPENING VIP 会員" : "会員") + "にご登録いただき、ありがとうございます。",
     "",
     "■ 会員番号：" + (vip ? "No." : "") + no,
   ];
@@ -2339,7 +2339,7 @@ function sendMemberMail_(r, cfg) {
     "お問い合わせ：" + cfg_("STORE_TEL", "09043918013"),
     senderName_()
   );
-  sendMail_(r["メール"], "【AROMA DAIAMOND】" + (vip ? "VIP会員" : "会員") + "登録完了（No." + no + "）", lines.join("\n"));
+  sendMail_(r["メール"], "【AROMA DIAMOND】" + (vip ? "VIP会員" : "会員") + "登録完了（No." + no + "）", lines.join("\n"));
   var store = storeEmail_();
   if (store) sendMail_(store, "[控え]" + (vip ? "VIP" : "会員") + "登録 No." + no, "ニックネーム: " + r["ニックネーム"] + "\n種別: " + r["種別"]);
 }
@@ -2622,7 +2622,7 @@ function privateBookStep1_copy() {
     Logger.log("すでに LEDGER_SHEET_ID が設定済みです: " + ledgerBook_().getUrl());
     return;
   }
-  var dst = SpreadsheetApp.create("AROMA DAIAMOND 予約台帳（非公開・共有しない）");
+  var dst = SpreadsheetApp.create("AROMA DIAMOND 予約台帳（非公開・共有しない）");
   var report = [];
   PRIVATE_TABS_.forEach(function (name) {
     var sh = src.getSheetByName(name);
@@ -2715,7 +2715,7 @@ function selfTest() {
    管理画面（Admin.html）は開いたときにこの版を確認し、Code.gs / lib.gs が古い・途中までしか
    貼られていない場合に警告を出す。※必ずファイルの「最後」に置く（途中で切れると無くなるので検出できる）。
    コードを変更したら Admin.html の APP_VERSION・lib.gs の LIB_VERSION と一緒に上げる。 */
-var CODE_VERSION = "2026-10-09-1";
+var CODE_VERSION = "2026-10-09-2";
 function adminVersion() {
   return { code: CODE_VERSION, lib: typeof LIB_VERSION === "undefined" ? "" : LIB_VERSION };
 }

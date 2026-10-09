@@ -6,11 +6,11 @@ import Breadcrumbs from "../_components/Breadcrumbs";
 export const metadata = {
   title: "外国人の方へ / For Foreign Customers",
   description:
-    "For foreign customers of AROMA DAIAMOND (Kameido). Reservation guide in English.",
+    "For foreign customers of AROMA DIAMOND (Kameido). Reservation guide in English.",
   alternates: { canonical: abs("foreigners/") },
   openGraph: {
     url: abs("foreigners/"),
-    title: "For Foreign Customers｜AROMA DAIAMOND Kameido",
+    title: "For Foreign Customers｜AROMA DIAMOND Kameido",
   },
 };
 

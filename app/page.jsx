@@ -19,37 +19,37 @@ const SLIDES = [
   {
     t: "10月限定\nLINE友だち追加特典",
     img: "slide-line3000.jpg",
-    alt: "10月中のLINE友だち追加で3,000円OFF｜AROMA DAIAMOND 亀戸（友だち追加期限 2026年10月31日）",
+    alt: "10月中のLINE友だち追加で3,000円OFF｜AROMA DIAMOND 亀戸（友だち追加期限 2026年10月31日）",
   },
   {
     t: "11月中旬\nOPEN",
     img: "slide-open.jpg",
-    alt: "2026年11月中旬 亀戸にグランドオープン｜AROMA DAIAMOND アロマダイヤモンド",
+    alt: "2026年11月中旬 亀戸にグランドオープン｜AROMA DIAMOND アロマダイヤモンド",
   },
   {
     t: "新規・新人\n特別割引",
     img: "slide-shinki.jpg",
-    alt: "新規・新人特別割引 2000円OFF｜AROMA DAIAMOND アロマダイヤモンド 亀戸",
+    alt: "新規・新人特別割引 2000円OFF｜AROMA DIAMOND アロマダイヤモンド 亀戸",
   },
   {
     t: "オープン\n記念特典",
     img: "slide-kinen.jpg",
-    alt: "11月限定 オープン記念特典 初回限定2,000円OFF｜AROMA DAIAMOND アロマダイヤモンド 亀戸",
+    alt: "11月限定 オープン記念特典 初回限定2,000円OFF｜AROMA DIAMOND アロマダイヤモンド 亀戸",
   },
   {
     t: "セラピスト\n大募集",
     img: "slide-recruit.jpg",
-    alt: "セラピスト大募集 高収入・完全個室待機・安心のサポート体制｜AROMA DAIAMOND アロマダイヤモンド 亀戸",
+    alt: "セラピスト大募集 高収入・完全個室待機・安心のサポート体制｜AROMA DIAMOND アロマダイヤモンド 亀戸",
   },
   {
     t: "会員様\n限定特典",
     img: "slide-member.jpg",
-    alt: "会員様限定特典 VIP会員様だけの特別なサービス｜AROMA DAIAMOND アロマダイヤモンド 亀戸",
+    alt: "会員様限定特典 VIP会員様だけの特別なサービス｜AROMA DIAMOND アロマダイヤモンド 亀戸",
   },
   {
     t: "アクセス\n公開予定",
     img: "slide-access.jpg",
-    alt: "11月上旬アクセス公開予定 駅近・好立地のプライベート空間｜AROMA DAIAMOND アロマダイヤモンド 亀戸",
+    alt: "11月上旬アクセス公開予定 駅近・好立地のプライベート空間｜AROMA DIAMOND アロマダイヤモンド 亀戸",
   },
 ];
 
@@ -121,13 +121,13 @@ export default function Home() {
       >
         {/* SEO/アクセシビリティ用の見出し（視覚的には非表示） */}
         <h1 className="sr-only">
-          AROMA DAIAMOND（アロマダイヤモンド）｜亀戸のメンズエステ
+          AROMA DIAMOND（アロマダイヤモンド）｜亀戸のメンズエステ
         </h1>
 
         {/* ---------- HEADER ---------- */}
         <header className="hero-header">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="hero-img" src={photoSrc("hero-banner.jpg")} alt="men's esthetic AROMA DAIAMOND アロマダイヤモンド KAMEIDO / 亀戸" />
+          <img className="hero-img" src={photoSrc("hero-banner.jpg")} alt="men's esthetic AROMA DIAMOND アロマダイヤモンド KAMEIDO / 亀戸" />
         </header>
 
         {/* ---------- 営業時間・電話受付バー ---------- */}

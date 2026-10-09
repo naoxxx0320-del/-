@@ -113,7 +113,7 @@ export default function RecruitForm({ role }) {
   const mailtoHref = () => {
     const subject = `【${roleLabel}応募】${form.name}`;
     const body = [
-      `AROMA DAIAMOND ${roleLabel} への応募`,
+      `AROMA DIAMOND ${roleLabel} への応募`,
       "",
       `応募職種：${roleLabel}`,
       `お名前：${form.name}`,

@@ -1,5 +1,5 @@
 /**
- * AROMA DAIAMOND｜求人応募フォームの受付（Google Apps Script）
+ * AROMA DIAMOND｜求人応募フォームの受付（Google Apps Script）
  * ------------------------------------------------------------------
  * サイトの応募フォーム（/careers/・/recruit/）から POST された応募内容を
  * スプレッドシートに保存し、店舗宛にメール通知します。
@@ -87,5 +87,5 @@ function doPost(e) {
 
 // 動作確認用（ブラウザで開いたときの応答）
 function doGet() {
-  return ContentService.createTextOutput("AROMA DAIAMOND recruit endpoint OK");
+  return ContentService.createTextOutput("AROMA DIAMOND recruit endpoint OK");
 }

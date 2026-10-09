@@ -8,9 +8,9 @@ import links from "../../data/links.json";
 export const metadata = {
   title: "はじめての方へ",
   description:
-    "AROMA DAIAMOND（アロマダイヤモンド）亀戸 をはじめてご利用の方へ。ご予約・お問い合わせ方法とご利用の流れ（STEP1〜5）をご案内します。",
+    "AROMA DIAMOND（アロマダイヤモンド）亀戸 をはじめてご利用の方へ。ご予約・お問い合わせ方法とご利用の流れ（STEP1〜5）をご案内します。",
   alternates: { canonical: abs("first/") },
-  openGraph: { url: abs("first/"), title: "はじめての方へ｜AROMA DAIAMOND 亀戸" },
+  openGraph: { url: abs("first/"), title: "はじめての方へ｜AROMA DIAMOND 亀戸" },
 };
 
 const TEL_DIGITS = SITE.telephone.replace(/\D/g, "");

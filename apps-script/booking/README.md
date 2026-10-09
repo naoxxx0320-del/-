@@ -1,4 +1,4 @@
-# 予約管理システム（AROMA DAIAMOND）
+# 予約管理システム（AROMA DIAMOND）
 
 WEB・LINE・電話の予約を **1つの台帳**に集約し、スタッフが登録・変更・確定・
 キャンセルできる小規模予約管理システムです。チョイスリザーブのような運用を、
@@ -216,7 +216,7 @@ LINE → Cloudflare Worker（X-Line-Signature検証）→ LINEボット(line-boo
 - 確認リンクは `PUBLIC_EXEC_URL`（未設定時は現デプロイURLを自動取得）から生成。
 
 **関連スクリプトプロパティ**（予約管理API側）:
-`STORE_EMAIL` / `MAIL_SENDER_NAME`（既定 "AROMA DAIAMOND"）/ `STORE_TEL`（既定 "09043918013"）/
+`STORE_EMAIL` / `MAIL_SENDER_NAME`（既定 "AROMA DIAMOND"）/ `STORE_TEL`（既定 "09043918013"）/
 `PUBLIC_EXEC_URL` / `TEST_MODE`。
 
 **TEST_MODE → 本番切替手順**（安全側の既定＝テストモード）:

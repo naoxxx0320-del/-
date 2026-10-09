@@ -7,11 +7,11 @@ import links from "../../data/links.json";
 export const metadata = {
   title: "プライバシーポリシー",
   description:
-    "AROMA DAIAMOND（アロマダイヤモンド）亀戸 のプライバシーポリシー（個人情報保護方針）。個人情報の取り扱い・収集・第三者提供・開示等についてご案内します。",
+    "AROMA DIAMOND（アロマダイヤモンド）亀戸 のプライバシーポリシー（個人情報保護方針）。個人情報の取り扱い・収集・第三者提供・開示等についてご案内します。",
   alternates: { canonical: abs("privacy/") },
   openGraph: {
     url: abs("privacy/"),
-    title: "プライバシーポリシー｜AROMA DAIAMOND 亀戸",
+    title: "プライバシーポリシー｜AROMA DIAMOND 亀戸",
   },
 };
 
@@ -34,7 +34,7 @@ export default function Privacy() {
         <NavGrid base="../" />
 
         <p className="terms-intro">
-          AROMA DAIAMOND（アロマダイヤモンド）はお客様のプライバシーを第一に考え運営しております。
+          AROMA DIAMOND（アロマダイヤモンド）はお客様のプライバシーを第一に考え運営しております。
           個人情報に対する取り扱いにあたり、以下の事項のプライバシーポリシー（個人情報保護方針）を公表いたします。
         </p>
 
@@ -105,7 +105,7 @@ export default function Privacy() {
 
         <p className="pp-meta">
           制定：2026年9月<br />
-          AROMA DAIAMOND（アロマダイヤモンド）／亀戸
+          AROMA DIAMOND（アロマダイヤモンド）／亀戸
         </p>
 
         <SiteChrome base="../" />

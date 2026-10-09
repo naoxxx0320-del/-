@@ -1,5 +1,5 @@
 /**
- * AROMA DAIAMOND｜GPT 経営・分析レポート自動生成（Google Apps Script）
+ * AROMA DIAMOND｜GPT 経営・分析レポート自動生成（Google Apps Script）
  * ------------------------------------------------------------------
  * 予約データ（Googleスプレッドシート）を集計し、OpenAI API（GPT）に渡して
  * 「経営・分析担当」としての分析レポートを自動生成し、レポート用シートへ保存
@@ -48,7 +48,7 @@ function runAnalysis() {
   if (to) {
     MailApp.sendEmail(
       to,
-      "【AROMA DAIAMOND】GPT経営・分析レポート " +
+      "【AROMA DIAMOND】GPT経営・分析レポート " +
         Utilities.formatDate(new Date(), "Asia/Tokyo", "yyyy/MM/dd"),
       report
     );
@@ -149,7 +149,7 @@ function parseDate_(v) {
 function callOpenAI_(key, summary) {
   var model = SP.getProperty("OPENAI_MODEL") || "gpt-4o-mini";
   var system =
-    "あなたは東京・亀戸のメンズエステ『AROMA DAIAMOND』の経営・分析アドバイザーです。" +
+    "あなたは東京・亀戸のメンズエステ『AROMA DIAMOND』の経営・分析アドバイザーです。" +
     "渡されるのは個人を特定できない集計データのみです。日本語で、次の構成で簡潔に出力してください。\n" +
     "1) 現状サマリ（数字の要点）\n" +
     "2) 気づき・課題（データから読み取れること）\n" +

@@ -7,9 +7,9 @@ import TherapistDirectory from "./TherapistDirectory";
 
 export const metadata = {
   title: "セラピスト",
-  description: "AROMA DAIAMOND（アロマダイヤモンド）亀戸 在籍セラピスト一覧。",
+  description: "AROMA DIAMOND（アロマダイヤモンド）亀戸 在籍セラピスト一覧。",
   alternates: { canonical: abs("therapist/") },
-  openGraph: { url: abs("therapist/"), title: "セラピスト｜AROMA DAIAMOND 亀戸" },
+  openGraph: { url: abs("therapist/"), title: "セラピスト｜AROMA DIAMOND 亀戸" },
 };
 
 export default function Therapist() {

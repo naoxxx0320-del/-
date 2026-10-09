@@ -1,6 +1,6 @@
-# AROMA DAIAMOND — メンズエステ サイト（TOPページ）
+# AROMA DIAMOND — メンズエステ サイト（TOPページ）
 
-men's esthetic「AROMA DAIAMOND（アロマ ダイアモンド）／亀戸」の TOP ページを、
+men's esthetic「AROMA DIAMOND（アロマ ダイアモンド）／亀戸」の TOP ページを、
 参考デザインに合わせて構築したものです。
 **まずはレイアウト・デザインの再現を最優先**に構築しています。
 
@@ -59,7 +59,7 @@ npx serve out                     # 例: 簡易サーバーで確認
 
 - **メタデータ**：`app/layout.jsx` に OGP（Open Graph）・Twitter カード・
   canonical・robots・keywords を集約。各ページはタイトルテンプレートで
-  `ページ名｜AROMA DAIAMOND 亀戸` に統一。
+  `ページ名｜AROMA DIAMOND 亀戸` に統一。
 - **構造化データ（JSON-LD）**：`app/_components/StructuredData.jsx`。
   店舗情報（`HealthAndBeautyBusiness`）＋サイト情報（`WebSite`）を出力。
   営業時間・エリア（東京都江東区亀戸）・コース料金（`data/reserve-config.json`

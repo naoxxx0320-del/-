@@ -7,7 +7,7 @@ const activePrizes = prizes.filter((prize) => campaign.prizeRules.some((rule) =>
 
 export const metadata = {
   title: "宝石の抽選ゲーム｜体験版",
-  description: "AROMA DAIAMONDの宝石を選ぶ抽選ゲーム体験版。実際の応募・当選は発生しません。",
+  description: "AROMA DIAMONDの宝石を選ぶ抽選ゲーム体験版。実際の応募・当選は発生しません。",
   robots: { index: false, follow: false },
   alternates: { canonical: null },
 };
@@ -19,7 +19,7 @@ export default function LotteryPage() {
         <span>体験版</span> 実際の応募・当選にはなりません
       </div>
       <header className={styles.header}>
-        <a href="../" aria-label="AROMA DAIAMOND トップへ">
+        <a href="../" aria-label="AROMA DIAMOND トップへ">
           <span className={styles.brandMark} aria-hidden="true">◇</span>
           <span>{SITE.name}<small>{SITE.area} · PRIVATE SALON</small></span>
         </a>
