@@ -19,6 +19,7 @@ export default function sitemap() {
     ["system/", 0.8],
     ["access/", 0.7],
     ["reserve/", 0.8],
+    ["membership/", 0.7],
     ["gallery/", 0.6],
     ["foreigners/", 0.5],
     ["flow/", 0.6],

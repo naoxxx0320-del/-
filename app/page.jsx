@@ -225,6 +225,19 @@ export default function Home() {
           ))}
         </div>
 
+        {/* ---------- 会員制度（DIAMOND MEMBERSHIP）への導線 ---------- */}
+        <a className="mb-topbanner" href="membership/">
+          <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true">
+            <path d="M4 9 L8 4 H16 L20 9 L12 20.5 Z M4 9 H20 M8 4 L10 9 L12 20.5 M16 4 L14 9 L12 20.5 M10 9 L12 4 L14 9" fill="none" stroke="#d9bf86" strokeWidth="1.1" strokeLinejoin="round" />
+          </svg>
+          <span className="mb-topbanner-txt">
+            <span className="mb-topbanner-en">DIAMOND MEMBERSHIP</span>
+            <span className="mb-topbanner-t">OPENING VIP 先着100名様限定</span>
+            <span className="mb-topbanner-s">入会金・年会費無料｜来店するほど、特別な待遇へ</span>
+          </span>
+          <span className="mb-topbanner-go" aria-hidden="true">›</span>
+        </a>
+
         {/* ---------- INFORMATION / 案内状況 ---------- */}
         <div className="info-head">
           <span className="ih-en">Information</span>

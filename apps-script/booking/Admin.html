@@ -125,6 +125,9 @@
     .tdy-card .row2 label { font-size:11px; color:#6b5d44; display:flex; flex-direction:column; gap:2px; }
     .tdy-card.off { opacity:.6; background:#f6f3ee; }
     .tdy-save { position:sticky; bottom:0; background:linear-gradient(180deg,rgba(244,239,231,0),#f4efe7 30%); padding:12px 0 8px; display:flex; gap:8px; align-items:center; }
+    .mrank { display:inline-block; font-size:11px; padding:1px 7px; border-radius:10px; border:1px solid #ddd; background:#f6f6f6; color:#555; }
+    .mrank.SILVER { color:#6c737a; border-color:#cfd4d8; } .mrank.GOLD { color:#8a6d2f; border-color:#e2d3ad; background:#fbf6ea; } .mrank.DIAMOND { color:#3f6d8e; border-color:#c7d9e6; background:#f1f6fa; }
+    .mvip { display:inline-block; font-size:11px; padding:1px 7px; border-radius:10px; background:#111; color:#e8cf8f; }
     .settled { display:inline-block; font-size:11px; padding:1px 7px; border-radius:10px; background:#e7f6ec; color:#1f6b3a; border:1px solid #bfe3cb; }
   </style>
 </head>
@@ -136,6 +139,7 @@
       <button class="ptab" id="tab-tdy">本日</button>
       <button class="ptab" id="tab-th">セラピスト</button>
       <button class="ptab" id="tab-pr">実績</button>
+      <button class="ptab" id="tab-mb">会員</button>
     </nav>
     <span class="me" id="me"></span>
   </header>
@@ -209,6 +213,18 @@
     <main>
       <div id="tdy-body"><div class="loading">読み込み中…</div></div>
       <p class="tt-hint">トップページの「本日の出勤」「只今の案内状況」に出る人は、週間出勤表の今日の出勤から自動で決まります（休み・申請中は出ません）。ここでは空き状況・次の案内時刻・並び順を変えられます。保存するとサイトに自動で反映されます（数分）。今日は朝6時に切り替わります。</p>
+    </main>
+  </div>
+
+  <!-- 会員 -->
+  <div id="page-mb" style="display:none">
+    <div class="bar">
+      <button class="ghost" id="mb-reload">更新</button>
+      <label>絞り込み<input type="text" id="mb-q" placeholder="番号・ニックネーム・メール・電話" /></label>
+    </div>
+    <main>
+      <div id="mb-body"><div class="loading">読み込み中…</div></div>
+      <p class="tt-hint">来店回数は直近6か月の「精算」済みのご来店（有料施術の完了）を、電話番号・メールで照合して数えます。回数の修正は、該当予約の精算を修正・取り消してください（履歴に残ります）。会員の連絡先は管理画面の中だけで扱い、外に出さないでください。</p>
     </main>
   </div>
 
@@ -368,7 +384,7 @@
       { label: "延長30分", price: 6000 },
     ];
     var STAFF_EMAIL = "<?= staffEmail ?>";
-    var APP_VERSION = "2026-10-07-5"; // Code.gs の CODE_VERSION・lib.gs の LIB_VERSION と同じ値
+    var APP_VERSION = "2026-10-09-1"; // Code.gs の CODE_VERSION・lib.gs の LIB_VERSION と同じ値
 
     // 画面の不具合を「読み込み中」のまま止めず、理由を表示する
     function showVerWarn(msg){ var b=document.getElementById("ver-warn"); b.innerHTML=msg; b.style.display="block"; }
@@ -397,6 +413,14 @@
       return r.visitNo>=2
         ? '<span class="rep again">リピーター '+r.visitNo+'回目</span>'
         : '<span class="rep new">初回</span>';
+    }
+    // 会員番号・来店ランク（直近6か月の精算済み来店）
+    function memberHtml(r){
+      var m=r&&r.member; if(!m) return "";
+      var h="";
+      if(m.memberNo) h+=' <span class="mvip">'+(m.memberKind==="VIP"?"VIP No.":"会員 ")+esc(m.memberNo)+'</span>';
+      if(m.rank) h+=' <span class="mrank '+esc(m.rank)+'">'+esc(m.rank)+'</span>';
+      return h;
     }
     function repText(r){
       if(!r || !r.visitNo) return "";
@@ -451,6 +475,7 @@
           + '<span class="src">'+esc(r.source)+'</span>'
           + repHtml(r)
           + (r.settled?' <span class="settled">精算済</span>':'')
+          + memberHtml(r)
           + '<span style="margin-left:auto;font-weight:700">'+esc(r.therapistName)+'</span></div>'
           + '<div class="meta">'+esc(r.customerName||"（名前なし）")+'　'+esc(r.course||"")+'　'+(r.price?("¥"+Number(r.price).toLocaleString()):"")
           + (r.tel?'　☎ '+esc(r.tel):'')+(r.email?'　✉ '+esc(r.email):'')
@@ -467,6 +492,7 @@
       $("d-body").innerHTML =
         "<b>"+esc(r.therapistName)+"</b>　<span class='pill st-"+esc(r.status)+"'>"+esc(r.statusLabel)+"</span>　<span class='src'>"+esc(r.source)+"</span>　"+repHtml(r)+"<br>"
         +(repText(r)?("来店 "+esc(repText(r))+"<br>"):"")
+        +(r.member&&(r.member.memberNo||r.member.rank)?("会員 "+memberHtml(r)+"　直近6か月の来店 "+esc(r.member.visits)+"回<br>"):"")
         +"開始 "+esc(r.start)+"<br>終了 "+esc(r.end)+"（"+esc(r.durationMin)+"分）<br>"
         +"コース "+esc(r.course||"")+"　料金 "+(r.price?("¥"+Number(r.price).toLocaleString()):"-")+"<br>"
         +"お客様 "+esc(r.customerName||"-")+"<br>連絡先 "+esc(r.tel||"-")+" / "+esc(r.email||"-")+(r.lineUserId?(" / LINE:"+esc(r.lineUserId)):"")+"<br>"
@@ -641,15 +667,17 @@
 
     // ---- ページ切替 ----
     function showPage(pg){
-      ["bk","tdy","th","pr"].forEach(function(k){ $("page-"+k).style.display = k===pg?"block":"none"; $("tab-"+k).classList.toggle("on", k===pg); });
+      ["bk","tdy","th","pr","mb"].forEach(function(k){ $("page-"+k).style.display = k===pg?"block":"none"; $("tab-"+k).classList.toggle("on", k===pg); });
       if(pg==="th" && !shData) loadShifts();
       if(pg==="pr" && window.loadPayroll) window.loadPayroll(true);
       if(pg==="tdy" && window.loadToday) window.loadToday();
+      if(pg==="mb" && window.loadMembers) window.loadMembers();
     }
     $("tab-bk").onclick=function(){ showPage("bk"); };
     $("tab-th").onclick=function(){ showPage("th"); };
     $("tab-pr").onclick=function(){ showPage("pr"); };
     $("tab-tdy").onclick=function(){ showPage("tdy"); };
+    $("tab-mb").onclick=function(){ showPage("mb"); };
     window.showPage=showPage;
 
     // ---- 週間出勤表 ----
@@ -1198,6 +1226,55 @@
     }
     $("tdy-reload").onclick=function(){ if(dirty && !confirm("未保存の変更は失われます。更新しますか？")) return; loadToday(); };
     $("tdy-goth").onclick=function(){ window.showPage("th"); };
+  })();
+  </script>
+
+  <script>
+  /* ===== 会員（DIAMOND MEMBERSHIP）一覧 ===== */
+  (function(){
+    var md=null;
+    window.loadMembers=function(){
+      var err=function(m){ $("mb-body").innerHTML='<div class="err">'+esc(m)+'</div>'; };
+      if(!hasServer("adminMembers")){ err("サーバー側のコード（Code.gs）に会員の機能がありません。Code.gs・lib.gs を最新に貼り替え、「新バージョン」でデプロイしてください。"); return; }
+      $("mb-body").innerHTML='<div class="loading">読み込み中…</div>';
+      google.script.run.withSuccessHandler(function(res){
+        if(!res||!res.ok){ err((res&&res.reason)||"取得に失敗しました"); return; }
+        md=res; try{ render(); }catch(e){ err("表示に失敗しました："+(e&&e.message?e.message:e)); }
+      }).withFailureHandler(function(e){ err(e&&e.message?e.message:e); }).adminMembers();
+    };
+    var PH={before:"募集前",open:"受付中",full:"満員（受付終了）",closed:"期間終了"};
+    function render(){
+      var v=md.vip, q=($("mb-q").value||"").trim().toLowerCase();
+      var rows=md.rows.filter(function(r){ return !q || [r.no,r.nickname,r.email,r.tel].join(" ").toLowerCase().indexOf(q)>=0; });
+      var cnt={SILVER:0,GOLD:0,DIAMOND:0}; md.rows.forEach(function(r){ if(r.rank&&r.status!=="取消") cnt[r.rank]++; });
+      var h='<div><span class="stat">OPENING VIP<b>'+v.count+'</b> / '+v.capacity+'名</span><span class="stat">'+esc(PH[v.phase]||v.phase)+'</span>'
+        +'<span class="stat">会員<b>'+md.rows.length+'</b>名</span><span class="stat">SILVER<b>'+cnt.SILVER+'</b> GOLD<b>'+cnt.GOLD+'</b> DIAMOND<b>'+cnt.DIAMOND+'</b></span></div>'
+        +'<p class="note">VIP募集 '+esc(v.openAt)+' 〜 '+esc(v.closeAt)+' ／ 特典は '+esc(v.validUntil)+' まで</p>';
+      if(!rows.length) h+='<div class="empty">'+(md.rows.length?"該当する会員はいません。":"まだ会員登録はありません。")+'</div>';
+      rows.forEach(function(r,i){
+        h+='<div class="card'+(r.status==="取消"?' tdy-card off':'')+'"><div class="top"><span class="mvip">'+(r.kind==="VIP"?"VIP No.":"会員 ")+esc(r.no)+'</span>'
+          +(r.rank?' <span class="mrank '+esc(r.rank)+'">'+esc(r.rank)+'</span>':' <span class="mrank">ランク未付与</span>')
+          +(r.status==="取消"?' <span class="pill st-cancelled">取消</span>':'')
+          +'<span style="margin-left:auto;font-weight:700">'+esc(r.nickname)+'</span></div>'
+          +'<div class="meta">✉ '+esc(r.email)+(r.tel?'　☎ '+esc(r.tel):'')+'<br>登録 '+esc(r.registeredAt)+'　来店（6か月）'+esc(r.visits)+'回'
+          +(r.birthMonth?'　誕生月 '+esc(r.birthMonth)+'月':'')+(r.marketing?'　お知らせ可':'')+(r.memo?'<br>📝 '+esc(r.memo):'')+'</div>'
+          +'<div class="row-actions"><button class="ghost" data-mmemo="'+esc(r.no)+'">メモ</button>'
+          +(r.status==="取消"?'<button class="ghost" data-mon="'+esc(r.no)+'">有効に戻す</button>':'<button class="danger" data-moff="'+esc(r.no)+'">登録を取消</button>')+'</div></div>';
+      });
+      $("mb-body").innerHTML=h;
+    }
+    function update(p, msg){
+      google.script.run.withSuccessHandler(function(r){ if(r&&r.ok){ toast(msg); loadMembers(); } else alert("できませんでした："+((r&&r.reason)||"不明")); })
+        .withFailureHandler(function(e){ alert("エラー："+(e&&e.message?e.message:e)); }).adminMemberUpdate(p);
+    }
+    $("mb-body").addEventListener("click",function(ev){
+      var b=ev.target.closest("button"); if(!b) return;
+      if(b.hasAttribute("data-moff")){ var no=b.getAttribute("data-moff"); if(confirm("No."+no+" の登録を取り消します（会員証が使えなくなります）。よろしいですか？")) update({no:no,status:"取消"},"取り消しました"); }
+      else if(b.hasAttribute("data-mon")){ update({no:b.getAttribute("data-mon"),status:"有効"},"有効に戻しました"); }
+      else if(b.hasAttribute("data-mmemo")){ var n2=b.getAttribute("data-mmemo"); var cur=(md.rows.filter(function(r){return r.no===n2;})[0]||{}).memo||""; var m=prompt("No."+n2+" のメモ（スタッフ用）",cur); if(m!=null) update({no:n2,memo:m},"メモを保存しました"); }
+    });
+    $("mb-reload").onclick=function(){ loadMembers(); };
+    $("mb-q").addEventListener("input",function(){ if(md) render(); });
   })();
   </script>
 </body>

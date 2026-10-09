@@ -360,6 +360,25 @@ LINE → Cloudflare Worker（X-Line-Signature検証）→ LINEボット(line-boo
 - サイト側は閲覧時点の日付で今日の行を選び直すので、更新が無いまま日付が変わっても前日の出勤は出ません。
 - 実装：`adminToday` / `adminTodaySave` / `autoDeployIfToday_`、サイトは `app/_components/today.js`。
 
+### 会員制度（DIAMOND MEMBERSHIP・OPENING VIP）
+
+- **公開ページ** `/membership/`（サイト）：メインビジュアル（OPENING VIP → 3ランク）、VIP 5大特典、ランク比較、仕組み、
+  登録、FAQ。トップページにバナー。会員証 `/membership/card/?k=…`（ご本人専用URL・検索除外）。
+- **登録**（公開API `member_register`・POST）：ニックネーム・メール（必須）・電話・誕生月（任意）・規約同意（必須）・
+  お知らせ同意（任意）。`LockService` の中で番号を発行するので、同時に申し込まれても定員を超えません。
+  メール・電話の重複、同じ送信の再送（冪等キー）も防ぎます。VIP受付中は VIP（001〜100）、
+  満員・期間終了後は通常会員（M0001〜）。募集開始前は受け付けません。登録完了メールで番号と会員証URLを送信（TEST_MODE に従う）。
+- **受付状況**（公開API `vip_status`）：人数の集計と状態（before / open / full / closed）だけを返します（個人情報なし）。
+- **会員証**（公開API `member_card`）：本人だけが知るキーで照会。会員番号・ニックネーム・来店回数・ランクを返し、
+  メール・電話は返しません。
+- **来店ランク**：直近6か月の「精算」済み（＝有料施術の完了をスタッフが確認した）来店を、電話番号・メールで照合して数えます。
+  0回=未付与／1〜2回 SILVER／3〜5回 GOLD／6回以上 DIAMOND。回数の修正は精算の修正・取消で行い、履歴に残ります。
+- **管理画面**：「会員」タブ（一覧・検索・取消/復帰・メモ）、予約一覧と詳細に会員番号とランクを表示。
+- **保存先**：非公開ファイル（`LEDGER_SHEET_ID`）の「会員」シート。
+- **設定（任意・スクリプトプロパティ）**：`VIP_OPEN_AT`（既定 2026/10/10 00:00）・`VIP_CLOSE_AT`（2026/11/14 23:59）・
+  `VIP_CAPACITY`（100）・`VIP_VALID_UNTIL`（2026/12/31）・`SITE_URL`。表示用の日付はサイトの `data/membership-config.json`（そろえること）。
+- テスト：`node apps-script/booking/tests/member.test.mjs`
+
 ### 実績・バック計算（精算の入力・月の集計）
 
 - **精算（接客後）**：予約の「詳細」→「**精算**」。担当したセラピスト・コース料金・延長（回数）・指名
