@@ -17,7 +17,7 @@ LINEログインチャネルの「LIFF」タブからアプリを追加します
 
 | 項目 | 入力する内容 |
 | --- | --- |
-| LIFFアプリ名 | AROMA DAIAMOND 抽選 |
+| LIFFアプリ名 | AROMA DIAMOND 抽選 |
 | サイズ | Full |
 | エンドポイントURL | `https://aroma-daiamond.com/lottery-line.html` |
 | Scope | `openid` と `profile` |
@@ -29,7 +29,7 @@ LINEログインチャネルの「LIFF」タブからアプリを追加します
 
 ## 3. Google側に抽選専用の台帳を作る
 
-1. [Googleスプレッドシート](https://sheets.google.com/)で新規作成し、名前を「AROMA DAIAMOND 抽選台帳」にします。共有は非公開のままにします。
+1. [Googleスプレッドシート](https://sheets.google.com/)で新規作成し、名前を「AROMA DIAMOND 抽選台帳」にします。共有は非公開のままにします。
 2. この新しいシートの「拡張機能 → Apps Script」を開きます。
 3. 初期の `myFunction` を削除し、`apps-script/lottery-install.gs` の内容を全て貼って保存します。このファイルにはサーバーと初期設定がまとまっています。既存のLINE予約用Webhookプロジェクトには貼りません。
 4. スプレッドシートのタブを開いた状態で、Apps Scriptの実行対象を `setupLottery` にして実行します。初回は自分が作成したスクリプトへの権限を確認して許可します。

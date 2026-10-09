@@ -1,5 +1,5 @@
 /**
- * AROMA DAIAMOND — LINE 自動応答＋自動予約 bot（Google Apps Script）
+ * AROMA DIAMOND — LINE 自動応答＋自動予約 bot（Google Apps Script）
  * =====================================================================
  * これは「サイト」とは別に動くサーバー処理です。LINE Messaging API の
  * Webhook を受け取り、トーク上で自動応答・予約受付を行い、予約内容を
@@ -699,10 +699,10 @@ function kv_(k, v) {
 }
 
 function welcomeMessage() {
-  return menuMessage("AROMA DAIAMOND（亀戸）へようこそ。\nご予約・本日の出勤・料金は下のボタンからどうぞ。");
+  return menuMessage("AROMA DIAMOND（亀戸）へようこそ。\nご予約・本日の出勤・料金は下のボタンからどうぞ。");
 }
 function menuMessage(lead) {
-  return card_("AROMA DAIAMOND 亀戸", null, [
+  return card_("AROMA DIAMOND 亀戸", null, [
     txt_(lead || "ご用件をお選びください。", { wrap: true, size: "sm", color: C.sub }),
   ], [
     postBtn_("📅 予約する", "a=start", "primary", "予約する"),

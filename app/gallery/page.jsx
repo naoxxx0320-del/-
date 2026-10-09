@@ -7,9 +7,9 @@ import Breadcrumbs from "../_components/Breadcrumbs";
 export const metadata = {
   title: "フォトギャラリー",
   description:
-    "AROMA DAIAMOND（アロマダイヤモンド）亀戸 の空間・セラピストのフォトギャラリー。",
+    "AROMA DIAMOND（アロマダイヤモンド）亀戸 の空間・セラピストのフォトギャラリー。",
   alternates: { canonical: abs("gallery/") },
-  openGraph: { url: abs("gallery/"), title: "フォトギャラリー｜AROMA DAIAMOND 亀戸" },
+  openGraph: { url: abs("gallery/"), title: "フォトギャラリー｜AROMA DIAMOND 亀戸" },
 };
 
 export default function Gallery() {

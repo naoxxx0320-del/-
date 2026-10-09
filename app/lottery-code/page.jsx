@@ -9,7 +9,7 @@ export const metadata = {
 
 export default function LotteryCodePage() {
   return <main className={styles.page}><div className={styles.card}>
-    <p className={styles.brand}>AROMA DAIAMOND</p>
+    <p className={styles.brand}>AROMA DIAMOND</p>
     <p className={styles.badge}>管理者向け・URL抽選の更新</p>
     <h1>最新コードを一括コピー</h1>
     <p className={styles.lead}>下のボタンを押すと、Apps Scriptに貼り付けるコード全文をコピーできます。</p>

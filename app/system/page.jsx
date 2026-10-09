@@ -7,9 +7,9 @@ import Breadcrumbs from "../_components/Breadcrumbs";
 export const metadata = {
   title: "料金システム",
   description:
-    "AROMA DAIAMOND（アロマダイヤモンド）亀戸 メンズエステの料金システム・コース・オプション一覧。",
+    "AROMA DIAMOND（アロマダイヤモンド）亀戸 メンズエステの料金システム・コース・オプション一覧。",
   alternates: { canonical: abs("system/") },
-  openGraph: { url: abs("system/"), title: "料金システム｜AROMA DAIAMOND 亀戸" },
+  openGraph: { url: abs("system/"), title: "料金システム｜AROMA DIAMOND 亀戸" },
 };
 
 const yen = (n) => n.toLocaleString("ja-JP") + "円";
@@ -97,7 +97,7 @@ export default function System() {
         <img
           className="sys-img"
           src={photoSrc("system-price.jpg", "../")}
-          alt="料金システム COURSE LIST／OPTION menu｜AROMA DAIAMOND 亀戸"
+          alt="料金システム COURSE LIST／OPTION menu｜AROMA DIAMOND 亀戸"
         />
 
         {/* ---- 各コースの説明 ---- */}
@@ -133,7 +133,7 @@ export default function System() {
           <img
             className="sys-pay-img"
             src={photoSrc("payment-credit.jpg", "../")}
-            alt="クレジット決済可能（VISA／Mastercard／JCB／AMERICAN EXPRESS／Diners Club／Clickで決済）。決済前は必ずお電話にて金額をお確かめください｜AROMA DAIAMOND 亀戸"
+            alt="クレジット決済可能（VISA／Mastercard／JCB／AMERICAN EXPRESS／Diners Club／Clickで決済）。決済前は必ずお電話にて金額をお確かめください｜AROMA DIAMOND 亀戸"
           />
           <p className="sys-pay-note">
             <span className="sys-pay-badge">PayPay（準備中）</span>

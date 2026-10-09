@@ -503,7 +503,7 @@ export default function Reserve() {
         <div className="rsv">
           <div className="rsv-head">
             <div className="rsv-logo">WEB予約</div>
-            <div className="rsv-sub">AROMA DAIAMOND｜亀戸</div>
+            <div className="rsv-sub">AROMA DIAMOND｜亀戸</div>
           </div>
           <div className="rsv-done">
             <div className="rsv-done-ic mail">✉</div>
@@ -608,7 +608,7 @@ export default function Reserve() {
       <div className="rsv">
         <div className="rsv-head">
           <div className="rsv-logo">WEB予約</div>
-          <div className="rsv-sub">AROMA DAIAMOND｜亀戸</div>
+          <div className="rsv-sub">AROMA DIAMOND｜亀戸</div>
         </div>
 
         {/* 進捗ステッパー */}

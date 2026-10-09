@@ -3,7 +3,7 @@ import CardView from "./CardView";
 
 export const metadata = {
   title: "デジタル会員証",
-  description: "AROMA DAIAMOND のデジタル会員証。",
+  description: "AROMA DIAMOND のデジタル会員証。",
   robots: { index: false, follow: false }, // ご本人専用ページ（検索に出さない）
 };
 

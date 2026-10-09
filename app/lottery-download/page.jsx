@@ -11,7 +11,7 @@ export default function LotteryDownloadPage() {
   return (
     <main className={styles.page}>
       <div className={styles.card}>
-        <p className={styles.brand}>AROMA DAIAMOND</p>
+        <p className={styles.brand}>AROMA DIAMOND</p>
         <p className={styles.badge}>体験版 · 実際の応募・当選は発生しません</p>
         <h1>宝石の抽選ゲーム<br />スマホ版</h1>
         <p className={styles.lead}>宝石を選ぶと、その場で結果の演出を楽しめます。スタイルとゲームの処理をまとめた、単体のHTMLファイルです。</p>

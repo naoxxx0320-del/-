@@ -79,7 +79,7 @@ export default function SiteChrome({ base = "", hideFooterbar = false }) {
       <div className="site-copy">
         <p className="sc-line">
           亀戸メンズエステ{" "}
-          <span className="sc-brand">AROMA DAIAMOND（アロマダイヤモンド）</span>
+          <span className="sc-brand">AROMA DIAMOND（アロマダイヤモンド）</span>
         </p>
         <p className="sc-copy">All rights reserved.</p>
         <a

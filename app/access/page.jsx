@@ -7,9 +7,9 @@ import links from "../../data/links.json";
 export const metadata = {
   title: "アクセス",
   description:
-    "AROMA DAIAMOND（アロマダイヤモンド）亀戸 へのアクセス。JR亀戸駅から徒歩圏内。詳しい所在地はご予約確定後にご案内します。",
+    "AROMA DIAMOND（アロマダイヤモンド）亀戸 へのアクセス。JR亀戸駅から徒歩圏内。詳しい所在地はご予約確定後にご案内します。",
   alternates: { canonical: abs("access/") },
-  openGraph: { url: abs("access/"), title: "アクセス｜AROMA DAIAMOND 亀戸" },
+  openGraph: { url: abs("access/"), title: "アクセス｜AROMA DIAMOND 亀戸" },
 };
 
 /* 駅からの道案内。 */
@@ -21,7 +21,7 @@ const STEPS = [
 ];
 
 const INFO = [
-  ["店名", "AROMA DAIAMOND（アロマダイヤモンド）"],
+  ["店名", "AROMA DIAMOND（アロマダイヤモンド）"],
   ["エリア", "東京都 江東区 亀戸"],
   ["最寄駅", "JR亀戸駅 北口 徒歩5分"],
   ["営業時間", "10:00〜翌5:00"],
@@ -70,7 +70,7 @@ export default function Access() {
           {/* ---- 地図（亀戸駅周辺） ---- */}
           <div className="acc-map">
             <iframe
-              title="AROMA DAIAMOND 亀戸 周辺マップ（JR亀戸駅）"
+              title="AROMA DIAMOND 亀戸 周辺マップ（JR亀戸駅）"
               src="https://maps.google.com/maps?q=JR%E4%BA%80%E6%88%B8%E9%A7%85&z=15&output=embed"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"

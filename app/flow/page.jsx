@@ -6,9 +6,9 @@ import { abs } from "../_lib/site";
 export const metadata = {
   title: "ご利用の流れ",
   description:
-    "AROMA DAIAMOND（アロマダイヤモンド）亀戸 のご利用の流れ。ご予約からご来店、駅からの道順、退店までを分かりやすくご案内します。",
+    "AROMA DIAMOND（アロマダイヤモンド）亀戸 のご利用の流れ。ご予約からご来店、駅からの道順、退店までを分かりやすくご案内します。",
   alternates: { canonical: abs("flow/") },
-  openGraph: { url: abs("flow/"), title: "ご利用の流れ｜AROMA DAIAMOND 亀戸" },
+  openGraph: { url: abs("flow/"), title: "ご利用の流れ｜AROMA DIAMOND 亀戸" },
 };
 
 // 電話アイコン（ゴールド）

@@ -12,7 +12,7 @@ const GALLERY = [
   { photo: "therapist-intro.jpg", caption: "容姿端麗なセラピスト" },
   { photo: "therapist-mio.jpg", caption: "みお" },
   { photo: "therapist-karen.jpg", caption: "花恋" },
-  { photo: "hero-banner.jpg", caption: "AROMA DAIAMOND｜亀戸" },
+  { photo: "hero-banner.jpg", caption: "AROMA DIAMOND｜亀戸" },
 ];
 
 export default function GalleryClient() {

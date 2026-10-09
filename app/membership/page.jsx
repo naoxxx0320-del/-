@@ -9,11 +9,11 @@ import RegisterSection from "./RegisterSection";
 export const metadata = {
   title: "会員制度・VIP特典",
   description:
-    "AROMA DAIAMOND（アロマダイヤモンド）亀戸の会員制度「DIAMOND MEMBERSHIP」。オープン記念 OPENING VIP は先着100名様限定・入会金年会費無料。ご来店回数に応じて SILVER・GOLD・DIAMOND の特典が受けられます。",
+    "AROMA DIAMOND（アロマダイヤモンド）亀戸の会員制度「DIAMOND MEMBERSHIP」。オープン記念 OPENING VIP は先着100名様限定・入会金年会費無料。ご来店回数に応じて SILVER・GOLD・DIAMOND の特典が受けられます。",
   alternates: { canonical: abs("membership/") },
   openGraph: {
     url: abs("membership/"),
-    title: "会員制度・VIP特典｜AROMA DAIAMOND 亀戸",
+    title: "会員制度・VIP特典｜AROMA DIAMOND 亀戸",
     description: "OPENING VIP 先着100名様限定。来店するほど、特別な待遇へ。",
   },
 };
@@ -64,7 +64,7 @@ export default function Membership() {
         {/* SECTION 01 メインビジュアル */}
         <section className="mb-hero" aria-labelledby="mb-title">
           <div className="mb-hero-icon"><DiamondIcon size={44} color="#3a3a3a" sw={1.2} /></div>
-          <p className="mb-brand">AROMA DAIAMOND</p>
+          <p className="mb-brand">AROMA DIAMOND</p>
           <h1 className="mb-title" id="mb-title">DIAMOND MEMBERSHIP</h1>
           <p className="mb-sub">来店するほど、特別な待遇へ。</p>
           <hr className="mb-rule" />

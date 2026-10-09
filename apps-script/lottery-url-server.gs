@@ -43,7 +43,7 @@ function lotteryUrlRequest(request) {
 }
 
 function doGet() {
-  return HtmlService.createHtmlOutput(LOTTERY_URL_HTML).setTitle("AROMA DAIAMOND 宝石の抽選")
+  return HtmlService.createHtmlOutput(LOTTERY_URL_HTML).setTitle("AROMA DIAMOND 宝石の抽選")
     .addMetaTag("viewport", "width=device-width, initial-scale=1");
 }
 

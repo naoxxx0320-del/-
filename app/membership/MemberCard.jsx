@@ -8,7 +8,7 @@ export default function MemberCard({ memberNo, kind, nickname, validUntil }) {
     <div className="mb-card" role="img" aria-label={`${vip ? "OPENING VIP MEMBER" : "MEMBER"} No.${memberNo}`}>
       <div className="mb-card-top">
         <DiamondIcon size={22} color="#d9bf86" sw={1.2} />
-        <span className="mb-card-brand">AROMA DAIAMOND</span>
+        <span className="mb-card-brand">AROMA DIAMOND</span>
       </div>
       <p className="mb-card-kind">{vip ? "OPENING VIP MEMBER" : "DIAMOND MEMBERSHIP"}</p>
       <p className="mb-card-no">MEMBER No.{memberNo}</p>

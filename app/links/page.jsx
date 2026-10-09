@@ -6,9 +6,9 @@ import { abs } from "../_lib/site";
 export const metadata = {
   title: "リンク集",
   description:
-    "AROMA DAIAMOND（アロマダイヤモンド）亀戸 のリンク集。求人・メンズエステ関連サイトのご紹介。",
+    "AROMA DIAMOND（アロマダイヤモンド）亀戸 のリンク集。求人・メンズエステ関連サイトのご紹介。",
   alternates: { canonical: abs("links/") },
-  openGraph: { url: abs("links/"), title: "リンク集｜AROMA DAIAMOND 亀戸" },
+  openGraph: { url: abs("links/"), title: "リンク集｜AROMA DIAMOND 亀戸" },
 };
 
 /* 相互リンク（バナー）。
@@ -66,7 +66,7 @@ export default function Links() {
 
         <section className="links">
           <p className="links-lead">
-            AROMA DAIAMOND（亀戸）と関わりのあるサイトをご紹介しています。
+            AROMA DIAMOND（亀戸）と関わりのあるサイトをご紹介しています。
           </p>
           <ul className="links-list">
             {LINKS.map((l, i) => (

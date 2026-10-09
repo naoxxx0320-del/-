@@ -6,9 +6,9 @@ import { abs } from "../_lib/site";
 export const metadata = {
   title: "ご利用規約",
   description:
-    "AROMA DAIAMOND（アロマダイヤモンド）亀戸 のご利用規約。サービス内容・ご予約・体調と安全・禁止事項・キャンセル/遅刻についてご案内します。",
+    "AROMA DIAMOND（アロマダイヤモンド）亀戸 のご利用規約。サービス内容・ご予約・体調と安全・禁止事項・キャンセル/遅刻についてご案内します。",
   alternates: { canonical: abs("terms/") },
-  openGraph: { url: abs("terms/"), title: "ご利用規約｜AROMA DAIAMOND 亀戸" },
+  openGraph: { url: abs("terms/"), title: "ご利用規約｜AROMA DIAMOND 亀戸" },
 };
 
 const PROHIBITED = [
@@ -42,7 +42,7 @@ export default function Terms() {
         <NavGrid base="../" />
 
         <p className="terms-intro">
-          AROMA DAIAMOND では、すべてのお客様とセラピストが安心して過ごせるよう、
+          AROMA DIAMOND では、すべてのお客様とセラピストが安心して過ごせるよう、
           以下のご利用規約を設けています。ご予約前にご確認ください。
         </p>
 

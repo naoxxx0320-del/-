@@ -25,7 +25,7 @@ LINE Developers・LIFFの設定は不要です。参加者は共通のURLを開�
 
 ## 管理者が公開する手順
 
-1. [Googleスプレッドシート](https://sheets.google.com/)で新しい非公開シートを作り、「AROMA DAIAMOND URL抽選台帳」と名付けます。
+1. [Googleスプレッドシート](https://sheets.google.com/)で新しい非公開シートを作り、「AROMA DIAMOND URL抽選台帳」と名付けます。
 2. 「拡張機能 → Apps Script」を開き、初期コードを `apps-script/lottery-url-install.gs` の内容すべてに置き換えて保存します。既存の予約Webhook・旧LINE抽選用プロジェクトは使用しません。
 3. 実行対象を `setupUrlLottery` にして実行し、自分で作成したスクリプトへのGoogleの権限許可を確認します。チャネルID等の入力は不要です。専用台帳とシート接続が作られます。
 4. 「デプロイ → 新しいデプロイ → ウェブアプリ」を選びます。実行ユーザーは「自分」、アクセスできるユーザーは「全員」（匿名アクセスを含む設定）にします。この選択をGoogle側で許可できない場合、一般参加者はログインなしで参加できません。

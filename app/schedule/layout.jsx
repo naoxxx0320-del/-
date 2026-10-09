@@ -6,9 +6,9 @@ import Breadcrumbs from "../_components/Breadcrumbs";
 export const metadata = {
   title: "出勤情報",
   description:
-    "AROMA DAIAMOND（アロマダイヤモンド）亀戸 本日の出勤・案内状況。空き状況をリアルタイムに更新中。",
+    "AROMA DIAMOND（アロマダイヤモンド）亀戸 本日の出勤・案内状況。空き状況をリアルタイムに更新中。",
   alternates: { canonical: abs("schedule/") },
-  openGraph: { url: abs("schedule/"), title: "出勤情報｜AROMA DAIAMOND 亀戸" },
+  openGraph: { url: abs("schedule/"), title: "出勤情報｜AROMA DIAMOND 亀戸" },
 };
 
 export default function ScheduleLayout({ children }) {
