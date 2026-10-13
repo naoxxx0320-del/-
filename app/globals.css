@@ -5931,33 +5931,41 @@ body:has(.rec-page) .aichat-fab {
   position: relative;
   z-index: 2;
   padding: 20px 14px 8px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); /* バナーは2列 */
+  gap: 10px;
+}
+.home-links a {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-}
-.home-links a {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
   text-decoration: none;
   background: rgba(255, 253, 248, 0.82);
   border: 1px solid #e3d6bf;
   border-radius: 10px;
-  padding: 12px 16px;
+  padding: 10px 8px;
 }
 .home-links a:hover { border-color: #cdae62; }
 .home-links img {
   display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
   background: #fff;
   border: 1px solid #eadfca;
   border-radius: 3px;
 }
 .home-links-label {
   font-family: var(--font-serif-jp), serif;
-  font-size: 14px;
+  font-size: 11.5px;
+  line-height: 1.4;
   color: #3a2d1c;
   letter-spacing: 0.02em;
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 
 /* =========================================================
