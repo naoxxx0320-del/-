@@ -4,6 +4,7 @@
     { "href": "https://www.fues.jp/job/kanto/ippan/top.html", "src": "https://www.fues.jp/upload/banners/job_200.gif", "w": 200, "h": 40, "alt": "週刊エステ求人", "label": "週刊エステ求人", "top": true },
     { "href": "https://m-sns.net", "src": "https://m-sns.net/uploads/banners/02_200.jpg", "w": 200, "h": 40, "alt": "メンズエステ専門SNS 02", "label": "メンズエステ専門SNS 02", "top": true },
     { "href": "https://m-sns.net/recruit/", "src": "https://m-sns.net/uploads/banners/02_recruit.gif", "w": 200, "h": 40, "alt": "メンズエステ求人SNS 02", "label": "メンズエステ求人SNS 02", "top": true },
+    { "href": "https://job.eslove.jp/kanto/tokyo/search", "src": "https://job.eslove.jp/eslove_job_front_theme/img/banner/banner_200x40.jpg", "w": 200, "h": 40, "alt": "東京のメンズエステ求人情報ならエステラブワーク", "label": "エステラブワーク（東京のメンズエステ求人）", "top": true },
     { "href": "https://mensesthe.cocoa-job.jp/8/area36/", "src": "https://cocoa-job.jp/assets/img/user/pc/link/2020img-bnr-mensesthe5.jpg", "w": 640, "h": 80, "alt": "ココア求人(錦糸町のメンズエステアルバイト求人情報)", "label": "ココア求人(錦糸町のメンズエステアルバイト求人情報)", "wide": true, "top": false },
     { "href": "https://ranking-deli.jp/tokyo/area36/style8/51375/", "src": "https://ranking-deli.jp/assets/img/user/link/bnr30050.jpg", "w": 300, "h": 50, "alt": "【アロマダイヤモンド】駅ちか版はコチラ", "label": "駅ちか（アロマダイヤモンド）", "wide": true, "top": true },
     { "href": "https://menesth.jp/8/shop/51375/", "src": "https://menesth.jp/assets/img/user/link/menesth_bnr30050.png", "w": 300, "h": 50, "alt": "メンズリラク版はコチラ", "label": "メンズリラク（アロマダイヤモンド）", "wide": true, "top": true },
