@@ -1,4 +1,4 @@
-/* デジタル会員証（ブラック×ゴールド）。VIP は有効期限つき。 */
+/* デジタル会員証（ブラック×ゴールド）。VIP の有効期限は設定がなければ「無期限」。 */
 import { DiamondIcon } from "./icons";
 
 export default function MemberCard({ memberNo, kind, nickname, validUntil }) {
@@ -14,7 +14,7 @@ export default function MemberCard({ memberNo, kind, nickname, validUntil }) {
       <p className="mb-card-no">MEMBER No.{memberNo}</p>
       <div className="mb-card-foot">
         <span className="mb-card-name">{nickname ? `${nickname} 様` : ""}</span>
-        {vip && until && <span className="mb-card-exp">有効期限：{until}</span>}
+        {vip && <span className="mb-card-exp">有効期限：{until || "無期限"}</span>}
       </div>
     </div>
   );

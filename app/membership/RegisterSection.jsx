@@ -82,7 +82,7 @@ export default function RegisterSection({ cfg }) {
 
       <dl className="mb-terms">
         <div><dt>募集期間</dt><dd>{cfg.openLabel}〜{cfg.closeLabel}</dd></div>
-        <div><dt>VIP特典の有効期限</dt><dd>2026年12月31日まで</dd></div>
+        <div><dt>VIP特典の有効期限</dt><dd>無期限</dd></div>
         <div><dt>入会金・年会費</dt><dd>無料</dd></div>
       </dl>
 
