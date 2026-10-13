@@ -1,0 +1,16 @@
+{
+  "_note": "相互リンク・提携バナー。リンク集（/links/）に全件、トップページには top:true のものを2列で表示。wide:true はリンク集でバナーを上に全幅表示。alt は提携先から指定された文言。",
+  "items": [
+    { "href": "https://www.fues.jp/job/kanto/ippan/top.html", "src": "https://www.fues.jp/upload/banners/job_200.gif", "w": 200, "h": 40, "alt": "週刊エステ求人", "label": "週刊エステ求人", "top": true },
+    { "href": "https://m-sns.net", "src": "https://m-sns.net/uploads/banners/02_200.jpg", "w": 200, "h": 40, "alt": "メンズエステ専門SNS 02", "label": "メンズエステ専門SNS 02", "top": true },
+    { "href": "https://m-sns.net/recruit/", "src": "https://m-sns.net/uploads/banners/02_recruit.gif", "w": 200, "h": 40, "alt": "メンズエステ求人SNS 02", "label": "メンズエステ求人SNS 02", "top": true },
+    { "href": "https://mensesthe.cocoa-job.jp/8/area36/", "src": "https://cocoa-job.jp/assets/img/user/pc/link/2020img-bnr-mensesthe5.jpg", "w": 640, "h": 80, "alt": "ココア求人(錦糸町のメンズエステアルバイト求人情報)", "label": "ココア求人(錦糸町のメンズエステアルバイト求人情報)", "wide": true, "top": false },
+    { "href": "https://ranking-deli.jp/tokyo/area36/style8/51375/", "src": "https://ranking-deli.jp/assets/img/user/link/bnr30050.jpg", "w": 300, "h": 50, "alt": "【アロマダイヤモンド】駅ちか版はコチラ", "label": "駅ちか（アロマダイヤモンド）", "wide": true, "top": true },
+    { "href": "https://menesth.jp/8/shop/51375/", "src": "https://menesth.jp/assets/img/user/link/menesth_bnr30050.png", "w": 300, "h": 50, "alt": "メンズリラク版はコチラ", "label": "メンズリラク（アロマダイヤモンド）", "wide": true, "top": true },
+    { "href": "https://ranking-deli.jp/tokyo/area36/style8/", "src": "https://ranking-deli.jp/assets/img/user/link/2020bnr01.jpg", "w": 468, "h": 60, "alt": "錦糸町でメンズエステ遊びなら[駅ちか]", "label": "駅ちか｜錦糸町のメンズエステ", "wide": true, "top": true },
+    { "href": "https://menesth.jp/8/area36/", "src": "https://menesth.jp/assets/img/user/link/menesth_bnr01.png", "w": 468, "h": 60, "alt": "錦糸町のメンズエステ情報｜メンズリラク", "label": "メンズリラク｜錦糸町のメンズエステ", "wide": true, "top": true },
+    { "href": "https://menesth-job.jp/8/shop/43761/", "src": "https://menesth-job.jp/assets/img/user/link/30050_riraku_2.gif", "w": 300, "h": 50, "alt": "詳しい求人情報を掲載中！気になる条件はリラクジョブ「アロマダイヤモンド」ページでチェック♪", "label": "リラクジョブ（求人）", "wide": true, "top": true },
+    { "href": "https://mensesthe.cocoa-job.jp/8/shop/43761/", "src": "https://cocoa-job.jp/assets/img/user/pc/link/30050_cocoa_mensesthe_cp.gif", "w": 300, "h": 50, "alt": "「アロマダイヤモンド」への応募はココア求人！ココアご利用でもらえるお仕事応援キャンペーン中♪", "label": "ココア求人（応募）", "wide": true, "top": true },
+    { "href": "https://menesth-job.jp/8/area36/", "src": "https://menesth-job.jp/assets/img/user/link/46860_rj.jpg", "w": 468, "h": 60, "alt": "メンズエステ求人を錦糸町でお探しなら「リラクジョブ」", "label": "リラクジョブ｜錦糸町のメンズエステ求人", "wide": true, "top": true }
+  ]
+}

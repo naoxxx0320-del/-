@@ -2,6 +2,7 @@ import SiteChrome from "../_components/SiteChrome";
 import NavGrid from "../_components/NavGrid";
 import Breadcrumbs from "../_components/Breadcrumbs";
 import { abs } from "../_lib/site";
+import banners from "../../data/banners.json";
 
 export const metadata = {
   title: "リンク集",
@@ -11,40 +12,9 @@ export const metadata = {
   openGraph: { url: abs("links/"), title: "リンク集｜AROMA DIAMOND 亀戸" },
 };
 
-/* 相互リンク（バナー）。
-   banner: バナー画像URL（外部URL可）／ w,h: バナーサイズ／ label: サイト名。
-   追加するときはこの配列に1件足すだけ。 */
-const LINKS = [
-  {
-    href: "https://www.fues.jp/job/kanto/ippan/top.html",
-    banner: "https://www.fues.jp/upload/banners/job_200.gif",
-    w: 200,
-    h: 40,
-    label: "週刊エステ求人",
-  },
-  {
-    href: "https://m-sns.net",
-    banner: "https://m-sns.net/uploads/banners/02_200.jpg",
-    w: 200,
-    h: 40,
-    label: "メンズエステ専門SNS 02",
-  },
-  {
-    href: "https://m-sns.net/recruit/",
-    banner: "https://m-sns.net/uploads/banners/02_recruit.gif",
-    w: 200,
-    h: 40,
-    label: "メンズエステ求人SNS 02",
-  },
-  {
-    href: "https://mensesthe.cocoa-job.jp/8/area36/",
-    banner: "https://cocoa-job.jp/assets/img/user/pc/link/2020img-bnr-mensesthe5.jpg",
-    w: 640,
-    h: 80,
-    label: "ココア求人(錦糸町のメンズエステアルバイト求人情報)",
-    wide: true, // 横長バナー：バナーを上に全幅で表示
-  },
-];
+/* 相互リンク（バナー）は data/banners.json で管理（トップページと共通）。
+   追加するときは banners.json の items に1件足すだけ。 */
+const LINKS = banners.items.map((b) => ({ href: b.href, banner: b.src, w: b.w, h: b.h, label: b.label, alt: b.alt, wide: b.wide }));
 
 export default function Links() {
   return (
@@ -77,7 +47,7 @@ export default function Links() {
                     <img
                       className="link-banner"
                       src={l.banner}
-                      alt={l.label}
+                      alt={l.alt || l.label}
                       width={l.w}
                       height={l.h}
                       loading="lazy"

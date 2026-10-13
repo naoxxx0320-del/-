@@ -9,6 +9,7 @@ import { SITE, telHref } from "./_lib/site";
 import guideData from "../data/guide.json";
 import rosterData from "../data/roster.json";
 import links from "../data/links.json";
+import banners from "../data/banners.json";
 import { HAS_TODAY, useTodayKey, keyLabel, todayList, todayCards, SCHEDULE_UPDATED, SCHEDULE_AREA } from "./_components/today";
 
 /* ---- data ---------------------------------------------------------- */
@@ -415,47 +416,15 @@ export default function Home() {
 
         {/* ---------- リンクバナー（求人・提携サイト） ---------- */}
         <section className="home-links">
-          <a
-            href="https://www.fues.jp/job/kanto/ippan/top.html"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://www.fues.jp/upload/banners/job_200.gif"
-              alt="週刊エステ求人"
-              width="200"
-              height="40"
-              loading="lazy"
-            />
-            <span className="home-links-label">週刊エステ求人</span>
-          </a>
-          <a href="https://m-sns.net" target="_blank" rel="noopener noreferrer">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://m-sns.net/uploads/banners/02_200.jpg"
-              alt="メンズエステ専門SNS 02"
-              width="200"
-              height="40"
-              loading="lazy"
-            />
-            <span className="home-links-label">メンズエステ専門SNS 02</span>
-          </a>
-          <a
-            href="https://m-sns.net/recruit/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://m-sns.net/uploads/banners/02_recruit.gif"
-              alt="メンズエステ求人SNS 02"
-              width="200"
-              height="40"
-              loading="lazy"
-            />
-            <span className="home-links-label">メンズエステ求人SNS 02</span>
-          </a>
+          {banners.items
+            .filter((b) => b.top)
+            .map((b) => (
+              <a href={b.href} target="_blank" rel="noopener noreferrer" key={b.href}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={b.src} alt={b.alt} width={b.w} height={b.h} loading="lazy" />
+                <span className="home-links-label">{b.label}</span>
+              </a>
+            ))}
         </section>
 
         {/* ---------- SHARED CHROME (footer + drawer + hamburger) ---------- */}
