@@ -2177,7 +2177,7 @@ function adminPayroll(month) {
 
 /* ==========================================================================
  * 会員制度（DIAMOND MEMBERSHIP）
- *   ・OPENING VIP：先着 VIP_CAPACITY 名（既定100）。募集 VIP_OPEN_AT〜VIP_CLOSE_AT、特典は VIP_VALID_UNTIL まで。
+ *   ・OPENING VIP：先着 VIP_CAPACITY 名（既定100）。募集 VIP_OPEN_AT〜VIP_CLOSE_AT、特典は無期限（VIP_VALID_UNTIL を設定した場合のみ、その日まで）。
  *     会員番号 001〜100 を登録完了順に発行（LockService で同時登録でも定員を超えない）。
  *   ・VIP募集の終了後（満員・期間終了）は、通常会員（番号 M0001〜）として無料登録を受け付ける。
  *   ・来店ランク：直近6か月の「精算」済み来店（有料施術の完了）を数える。予約のみ・キャンセルは含めない。
@@ -2185,7 +2185,7 @@ function adminPayroll(month) {
  *   ・会員情報は非公開ファイル（ledgerBook_）の「会員」シート。公開APIは人数（集計）と、
  *     本人だけが知る会員証キーでの照会のみ。メール・電話は返さない。
  *   Script Properties（任意）：VIP_OPEN_AT（既定 2026/10/10 00:00）VIP_CLOSE_AT（既定 2026/11/14 23:59）
- *     VIP_CAPACITY（既定 100）VIP_VALID_UNTIL（既定 2026/12/31）SITE_URL（会員証URL用）
+ *     VIP_CAPACITY（既定 100）VIP_VALID_UNTIL（既定 空＝無期限）SITE_URL（会員証URL用）
  * ========================================================================== */
 var MEMBER_SHEET = "会員";
 var MEMBER_HEADER = [
@@ -2200,13 +2200,13 @@ function vipCfg_() {
     if (!m) return null;
     return parseJstDateTime(m[1] + "/" + m[2] + "/" + m[3], (m[4] || "0") + ":" + (m[5] || "00"));
   };
-  var until = String(cfg_("VIP_VALID_UNTIL", "2026/12/31"));
+  var until = String(cfg_("VIP_VALID_UNTIL", "")).trim(); // 空＝無期限
   return {
     openAt: at("VIP_OPEN_AT", "2026/10/10 00:00"),
     closeAt: at("VIP_CLOSE_AT", "2026/11/14 23:59"),
     capacity: Math.max(1, parseInt(cfg_("VIP_CAPACITY", "100"), 10) || 100),
     validUntil: until,
-    validUntilMs: at("VIP_VALID_UNTIL", until) + 24 * 3600 * 1000 - 1, // その日の終わりまで
+    validUntilMs: until && at("VIP_VALID_UNTIL", until) != null ? at("VIP_VALID_UNTIL", until) + 24 * 3600 * 1000 - 1 : Infinity, // その日の終わりまで／空なら無期限
   };
 }
 function memberSheet_() {
@@ -2328,7 +2328,9 @@ function sendMemberMail_(r, cfg) {
     "■ 会員番号：" + (vip ? "No." : "") + no,
   ];
   if (vip) {
-    lines.push("■ VIP特典の利用期間：2026年11月15日〜" + cfg.validUntil.replace(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/, "$1年$2月$3日"));
+    lines.push(cfg.validUntil
+      ? "■ VIP特典の利用期間：2026年11月15日〜" + cfg.validUntil.replace(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/, "$1年$2月$3日")
+      : "■ VIP特典：2026年11月15日から無期限でご利用いただけます");
   }
   lines.push(
     "■ デジタル会員証（ご本人専用のURLです。他の方には教えないでください）",
@@ -2715,7 +2717,7 @@ function selfTest() {
    管理画面（Admin.html）は開いたときにこの版を確認し、Code.gs / lib.gs が古い・途中までしか
    貼られていない場合に警告を出す。※必ずファイルの「最後」に置く（途中で切れると無くなるので検出できる）。
    コードを変更したら Admin.html の APP_VERSION・lib.gs の LIB_VERSION と一緒に上げる。 */
-var CODE_VERSION = "2026-10-09-2";
+var CODE_VERSION = "2026-10-09-3";
 function adminVersion() {
   return { code: CODE_VERSION, lib: typeof LIB_VERSION === "undefined" ? "" : LIB_VERSION };
 }

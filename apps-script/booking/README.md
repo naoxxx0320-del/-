@@ -376,7 +376,7 @@ LINE → Cloudflare Worker（X-Line-Signature検証）→ LINEボット(line-boo
 - **管理画面**：「会員」タブ（一覧・検索・取消/復帰・メモ）、予約一覧と詳細に会員番号とランクを表示。
 - **保存先**：非公開ファイル（`LEDGER_SHEET_ID`）の「会員」シート。
 - **設定（任意・スクリプトプロパティ）**：`VIP_OPEN_AT`（既定 2026/10/10 00:00）・`VIP_CLOSE_AT`（2026/11/14 23:59）・
-  `VIP_CAPACITY`（100）・`VIP_VALID_UNTIL`（2026/12/31）・`SITE_URL`。表示用の日付はサイトの `data/membership-config.json`（そろえること）。
+  `VIP_CAPACITY`（100）・`VIP_VALID_UNTIL`（空＝無期限。日付を入れるとその日まで）・`SITE_URL`。表示用の日付はサイトの `data/membership-config.json`（そろえること）。
 - テスト：`node apps-script/booking/tests/member.test.mjs`
 
 ### 実績・バック計算（精算の入力・月の集計）

@@ -112,8 +112,9 @@ t("会員証：キーで照会・直近6か月の精算済み来店でランク�
   assert.ok(!JSON.stringify(c).includes("example.com") && !JSON.stringify(c).includes("0901111"));
   assert.equal(jsonp(g.memberCardResponse_({ k: "0".repeat(40) })).ok, false);
   assert.equal(jsonp(g.memberCardResponse_({ k: "<script>" })).ok, false);
-  g.__now = g.parseJstDateTime("2027/1/1", "12:00");
-  assert.equal(jsonp(g.memberCardResponse_({ k: a.cardKey })).vipActive, false); // 12/31で終了
+  g.__now = g.parseJstDateTime("2030/1/1", "12:00");
+  assert.equal(jsonp(g.memberCardResponse_({ k: a.cardKey })).vipActive, true); // 既定は無期限
+  assert.equal(jsonp(g.memberCardResponse_({ k: a.cardKey })).validUntil, "");
 });
 
 t("ランクの段階：0=未付与・1〜2 SILVER・3〜5 GOLD・6〜 DIAMOND", () => {
@@ -150,6 +151,15 @@ t("予約一覧に会員番号・来店ランク", () => {
   const b2 = rows.find((r) => r.id === "B2");
   assert.equal(b2.member.memberNo, "001");
   assert.equal(b2.member.rank, "SILVER");
+});
+
+t("VIP_VALID_UNTIL を設定した場合だけ、その日の終わりで特典終了", () => {
+  const { g } = setup({ VIP_VALID_UNTIL: "2026/12/31" });
+  const a = reg(g, { email: "z@example.com" });
+  g.__now = g.parseJstDateTime("2026/12/31", "23:00");
+  assert.equal(jsonp(g.memberCardResponse_({ k: a.cardKey })).vipActive, true);
+  g.__now = g.parseJstDateTime("2027/1/1", "0:30");
+  assert.equal(jsonp(g.memberCardResponse_({ k: a.cardKey })).vipActive, false);
 });
 
 console.log(`\n✅ 全 ${passed} 件 パス`);
