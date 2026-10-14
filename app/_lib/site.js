@@ -49,6 +49,6 @@ export const telHref = (s = SITE.telephone) => `tel:${telDigits(s)}`;
 export const GTM_ID = "GTM-M4CPNNDT";
 
 // GA4 測定ID（例: G-XXXXXXXXXX）。
-// 原則アクセス解析はGTM経由に一本化するため、GTMが有効なときは
-// この独立GA4タグは出力しない（二重計測防止・Analytics.jsx を参照）。
-export const GA_ID = process.env.NEXT_PUBLIC_GA_ID || "";
+// このサイトは GA4 を gtag.js でコードから直接配信する（Analytics.jsx）。
+// ※GTM 側に GA4 設定タグを作らないこと。作ると二重計測になる。
+export const GA_ID = process.env.NEXT_PUBLIC_GA_ID || "G-YDRYPPM122";
