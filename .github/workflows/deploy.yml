@@ -58,7 +58,7 @@ jobs:
           node scripts/build-lottery-url.mjs
 
       - name: Check lottery behavior and public link configuration
-        run: node --test scripts/lottery-server.test.cjs scripts/lottery-setup.test.cjs scripts/lottery-url.test.cjs scripts/lottery-public.test.mjs
+        run: node --test scripts/lottery-server.test.cjs scripts/lottery-setup.test.cjs scripts/lottery-url.test.cjs scripts/lottery-public.test.mjs scripts/fetch-sheets.test.mjs
 
       - name: Build static export
         run: npm run build
