@@ -6325,3 +6325,57 @@ body:has(.rec-page) .aichat-fab {
   color: #5b4320;
 }
 .page-head .ph-jp .ph-line { display: block; }
+
+/* 個別ページ：出勤情報・プロフィール（お店コメントと同じ金の飾り枠） */
+.td-box .tdc-head { margin-top: 0; font-weight: 400; }
+.tds-list { list-style: none; margin: 0; padding: 0; }
+.tds-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  padding: 9px 2px;
+  border-bottom: 1px dashed #e0cfa6;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 14px;
+  color: #3a2f20;
+}
+.tds-row:last-child { border-bottom: none; }
+.tds-date { min-width: 5.2em; color: #6b5426; }
+.tds-time { letter-spacing: 0.02em; }
+.tds-status {
+  font-size: 11.5px;
+  padding: 1px 9px;
+  border-radius: 10px;
+  background: #2e7d5b;
+  color: #fff;
+}
+.tds-status.full { background: #9a3b3b; }
+.tds-go {
+  margin-left: auto;
+  font-size: 12.5px;
+  color: #8a1a30;
+  text-decoration: none;
+  border: 1px solid #cdae62;
+  border-radius: 999px;
+  padding: 2px 10px;
+  background: #fff;
+}
+.tdq-empty { margin: 0; text-align: center; font-size: 13px; color: #7a6a52; }
+.tdq-list { margin: 0; }
+.tdq-row {
+  display: grid;
+  grid-template-columns: 8.5em 1fr;
+  gap: 4px 10px;
+  padding: 9px 2px;
+  border-bottom: 1px dashed #e0cfa6;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.tdq-row:last-child { border-bottom: none; }
+.tdq-row dt { color: #6b5426; }
+.tdq-row dd { margin: 0; color: #3a2f20; overflow-wrap: anywhere; }
+@media (max-width: 360px) {
+  .tdq-row { grid-template-columns: 1fr; gap: 0; }
+}

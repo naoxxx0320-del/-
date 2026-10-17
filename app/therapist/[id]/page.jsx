@@ -4,6 +4,7 @@ import { SnsBadge } from "../../_components/TherapistCard";
 import { photoSrc } from "../../_components/photo";
 import roster from "../../../data/roster.json";
 import TherapistGallery from "./TherapistGallery";
+import TherapistSchedule from "./TherapistSchedule";
 import { buildMetadata } from "../../_lib/seo";
 import Breadcrumbs from "../../_components/Breadcrumbs";
 
@@ -143,6 +144,39 @@ export default function TherapistDetail({ params }) {
                   {t.status}
                 </span>
               )}
+            </div>
+          )}
+
+          {/* 出勤情報（今日以降の予定） */}
+          <TherapistSchedule name={t.name} base={BASE} />
+
+          {/* プロフィール（質問と回答。空欄の項目は出さない） */}
+          {Array.isArray(t.qa) && t.qa.length > 0 && (
+            <div className="td-comment td-box">
+              <span className="tdc-corner tl" aria-hidden="true" />
+              <span className="tdc-corner tr" aria-hidden="true" />
+              <span className="tdc-corner bl" aria-hidden="true" />
+              <span className="tdc-corner br" aria-hidden="true" />
+              <h2 className="tdc-head">
+                <span className="tdc-dia">◆</span>
+                プロフィール
+                <span className="tdc-dia">◆</span>
+              </h2>
+              <dl className="tdq-list">
+                {t.qa.map((x) => (
+                  <div className="tdq-row" key={x.q}>
+                    <dt>{x.q}</dt>
+                    <dd>
+                      {String(x.a).split("\n").map((line, k, arr) => (
+                        <span key={k}>
+                          {line}
+                          {k < arr.length - 1 && <br />}
+                        </span>
+                      ))}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           )}
 
