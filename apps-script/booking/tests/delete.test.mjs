@@ -61,7 +61,7 @@ function setup({ futureForReiko = false, token = true } = {}) {
     "data/schedule.json": JSON.stringify({ today: "2026/10/17", days: [{ date: "2026/10/17", list: [{ name: "れいこ" }, { name: "みお" }] }] }),
   });
   const sheets = {};
-  const g = load(sheets, token ? { GITHUB_TOKEN: TOKEN } : {}, { UrlFetchApp: { fetch: repo.fetch } });
+  const g = load(sheets, token ? { GITHUB_TOKEN: TOKEN } : {}, { UrlFetchApp: { fetch: (...a) => repo.fetch(...a), fetchAll: (reqs) => reqs.map((r) => repo.fetch(r.url, r)) } });
   const bk = (id, name, startAt, status) => g.objToRow_({ id, source: "web", status, therapistId: name, therapistName: name, startAt, endAt: startAt + 1.5 * H, durationMin: 90, course: "90分", price: 18000, customerName: "テスト客", tel: "09000000000", email: "a@example.com", createdAt: "", updatedAt: "" });
   const ledgerRows = [
     bk("BK1", "れいこ", now - 72 * H, g.STATUS.CONFIRMED),
@@ -122,6 +122,8 @@ t("削除：この人のデータだけがすべて消え、ほかの人は残�
   const { g, sheets, repo } = setup();
   const r = plain(g.adminTherapistDelete({ name: "れいこ", confirm: "れいこ" }));
   assert.equal(r.ok, true, r.reason);
+  assert.equal(r.cleanup, true);
+  assert.equal(repo.head, "c0"); // この時点ではサイトは触らない（すぐ返す）
   const c = g.colIndex_();
   assert.deepEqual(names(sheets["予約台帳"], c["予約ID"]), ["BK2"]);
   assert.deepEqual(names(sheets["予約履歴"]), ["H2", "H4", "H6"]);
@@ -133,18 +135,34 @@ t("削除：この人のデータだけがすべて消え、ほかの人は残�
   const log = g.__history.at(-1);
   assert.equal(log[0], "THERAPIST");
   assert.ok(!JSON.stringify(log).includes("れいこ"));
-  // サイト：この人の写真（保存しなかった写真も）は削除、共有中の写真は残す
+  // 後片付け：この人の写真（保存しなかった写真も）は削除、共有中の写真は残す
+  const cl = plain(g.adminTherapistCleanup());
+  assert.equal(cl.ok, true);
+  assert.equal(cl.done, true);
+  assert.equal(cl.removedFiles, 3);
+  assert.equal(plain(g.adminTherapistCleanup()).done, false); // 2回目は待ちが無いので何もしない
   assert.equal(repo.files["public/therapist-reiko-a.jpg"], undefined);
   assert.equal(repo.files["public/therapist-reiko-b.jpg"], undefined);
   assert.equal(repo.files["public/therapist-reiko-unsaved.jpg"], undefined);
   assert.equal(repo.files["public/therapist-mio.jpg"], "M");
-  assert.equal(r.removedFiles, 3);
   assert.deepEqual(JSON.parse(repo.files["data/photo-overrides.json"]), { みお: "therapist-mio.jpg" });
   assert.deepEqual(JSON.parse(repo.files["data/therapist-details.json"]), { 花恋: { profile: "y" } });
   assert.deepEqual(JSON.parse(repo.files["data/roster.json"]).map((x) => x.name), ["みお"]);
   assert.deepEqual(JSON.parse(repo.files["data/schedule.json"]).days[0].list.map((x) => x.name), ["みお"]);
-  assert.equal(r.deployed, true);
+  assert.equal(cl.deployed, true);
   assert.equal(repo.lastMessage, "管理画面: セラピストを削除"); // コミット文にも名前を残さない
+});
+
+t("後片付けが失敗しても待ちに残り、次回に続きを行える", () => {
+  const { g, repo } = setup();
+  assert.equal(plain(g.adminTherapistDelete({ name: "れいこ", confirm: "れいこ" })).ok, true);
+  const orig = repo.fetch;
+  repo.fetch = () => { throw new Error("通信エラー"); };
+  assert.throws(() => g.adminTherapistCleanup());
+  repo.fetch = orig;
+  const cl = plain(g.adminTherapistCleanup());
+  assert.equal(cl.done, true);
+  assert.equal(repo.files["public/therapist-reiko-a.jpg"], undefined);
 });
 
 t("GitHubの鍵が無いときはシートだけ削除し、その旨を返す", () => {

@@ -47,7 +47,7 @@ export function load(sheets, props = {}, extra = {}) {
       getUuid: () => crypto.randomUUID(),
       newBlob: (bytes) => ({ getDataAsString: () => Buffer.from(bytes).toString("utf8") }),
     },
-    PropertiesService: { getScriptProperties: () => ({ getProperty: (k) => props[k] ?? null }) },
+    PropertiesService: { getScriptProperties: () => ({ getProperty: (k) => props[k] ?? null, setProperty: (k, v) => { props[k] = String(v); }, deleteProperty: (k) => { delete props[k]; } }) },
     LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
     CacheService: (() => { const m = new Map(); return { getScriptCache: () => ({ get: (k) => m.get(k) ?? null, put: (k, v) => m.set(k, v), remove: (k) => m.delete(k) }) }; })(),
     ContentService: { createTextOutput: (s) => ({ s, setMimeType() { return this; } }), MimeType: { JSON: "json", JAVASCRIPT: "js" } },
