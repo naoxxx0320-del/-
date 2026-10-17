@@ -1708,7 +1708,7 @@ function readRepoJson_(path) {
 }
 /* 1回のコミットで複数ファイルを登録（main へ push → サイトが自動で作り直される）。
    files は配列、または最新の内容を読み直して配列を返す関数（同時更新でやり直す場合に備える）。
-   要素: {path, content, encoding:"utf-8"|"base64"}。空配列なら何もしない。 */
+   要素: {path, content, encoding:"utf-8"|"base64"} または削除 {path, remove:true}。空配列なら何もしない。 */
 function ghCommit_(message, files) {
   var br = ghBranch_();
   for (var attempt = 0; attempt < 3; attempt++) {
@@ -1717,6 +1717,8 @@ function ghCommit_(message, files) {
     var baseSha = gh_("GET", "/git/ref/heads/" + encodeURIComponent(br)).object.sha;
     var baseTree = gh_("GET", "/git/commits/" + baseSha).tree.sha;
     var tree = list.map(function (f) {
+      // f.remove が true のファイルは削除（sha: null）。存在するファイルだけを渡すこと。
+      if (f.remove) return { path: f.path, mode: "100644", type: "blob", sha: null };
       var b = gh_("POST", "/git/blobs", { content: f.content, encoding: f.encoding || "utf-8" });
       return { path: f.path, mode: "100644", type: "blob", sha: b.sha };
     });
@@ -1884,6 +1886,208 @@ function adminPhotoUpload(p) {
     { path: "public/" + file, content: m[2], encoding: "base64" },
   ]);
   return { ok: true, file: file };
+}
+
+/* ===================== セラピストの完全削除 =====================
+   管理画面の「このセラピストを削除」から実行。元に戻せない。
+   消すもの：
+     ・プロフィール（「本日の出勤」シートの行）と、すべての出勤（「出勤情報」シート）
+     ・予約台帳の予約（過去分を含む）と、その予約の履歴・精算、バック率
+     ・予約履歴のうち、この人の出勤・プロフィール・バック率の記録
+     ・サイトの写真ファイルと旧設定ファイル（therapist-details / photo-overrides）の記載、
+       公開用データ（roster / schedule / guide.json）の記載
+   安全装置：
+     ・名前をそのまま入力しないと実行しない
+     ・今日以降の有効な予約（仮予約・確定）が残っている間は削除しない（お客様への連絡漏れ防止）
+   ※GitHub の変更履歴には過去の写真が残る（履歴の書き換えはしない）。
+   ※削除の記録は「予約履歴」に件数だけ残す（名前・お客様情報は残さない）。 */
+var PROFILE_LOG_TYPES_ = ["SHIFT", "PROFILE", "RATE"];
+
+/* 予約履歴の「操作」欄の語（空白区切り）に名前がちょうど含まれるか（部分一致はしない）。 */
+function logMentions_(action, name) {
+  return String(action || "").split(/\s+/).indexOf(name) >= 0;
+}
+/* 削除対象を集める（シートは変更しない）。 */
+function therapistDeletePlan_(name) {
+  var plan = { name: name, ledgerRows: [], ids: {}, future: [], historyRows: [], settleRows: [], rateRows: [], shiftRows: [], profileRow: 0, photos: [] };
+  var tid = resolveTherapistId_(name);
+  var now = nowMs_();
+  // 予約台帳
+  var L = ledger_(), lv = L.getLastRow() > 1 ? L.getRange(2, 1, L.getLastRow() - 1, HEADER.length).getValues() : [];
+  var c = colIndex_();
+  lv.forEach(function (r, i) {
+    var nm = String(r[c["担当者名"]]).trim(), id = String(r[c["担当者ID"]]).trim();
+    if (nm !== name && !(id && id === String(tid) && tid !== "")) return;
+    plan.ledgerRows.push(i + 2);
+    plan.ids[String(r[c["予約ID"]])] = 1;
+    var st = r[c["状態"]], end = Number(r[c["終了epoch"]]) || 0;
+    if (ACTIVE_STATUSES.indexOf(st) >= 0 && end > now) plan.future.push({ start: fmtJst(Number(r[c["開始epoch"]]) || 0), course: String(r[c["コース"]] || "") });
+  });
+  // 予約履歴（この人の予約の履歴＋出勤・プロフィール・バック率の記録）
+  var H = history_(), hv = H.getLastRow() > 1 ? H.getRange(2, 1, H.getLastRow() - 1, HISTORY_HEADER.length).getValues() : [];
+  hv.forEach(function (r, i) {
+    var bid = String(r[2]);
+    if (plan.ids[bid] || (PROFILE_LOG_TYPES_.indexOf(bid) >= 0 && logMentions_(r[4], name))) plan.historyRows.push(i + 2);
+  });
+  // 精算・バック率（非公開ファイル）
+  sheetObjs_(privSheet_(SETTLE_SHEET, SETTLE_HEADER)).forEach(function (o) {
+    if (plan.ids[String(o["予約ID"])] || String(o["担当者名"]).trim() === name) plan.settleRows.push(o._row);
+  });
+  sheetObjs_(privSheet_(RATE_SHEET, RATE_HEADER)).forEach(function (o) {
+    if (String(o["名前"]).trim() === name) plan.rateRows.push(o._row);
+  });
+  // 出勤情報（過去分を含むすべて）
+  var S = schedSheet_();
+  for (var r = S.hi + 1; r < S.values.length; r++) {
+    if (String(S.values[r][S.c.name]).trim() === name) plan.shiftRows.push(r + 1);
+  }
+  // プロフィール（本日の出勤）と写真
+  var P = profileSheet_();
+  if (P) {
+    var ni = P.head.indexOf("名前"), pi = P.head.indexOf("写真");
+    for (var k = P.hi + 1; k < P.values.length; k++) {
+      if (String(P.values[k][ni]).trim() !== name) continue;
+      plan.profileRow = k + 1;
+      if (pi >= 0) plan.photos = String(P.values[k][pi] || "").split(";").map(function (x) { return x.trim(); }).filter(Boolean);
+      break;
+    }
+  }
+  return plan;
+}
+function planCounts_(plan) {
+  return {
+    bookings: plan.ledgerRows.length,
+    history: plan.historyRows.length,
+    settles: plan.settleRows.length,
+    rates: plan.rateRows.length,
+    shifts: plan.shiftRows.length,
+    profile: plan.profileRow ? 1 : 0,
+    photos: plan.photos.length,
+  };
+}
+/* 行をまとめて削除（下の行から消して行番号のずれを防ぐ）。 */
+function deleteRows_(sh, rows) {
+  rows.slice().sort(function (a, b) { return b - a; }).forEach(function (r) { sh.deleteRow(r); });
+}
+
+/* 削除前の確認：消える件数と、残っている今日以降の予約。 */
+function adminTherapistDeletePreview(name) {
+  requireStaff_();
+  name = String(name || "").trim();
+  if (!name) return { ok: false, reason: "名前がありません。" };
+  var plan = therapistDeletePlan_(name);
+  var cnt = planCounts_(plan);
+  if (!cnt.profile && !cnt.shifts && !cnt.bookings) return { ok: false, reason: name + " さんは名簿・出勤・予約のどこにも見つかりません。" };
+  return jsonSafe_({ ok: true, name: name, counts: cnt, future: plan.future, hasToken: !!ghToken_() });
+}
+
+/* 削除の実行。p = {name, confirm}（confirm は画面で入力した名前）。 */
+function adminTherapistDelete(p) {
+  var staff = requireStaff_();
+  p = p || {};
+  var name = String(p.name || "").trim();
+  if (!name) return { ok: false, reason: "名前がありません。" };
+  if (String(p.confirm || "").trim() !== name) return { ok: false, reason: "確認のために入力した名前が一致しません。" };
+
+  var res = withLock_(function () {
+    var plan = therapistDeletePlan_(name);
+    if (plan.future.length)
+      return { ok: false, reason: "今日以降の予約が " + plan.future.length + " 件あります（" + plan.future.map(function (f) { return f.start; }).join("、") +
+        "）。先に予約の変更・キャンセルをしてから削除してください。" };
+    var cnt = planCounts_(plan);
+    if (!cnt.profile && !cnt.shifts && !cnt.bookings) return { ok: false, reason: name + " さんは名簿・出勤・予約のどこにも見つかりません。" };
+    deleteRows_(ledger_(), plan.ledgerRows);
+    deleteRows_(history_(), plan.historyRows);
+    deleteRows_(privSheet_(SETTLE_SHEET, SETTLE_HEADER), plan.settleRows);
+    deleteRows_(privSheet_(RATE_SHEET, RATE_HEADER), plan.rateRows);
+    deleteRows_(schedSheet_().sh, plan.shiftRows);
+    if (plan.profileRow) profileSheet_().sh.deleteRow(plan.profileRow);
+    // 削除の記録は件数のみ（名前・お客様情報は残さない）
+    logHistory_("THERAPIST", staff, "セラピストを削除", null, cnt);
+    return { ok: true, counts: cnt, photos: plan.photos };
+  });
+  if (!res.ok) return res;
+
+  // サイト側（写真ファイル・設定ファイル・公開用データ）から消して、サイトを作り直す
+  var note = "", deployed = false, removedFiles = 0;
+  if (ghToken_()) {
+    try {
+      var sha = ghCommit_("管理画面: セラピストを削除", function () {
+        var files = therapistRepoRemovals_(name, res.photos);
+        removedFiles = files.filter(function (f) { return f.remove; }).length;
+        return files;
+      });
+      if (sha) deployed = true;
+      else { ghDispatchDeploy_(); deployed = true; }
+    } catch (e) {
+      note = "シートからは削除しましたが、サイトの写真・データの削除に失敗しました（" + e.message + "）。もう一度「削除」を押すか、時間をおいて「今すぐサイトに反映」を押してください。";
+    }
+  } else {
+    note = "シートからは削除しました。GitHubの鍵（GITHUB_TOKEN）が未設定のため、写真ファイルは削除できていません。サイトの表示からは数時間おきの自動更新で消えます。";
+  }
+  return { ok: true, counts: res.counts, removedFiles: removedFiles, deployed: deployed, note: note };
+}
+
+/* サイトのリポジトリから消すファイルと、書き換えるデータファイルの一覧。 */
+function therapistRepoRemovals_(name, sheetPhotos) {
+  var files = [];
+  // 写真：シートの写真列＋旧上書きファイル＋管理画面からこの人の名前で追加した写真
+  var cand = {};
+  (sheetPhotos || []).forEach(function (f) { cand[f] = 1; });
+  var ov = readRepoJson_(PHOTO_OV_PATH_);
+  if (ov[name] != null) [].concat(ov[name]).forEach(function (f) { cand[String(f).trim()] = 1; });
+  uploadedPhotosOf_(name).forEach(function (f) { cand[f] = 1; });
+  // ほかの人が使っている写真は消さない
+  var used = {};
+  var P = profileSheet_();
+  if (P) {
+    var pi = P.head.indexOf("写真");
+    if (pi >= 0) for (var k = P.hi + 1; k < P.values.length; k++) String(P.values[k][pi] || "").split(";").forEach(function (x) { if (x.trim()) used[x.trim()] = 1; });
+  }
+  Object.keys(ov).forEach(function (n) { if (n !== name) [].concat(ov[n]).forEach(function (f) { used[String(f).trim()] = 1; }); });
+  Object.keys(cand).forEach(function (f) {
+    if (!/^[\w.\-]+\.(jpe?g|png|webp)$/i.test(f) || used[f]) return; // 外部URL・共有中の写真は対象外
+    var path = "public/" + f;
+    var r = ghRaw_("GET", "/contents/" + encPath_(path) + "?ref=" + encodeURIComponent(ghBranch_()));
+    if (r.code === 200) files.push({ path: path, remove: true });
+  });
+  // 旧設定ファイルの記載
+  if (ov[name] != null) { delete ov[name]; files.push({ path: PHOTO_OV_PATH_, content: JSON.stringify(ov, null, 2) + "\n" }); }
+  var det = readRepoJson_(DETAILS_PATH_);
+  if (det[name] != null) { delete det[name]; files.push({ path: DETAILS_PATH_, content: JSON.stringify(det, null, 2) + "\n" }); }
+  // 公開用データ（取り込みに失敗したときの予備データ）からも消す
+  var roster = readRepoJson_("data/roster.json");
+  if (Array.isArray(roster) && roster.some(function (t) { return t && t.name === name; })) {
+    files.push({ path: "data/roster.json", content: JSON.stringify(roster.filter(function (t) { return !(t && t.name === name); }), null, 2) + "\n" });
+  }
+  var sched = readRepoJson_("data/schedule.json");
+  if (sched && Array.isArray(sched.days) && sched.days.some(function (d) { return (d.list || []).some(function (x) { return x && x.name === name; }); })) {
+    sched.days.forEach(function (d) { d.list = (d.list || []).filter(function (x) { return !(x && x.name === name); }); });
+    files.push({ path: "data/schedule.json", content: JSON.stringify(sched, null, 2) + "\n" });
+  }
+  var guide = readRepoJson_("data/guide.json");
+  if (guide && Array.isArray(guide.areas) && guide.areas.some(function (a) { return (a.list || []).some(function (x) { return x && x.name === name; }); })) {
+    guide.areas.forEach(function (a) { a.list = (a.list || []).filter(function (x) { return !(x && x.name === name); }); });
+    files.push({ path: "data/guide.json", content: JSON.stringify(guide, null, 2) + "\n" });
+  }
+  return files;
+}
+/* 管理画面で「写真を追加（名前）」として登録した写真のファイル名（保存しなかった写真も含む）。 */
+function uploadedPhotosOf_(name) {
+  var msg = "管理画面: 写真を追加（" + String(name).slice(0, 20) + "）";
+  var out = [];
+  try {
+    var list = gh_("GET", "/commits?path=public&per_page=100&sha=" + encodeURIComponent(ghBranch_()));
+    (list || []).forEach(function (cm) {
+      if (!cm || !cm.commit || cm.commit.message !== msg) return;
+      var d = gh_("GET", "/commits/" + cm.sha);
+      (d.files || []).forEach(function (f) {
+        var m = String(f.filename || "").match(/^public\/(therapist-[\w.\-]+)$/);
+        if (m) out.push(m[1]);
+      });
+    });
+  } catch (e) {}
+  return out;
 }
 
 /* 「今すぐサイトに反映」：サイトの作り直しを開始（出勤やプロフィールをシートから取り込み直す）。 */
@@ -2717,7 +2921,7 @@ function selfTest() {
    管理画面（Admin.html）は開いたときにこの版を確認し、Code.gs / lib.gs が古い・途中までしか
    貼られていない場合に警告を出す。※必ずファイルの「最後」に置く（途中で切れると無くなるので検出できる）。
    コードを変更したら Admin.html の APP_VERSION・lib.gs の LIB_VERSION と一緒に上げる。 */
-var CODE_VERSION = "2026-10-09-3";
+var CODE_VERSION = "2026-10-17-1";
 function adminVersion() {
   return { code: CODE_VERSION, lib: typeof LIB_VERSION === "undefined" ? "" : LIB_VERSION };
 }

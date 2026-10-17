@@ -271,9 +271,22 @@
       <h2 id="td-title">セラピスト</h2>
       <div id="td-body"><div class="loading">読み込み中…</div></div>
       <div class="modal-actions">
+        <button class="danger" id="td-del" style="margin-right:auto">削除</button>
         <button class="ghost" id="td-close">閉じる</button>
         <button class="ghost" id="td-prof">プロフィール編集</button>
         <button class="primary" id="td-add">＋ 出勤を登録</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- セラピストの削除（元に戻せない） -->
+  <div class="modal-bg" id="del-bg" style="z-index:70">
+    <div class="modal" style="max-width:520px">
+      <h2 id="del-title">セラピストを削除</h2>
+      <div id="del-body"><div class="loading">確認中…</div></div>
+      <div class="modal-actions">
+        <button class="ghost" id="del-close">やめる</button>
+        <button class="danger" id="del-run" disabled>完全に削除する</button>
       </div>
     </div>
   </div>
@@ -384,7 +397,7 @@
       { label: "延長30分", price: 6000 },
     ];
     var STAFF_EMAIL = "<?= staffEmail ?>";
-    var APP_VERSION = "2026-10-09-3"; // Code.gs の CODE_VERSION・lib.gs の LIB_VERSION と同じ値
+    var APP_VERSION = "2026-10-17-1"; // Code.gs の CODE_VERSION・lib.gs の LIB_VERSION と同じ値
 
     // 画面の不具合を「読み込み中」のまま止めず、理由を表示する
     function showVerWarn(msg){ var b=document.getElementById("ver-warn"); b.innerHTML=msg; b.style.display="block"; }
@@ -937,6 +950,53 @@
         .adminProfileSave({ name:name, isNew:pf.isNew, values:vals, photos:pf.photos });
     };
     $("td-prof").onclick=function(){ openProfile(tdName); };
+
+    // ---- セラピストの削除（名前を入力して確認・元に戻せない） ----
+    var delName="";
+    function openDelete(name){
+      if(!hasServer("adminTherapistDelete")){ alert("サーバー側のコード（Code.gs）に削除の機能がありません。Code.gs・lib.gs・Admin.html を最新に貼り替え、「新バージョン」でデプロイしてください。"); return; }
+      delName=name;
+      $("del-title").textContent=name+" さんを削除";
+      $("del-body").innerHTML='<div class="loading">確認中…</div>';
+      $("del-run").disabled=true;
+      $("del-bg").classList.add("on");
+      google.script.run.withSuccessHandler(function(res){
+        if(!res||!res.ok){ $("del-body").innerHTML='<div class="err">'+esc((res&&res.reason)||"確認できませんでした")+'</div>'; return; }
+        var c=res.counts, h='';
+        h+='<p class="err" style="font-weight:700;padding:4px 0">削除すると元に戻せません。</p>';
+        h+='<p class="note">次のデータをすべて削除します。</p><ul style="margin:6px 0 10px 18px;padding:0;line-height:1.9">';
+        h+='<li>プロフィール・写真（'+c.photos+'枚）</li>';
+        h+='<li>出勤（過去分を含む '+c.shifts+'件）</li>';
+        h+='<li>予約（過去分を含む '+c.bookings+'件）と、その履歴・精算（'+c.settles+'件）</li>';
+        h+='<li>バック率の設定</li></ul>';
+        h+='<p class="note">過去の売上・実績の集計からも消えます。会員のご来店回数（ランク）も、この方の予約分が減ります。</p>';
+        if(res.future&&res.future.length){
+          h+='<div class="err" style="padding:8px 0">今日以降の予約が '+res.future.length+' 件あるため削除できません（'+res.future.map(function(f){return esc(f.start);}).join("、")+'）。先に予約の変更・キャンセルをしてください。</div>';
+          $("del-body").innerHTML=h; return;
+        }
+        if(!res.hasToken) h+='<p class="note">GitHubの鍵が未設定のため、写真ファイルは削除できません（サイトの表示からは消えます）。</p>';
+        h+='<div class="field"><label for="del-confirm">確認のため「'+esc(name)+'」と入力してください</label><input id="del-confirm" autocomplete="off" /></div>';
+        $("del-body").innerHTML=h;
+        $("del-confirm").addEventListener("input", function(){ $("del-run").disabled = this.value.trim()!==delName; });
+      }).withFailureHandler(function(e){ $("del-body").innerHTML='<div class="err">'+esc(e&&e.message?e.message:e)+'</div>'; })
+        .adminTherapistDeletePreview(name);
+    }
+    $("del-close").onclick=function(){ $("del-bg").classList.remove("on"); };
+    $("del-run").onclick=function(){
+      var inp=$("del-confirm"); if(!inp||inp.value.trim()!==delName) return;
+      var btn=$("del-run"); btn.disabled=true; btn.textContent="削除中…";
+      google.script.run.withSuccessHandler(function(res){
+        btn.textContent="完全に削除する";
+        if(!res||!res.ok){ btn.disabled=false; alert("削除できませんでした："+((res&&res.reason)||"不明")); return; }
+        $("del-bg").classList.remove("on"); $("td-bg").classList.remove("on"); $("pf-bg").classList.remove("on");
+        toast(delName+" さんを削除しました");
+        if(res.note) setTimeout(function(){ alert(res.note); }, 50);
+        if(res.deployed) watchDeploy();
+        loadShifts();
+      }).withFailureHandler(function(e){ btn.disabled=false; btn.textContent="完全に削除する"; alert("エラー："+(e&&e.message?e.message:e)); })
+        .adminTherapistDelete({ name: delName, confirm: inp.value.trim() });
+    };
+    $("td-del").onclick=function(){ openDelete(tdName); };
     $("th-addther").onclick=function(){ openProfile(""); };
 
     // ---- 今すぐサイトに反映 ----
