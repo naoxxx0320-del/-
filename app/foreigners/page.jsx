@@ -1,18 +1,10 @@
 import SiteChrome from "../_components/SiteChrome";
 import NavGrid from "../_components/NavGrid";
-import { abs, SITE, telHref } from "../_lib/site";
+import { SITE, telHref } from "../_lib/site";
 import Breadcrumbs from "../_components/Breadcrumbs";
+import { pageMetadata } from "../_lib/seo";
 
-export const metadata = {
-  title: "外国人の方へ / For Foreign Customers",
-  description:
-    "For foreign customers of AROMA DIAMOND (Kameido). Reservation guide in English.",
-  alternates: { canonical: abs("foreigners/") },
-  openGraph: {
-    url: abs("foreigners/"),
-    title: "For Foreign Customers｜AROMA DIAMOND Kameido",
-  },
-};
+export const metadata = pageMetadata("foreigners");
 
 const STEPS = [
   {

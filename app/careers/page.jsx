@@ -1,16 +1,7 @@
 import RecruitPage from "../_components/RecruitPage";
-import { abs } from "../_lib/site";
+import { pageMetadata } from "../_lib/seo";
 
-export const metadata = {
-  title: "スタッフ求人｜受付・店舗運営",
-  description:
-    "AROMA DIAMOND（アロマダイヤモンド）亀戸 の受付・店舗運営スタッフ求人。仕事内容と募集条件をご確認のうえご応募ください。",
-  alternates: { canonical: abs("careers/") },
-  openGraph: {
-    url: abs("careers/"),
-    title: "スタッフ求人｜受付・店舗運営｜AROMA DIAMOND 亀戸",
-  },
-};
+export const metadata = pageMetadata("careers");
 
 export default function Careers() {
   return <RecruitPage role="staff" />;

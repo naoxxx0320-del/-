@@ -1,16 +1,7 @@
 import RecruitPage from "../_components/RecruitPage";
-import { abs } from "../_lib/site";
+import { pageMetadata } from "../_lib/seo";
 
-export const metadata = {
-  title: "セラピスト求人",
-  description:
-    "AROMA DIAMOND（アロマダイヤモンド）亀戸 のセラピスト求人。施術・接客のお仕事です。報酬の仕組みや勤務条件をご確認のうえご応募ください。",
-  alternates: { canonical: abs("recruit/") },
-  openGraph: {
-    url: abs("recruit/"),
-    title: "セラピスト求人｜AROMA DIAMOND 亀戸",
-  },
-};
+export const metadata = pageMetadata("recruit");
 
 export default function Recruit() {
   return <RecruitPage role="therapist" />;

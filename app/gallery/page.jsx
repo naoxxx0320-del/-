@@ -1,16 +1,10 @@
 import SiteChrome from "../_components/SiteChrome";
 import NavGrid from "../_components/NavGrid";
-import { abs } from "../_lib/site";
 import GalleryClient from "./GalleryClient";
 import Breadcrumbs from "../_components/Breadcrumbs";
+import { pageMetadata } from "../_lib/seo";
 
-export const metadata = {
-  title: "フォトギャラリー",
-  description:
-    "AROMA DIAMOND（アロマダイヤモンド）亀戸 の空間・セラピストのフォトギャラリー。",
-  alternates: { canonical: abs("gallery/") },
-  openGraph: { url: abs("gallery/"), title: "フォトギャラリー｜AROMA DIAMOND 亀戸" },
-};
+export const metadata = pageMetadata("gallery");
 
 export default function Gallery() {
   return (

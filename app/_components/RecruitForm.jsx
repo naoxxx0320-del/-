@@ -9,6 +9,7 @@ import { useState } from "react";
 import cfg from "../../data/recruit-config.json";
 import links from "../../data/links.json";
 import { SITE } from "../_lib/site";
+import { track, trackOnce } from "../_lib/track";
 
 export default function RecruitForm({ role }) {
   const roleCfg = cfg.roles[role] || {};
@@ -98,6 +99,9 @@ export default function RecruitForm({ role }) {
     });
     try {
       await fetch(cfg.endpoint, { method: "POST", mode: "no-cors", body });
+      // no-cors 送信のためサーバー側の成功は確認できない。完了(recruit_form_complete)とは
+      // 区別して「送信」として計測する（個人情報は送らない）。
+      track("recruit_form_submit", { role });
       setState({ sending: false, done: true, error: "" });
     } catch (e) {
       setState({
@@ -247,7 +251,7 @@ export default function RecruitForm({ role }) {
 
   /* ---------- 入力フォーム ---------- */
   return (
-    <div className="rec-apply">
+    <div className="rec-apply" onFocusCapture={() => trackOnce("recruit_form_start", { role })}>
       {!accepting && (
         <div className="rec-draft-note" role="status">
           現在、募集要項を準備中です。応募受付の開始まで今しばらくお待ちください。

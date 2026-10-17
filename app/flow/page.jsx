@@ -1,15 +1,9 @@
 import SiteChrome from "../_components/SiteChrome";
 import NavGrid from "../_components/NavGrid";
 import Breadcrumbs from "../_components/Breadcrumbs";
-import { abs } from "../_lib/site";
+import { pageMetadata } from "../_lib/seo";
 
-export const metadata = {
-  title: "ご利用の流れ",
-  description:
-    "AROMA DIAMOND（アロマダイヤモンド）亀戸 のご利用の流れ。ご予約からご来店、駅からの道順、退店までを分かりやすくご案内します。",
-  alternates: { canonical: abs("flow/") },
-  openGraph: { url: abs("flow/"), title: "ご利用の流れ｜AROMA DIAMOND 亀戸" },
-};
+export const metadata = pageMetadata("flow");
 
 // 電話アイコン（ゴールド）
 function PhoneIcon() {

@@ -4,7 +4,7 @@ import { SnsBadge } from "../../_components/TherapistCard";
 import { photoSrc } from "../../_components/photo";
 import roster from "../../../data/roster.json";
 import TherapistGallery from "./TherapistGallery";
-import { abs } from "../../_lib/site";
+import { buildMetadata } from "../../_lib/seo";
 import Breadcrumbs from "../../_components/Breadcrumbs";
 
 const BASE = "../../"; // /therapist/[id]/ はルートから2階層下
@@ -21,13 +21,12 @@ function pick(id) {
 export function generateMetadata({ params }) {
   const t = pick(params.id);
   const nm = (t && (t.nameFull || t.name)) || "セラピスト";
-  const url = abs(`therapist/${params.id}/`);
-  return {
-    title: nm,
-    description: `AROMA DIAMOND（アロマダイヤモンド）亀戸 セラピスト「${nm}」のプロフィール。`,
-    alternates: { canonical: url },
-    openGraph: { url, title: `${nm}｜AROMA DIAMOND 亀戸` },
-  };
+  const tags = t && Array.isArray(t.tags) && t.tags.length ? `（${t.tags.slice(0, 3).join("・")}）` : "";
+  return buildMetadata({
+    path: `therapist/${params.id}/`,
+    title: `${nm}のプロフィール｜亀戸 メンズエステ AROMA DIAMOND`,
+    description: `AROMA DIAMOND（アロマダイヤモンド）亀戸のセラピスト「${nm}」${tags}のプロフィール。出勤予定の確認とWEB・LINE・お電話でのご予約はこちらから。`,
+  });
 }
 
 // stats(["T.158","B.86(D)",...]) から値を取り出す

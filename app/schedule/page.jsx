@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import SiteChrome from "../_components/SiteChrome";
 import NavGrid from "../_components/NavGrid";
+import Breadcrumbs from "../_components/Breadcrumbs";
 import StaffCard from "../_components/StaffCard";
 import schedule from "../../data/schedule.json";
 import roster from "../../data/roster.json";
@@ -52,10 +53,14 @@ export default function Schedule() {
             "#f4efe7 url(../bg-marble.jpg) top center / 100% auto repeat",
         }}
       >
+        <Breadcrumbs items={[{ name: "出勤情報", path: "schedule/" }]} jsonld={false} />
         <div className="page-head">
           <div className="ph-en">Schedule</div>
-          <h1 className="ph-jp">出勤情報</h1>
+          <h1 className="ph-jp ph-long">セラピスト出勤スケジュール</h1>
         </div>
+        {schedule.today && schedule.updated && (
+          <p className="sch-updated">更新：{schedule.today} {schedule.updated}</p>
+        )}
 
         <NavGrid base="../" />
 
@@ -80,7 +85,11 @@ export default function Schedule() {
         </div>
 
         {cards.length === 0 ? (
-          <p className="therapists-empty">この日の出勤情報はまだありません。</p>
+          <p className="therapists-empty">
+            {days.length === 0
+              ? "現在掲載中の出勤予定はありません。出勤予定が決まり次第、このページでお知らせします。"
+              : "この日の出勤情報はまだありません。"}
+          </p>
         ) : (
           <section className="staff-grid">
             {cards.map((t, i) => (

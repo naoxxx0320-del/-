@@ -1,22 +1,12 @@
 import SiteChrome from "../_components/SiteChrome";
 import NavGrid from "../_components/NavGrid";
 import Breadcrumbs from "../_components/Breadcrumbs";
-import { abs } from "../_lib/site";
 import cfg from "../../data/membership-config.json";
 import { DiamondIcon, CrownIcon, RibbonIcon, MedalIcon, ArrowDown, Glyph } from "./icons";
 import RegisterSection from "./RegisterSection";
+import { pageMetadata } from "../_lib/seo";
 
-export const metadata = {
-  title: "会員制度・VIP特典",
-  description:
-    "AROMA DIAMOND（アロマダイヤモンド）亀戸の会員制度「DIAMOND MEMBERSHIP」。オープン記念 OPENING VIP は先着100名様限定・入会金年会費無料。ご来店回数に応じて SILVER・GOLD・DIAMOND の特典が受けられます。",
-  alternates: { canonical: abs("membership/") },
-  openGraph: {
-    url: abs("membership/"),
-    title: "会員制度・VIP特典｜AROMA DIAMOND 亀戸",
-    description: "OPENING VIP 先着100名様限定。来店するほど、特別な待遇へ。",
-  },
-};
+export const metadata = pageMetadata("membership");
 
 const RANKS = [
   { key: "silver", name: "SILVER", visits: "1〜2回来店", perk: "会員限定アロマ", Icon: RibbonIcon, color: "#9aa1a8" },
@@ -65,7 +55,7 @@ export default function Membership() {
         <section className="mb-hero" aria-labelledby="mb-title">
           <div className="mb-hero-icon"><DiamondIcon size={44} color="#3a3a3a" sw={1.2} /></div>
           <p className="mb-brand">AROMA DIAMOND</p>
-          <h1 className="mb-title" id="mb-title">DIAMOND MEMBERSHIP</h1>
+          <h1 className="mb-title" id="mb-title">DIAMOND MEMBERSHIP<span className="mb-title-ja">会員制度・VIP特典</span></h1>
           <p className="mb-sub">来店するほど、特別な待遇へ。</p>
           <hr className="mb-rule" />
 

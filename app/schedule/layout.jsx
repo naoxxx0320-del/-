@@ -1,20 +1,14 @@
 // /schedule はクライアントコンポーネントのため、メタデータはこの
 // サーバー用レイアウトで付与する（canonical を自ページに向ける）。
-import { abs } from "../_lib/site";
 import Breadcrumbs from "../_components/Breadcrumbs";
+import { pageMetadata } from "../_lib/seo";
 
-export const metadata = {
-  title: "出勤情報",
-  description:
-    "AROMA DIAMOND（アロマダイヤモンド）亀戸 本日の出勤・案内状況。空き状況をリアルタイムに更新中。",
-  alternates: { canonical: abs("schedule/") },
-  openGraph: { url: abs("schedule/"), title: "出勤情報｜AROMA DIAMOND 亀戸" },
-};
+export const metadata = pageMetadata("schedule");
 
 export default function ScheduleLayout({ children }) {
   return (
     <>
-      <Breadcrumbs items={[{ name: "出勤情報", path: "schedule/" }]} />
+      <Breadcrumbs items={[{ name: "出勤情報", path: "schedule/" }]} visible={false} />
       {children}
     </>
   );

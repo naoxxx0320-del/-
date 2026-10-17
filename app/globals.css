@@ -6172,3 +6172,156 @@ body:has(.rec-page) .aichat-fab {
 .mb-topbanner-t { font-size: 15px; font-weight: 700; color: #f0d79a; letter-spacing: 0.04em; }
 .mb-topbanner-s { font-size: 11.5px; color: #cdb37a; }
 .mb-topbanner-go { font-size: 18px; color: #d9bf86; }
+
+/* =========================================================
+   トップ：店舗紹介（主見出しH1＋特徴＋主要ページへの導線）
+   ========================================================= */
+.home-intro {
+  position: relative;
+  z-index: 2;
+  margin: 16px 14px 0;
+  padding: 20px 16px 18px;
+  text-align: center;
+  background: rgba(255, 253, 248, 0.86);
+  border: 1px solid #e3d6bf;
+  border-radius: 12px;
+}
+.home-intro-h1 {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-weight: 400;
+}
+.home-intro-h1 .hi-sub {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 13px;
+  letter-spacing: 0.3em;
+  color: var(--brown);
+}
+.home-intro-h1 .hi-main {
+  font-family: var(--font-serif-en), serif;
+  font-size: clamp(24px, 7.4vw, 30px);
+  letter-spacing: 0.08em;
+  color: var(--gold-deep);
+  line-height: 1.2;
+}
+.home-intro-h1 .hi-ja {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  color: var(--brown);
+}
+.home-intro-p {
+  margin: 12px 0 0;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 13.5px;
+  line-height: 1.95;
+  color: #3a2d1c;
+  text-align: left;
+}
+.home-intro-open {
+  display: inline-block;
+  margin: 10px 0 0;
+  padding: 3px 12px;
+  border: 1px solid #cdae62;
+  border-radius: 999px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: #8a6a2c;
+}
+.home-intro-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+.home-intro-links a {
+  display: block;
+  padding: 10px 6px;
+  border: 1px solid #cdae62;
+  border-radius: 8px;
+  background: #fff;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 13.5px;
+  letter-spacing: 0.06em;
+  color: #5b4320;
+  text-decoration: none;
+}
+.home-intro-links a:hover { background: #fbf4e4; }
+
+/* 長い主見出し（下層ページ）は字間を詰めて2行でも読みやすく */
+.page-head .ph-jp.ph-long {
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  line-height: 1.6;
+}
+
+/* パンくずリスト（画面表示。JSON-LD と同じ内容） */
+.crumbs {
+  position: relative;
+  z-index: 3;
+  padding: 8px 62px 0 14px;
+  font-size: 11.5px;
+  color: #7a6a52;
+}
+.crumbs ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 2px 0; }
+.crumbs li + li::before { content: "›"; margin: 0 6px; color: #b18e46; }
+.crumbs a { color: #8a6a2c; text-decoration: none; }
+.crumbs a:hover { text-decoration: underline; }
+.sch-updated {
+  position: relative;
+  z-index: 2;
+  margin: -4px 0 8px;
+  text-align: center;
+  font-size: 11.5px;
+  color: #7a6a52;
+}
+.mb-title-ja {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  color: #5a4a3c;
+}
+.sys-fees-h3 {
+  margin: 14px 0 8px;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  color: #5b4320;
+}
+.sys-fees-notes {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1.8;
+  color: #6f5b48;
+}
+.sys-reserve-link {
+  display: block;
+  margin: 18px 0 4px;
+  padding: 12px;
+  text-align: center;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2a0a0d, #4a1218);
+  color: #edd39b;
+  font-family: var(--font-serif-jp), serif;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+}
+.links-group + .links-group { margin-top: 22px; }
+.links-group-h {
+  margin: 0 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #d8c8a8;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  color: #5b4320;
+}
+.page-head .ph-jp .ph-line { display: block; }

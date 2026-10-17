@@ -1,7 +1,9 @@
-// robots.txt を静的生成する。/secret はクロール対象外にする。
-// ※GitHub のプロジェクトページ（/-/ 配下）では robots.txt がサイト直下に
-//   置けないため検索エンジンには読まれない。独自ドメイン導入後に有効化される。
-import { abs, SITE_URL } from "./_lib/site";
+// robots.txt を静的生成する。
+// 公開ページ・CSS・JS・画像のクロールは妨げない。
+// 検索に出したくないページ（/secret/ 等）は各ページの noindex で制御する。
+// robots.txt で遮断すると noindex が読まれず URL だけ登録されることがあるため、ここでは遮断しない。
+// ※robots.txt はアクセス制限ではない（機密の保護には使わない）。
+import { abs } from "./_lib/site";
 
 export const dynamic = "force-static";
 
@@ -10,9 +12,7 @@ export default function robots() {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/secret/"],
     },
     sitemap: abs("sitemap.xml"),
-    host: SITE_URL,
   };
 }

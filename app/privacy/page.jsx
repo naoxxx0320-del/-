@@ -1,19 +1,10 @@
 import SiteChrome from "../_components/SiteChrome";
 import NavGrid from "../_components/NavGrid";
 import Breadcrumbs from "../_components/Breadcrumbs";
-import { abs } from "../_lib/site";
 import links from "../../data/links.json";
+import { pageMetadata } from "../_lib/seo";
 
-export const metadata = {
-  title: "プライバシーポリシー",
-  description:
-    "AROMA DIAMOND（アロマダイヤモンド）亀戸 のプライバシーポリシー（個人情報保護方針）。個人情報の取り扱い・収集・第三者提供・開示等についてご案内します。",
-  alternates: { canonical: abs("privacy/") },
-  openGraph: {
-    url: abs("privacy/"),
-    title: "プライバシーポリシー｜AROMA DIAMOND 亀戸",
-  },
-};
+export const metadata = pageMetadata("privacy");
 
 export default function Privacy() {
   return (

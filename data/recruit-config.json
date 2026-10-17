@@ -1,5 +1,5 @@
 {
-  "_note": "求人ページの共通データ。募集条件は確定次第 value(v) を埋める。status: draft(準備中) / open(募集中) / closed(募集終了)。endpoint 未設定の間はフォーム送信は未接続（準備中表示）。",
+  "_note": "求人ページの共通データ。募集条件は確定次第 value(v) を埋める。status: draft(準備中) / open(募集中) / closed(募集終了)。求人の構造化データ(JobPosting)は status が open かつ datePosted（募集開始日）があるときだけ出力。募集を終えたら status を closed に。endpoint 未設定の間はフォーム送信は未接続（準備中表示）。",
   "endpoint": "https://script.google.com/macros/s/AKfycbz-4HSg_OsoM_IgffAKp1DpgAbbnBgDTWXDY99JGB_trCEq2PY5On--jEv4g8Iv-dHdIg/exec",
   "applyEmail": "naoxxx0320@gmail.com",
   "privacyUrl": "",
@@ -27,6 +27,7 @@
       "name": "セラピスト求人",
       "sub": "施術・接客",
       "status": "open",
+      "datePosted": "2026-09-27",
       "reward": [
         { "k": "契約形態", "v": "業務委託" },
         { "k": "基本の報酬", "v": "コース料金の60〜75%（経験・実績に応じてアップ）" },
@@ -38,7 +39,7 @@
         { "k": "歩合率の適用条件・計算方法", "v": null }
       ],
       "conditions": [
-        { "k": "勤務地", "v": "東京都江東区亀戸（亀戸駅北口から徒歩約5分）。詳しい場所は面接時にご案内します。" },
+        { "k": "勤務地", "v": "東京都江東区亀戸（亀戸駅北口から徒歩4分）。詳しい場所は面接時にご案内します。" },
         { "k": "勤務エリア", "v": "亀戸（プライベートサロン・1室）" },
         { "k": "開業予定", "v": "2026年11月中旬" },
         { "k": "営業時間", "v": "10:00〜翌5:00" },

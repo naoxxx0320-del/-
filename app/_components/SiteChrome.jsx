@@ -33,13 +33,11 @@ const FOOT = [
   { en: "Careers", jp: "スタッフ求人", slug: "careers" },
   { en: "Recruit", jp: "セラピスト求人", slug: "recruit" },
   { en: "Flow", jp: "ご利用の流れ", slug: "flow" },
-  { en: "Q & A", jp: "よくある質問", slug: null },
-  { en: "Column", jp: "メンズエステコラム", slug: null },
+  { en: "Q & A", jp: "よくある質問", slug: "faq" },
   { en: "Terms", jp: "ご利用規約", slug: "terms" },
   { en: "Privacy", jp: "プライバシーポリシー", slug: "privacy" },
   { en: "Link", jp: "リンク集", slug: "links" },
-  { en: "Review", jp: "ご意見フォーム", slug: null },
-  { en: "Contact", jp: "お問い合わせ", slug: null },
+  { en: "Contact", jp: "お問い合わせ", slug: "faq", hash: "contact" },
 ];
 
 export default function SiteChrome({ base = "", hideFooterbar = false }) {
@@ -51,8 +49,8 @@ export default function SiteChrome({ base = "", hideFooterbar = false }) {
   }, [menuOpen]);
 
   const home = base === "" ? "./" : base;
-  const href = (slug) =>
-    slug === null ? "#" : slug === "" ? home : `${base}${slug}/`;
+  const href = (slug, hash) =>
+    (slug === "" ? home : `${base}${slug}/`) + (hash ? `#${hash}` : "");
 
   return (
     <>
@@ -70,7 +68,7 @@ export default function SiteChrome({ base = "", hideFooterbar = false }) {
       {/* ---------- SITE FOOTER (link list + copyright) ---------- */}
       <nav className="sitefoot">
         {FOOT.map((m, i) => (
-          <a className="sf-row" href={href(m.slug)} key={i}>
+          <a className="sf-row" href={href(m.slug, m.hash)} key={i}>
             <span className="sf-en">{m.en}</span>
             <span className="sf-jp">{m.jp}</span>
           </a>
@@ -202,7 +200,7 @@ export default function SiteChrome({ base = "", hideFooterbar = false }) {
           <div className="menu-logo">
             <div className="ml-sub">men&apos;s esthetic</div>
             <div className="ml-en">
-              <span className="gold">A</span>ROMA <span className="gold">D</span>AIAMOND
+              <span className="gold">A</span>ROMA <span className="gold">D</span>IAMOND
             </div>
             <div className="ml-jp">アロマダイヤモンド</div>
           </div>

@@ -1,6 +1,7 @@
-// 構造化データ（JSON-LD）。検索エンジンに店舗情報を正しく認識させ、
-// 「営業時間」「エリア」「料金」などをリッチに表示させるための埋め込み。
-// 住所は方針によりエリア（東京都江東区亀戸）レベルまで。番地は含めない。
+// 構造化データ（JSON-LD）。トップページにだけ出力し、店舗とサイトの情報を検索エンジンに伝える。
+// 住所は方針によりエリア（東京都江東区亀戸）レベルまで。番地・座標は含めない
+// （駅の座標を店舗の位置として登録しない）。口コミ・評価点（Review/AggregateRating）は付けない。
+// 開業前（SITE.openLabel が入っている間）は営業時間を出さず、営業中と誤解されないようにする。
 import { SITE, SITE_URL, abs } from "../_lib/site";
 import reserveConfig from "../../data/reserve-config.json";
 
@@ -11,12 +12,13 @@ export default function StructuredData() {
     "@context": "https://schema.org",
     "@type": "HealthAndBeautyBusiness",
     "@id": `${SITE_URL}#business`,
-    name: `${SITE.name}（${SITE.nameJa}）`,
+    name: SITE.name,
+    alternateName: SITE.nameJa,
     description: SITE.description,
     url: SITE_URL,
     telephone: SITE.telephone,
-    email: SITE.email,
     image: abs(SITE.ogImage),
+    logo: abs("icon-512.png"),
     priceRange: SITE.priceRange,
     currenciesAccepted: "JPY",
     // 準備中の支払い方法は「受付可能」として構造化データに含めない。
@@ -29,8 +31,8 @@ export default function StructuredData() {
       addressRegion: SITE.addressRegion,
       addressLocality: `${SITE.addressDistrict}${SITE.addressLocality}`,
     },
-    areaServed: { "@type": "Place", name: `${SITE.addressRegion}${SITE.area}` },
-    openingHours: SITE.openingHours,
+    areaServed: { "@type": "Place", name: `${SITE.addressRegion}${SITE.addressDistrict}${SITE.area}` },
+    ...(SITE.openLabel ? {} : { openingHours: SITE.openingHours }),
     ...(courses.length
       ? {
           hasOfferCatalog: {
@@ -52,7 +54,8 @@ export default function StructuredData() {
     "@type": "WebSite",
     "@id": `${SITE_URL}#website`,
     url: SITE_URL,
-    name: `${SITE.name}｜${SITE.nameJa}｜${SITE.area} メンズエステ`,
+    name: SITE.name,
+    alternateName: SITE.nameJa,
     inLanguage: "ja",
     publisher: { "@id": `${SITE_URL}#business` },
   };
