@@ -2,16 +2,11 @@ import SiteChrome from "../_components/SiteChrome";
 import NavGrid from "../_components/NavGrid";
 import Breadcrumbs from "../_components/Breadcrumbs";
 import { photoSrc } from "../_components/photo";
-import { SITE, abs } from "../_lib/site";
+import { SITE } from "../_lib/site";
 import links from "../../data/links.json";
+import { pageMetadata } from "../_lib/seo";
 
-export const metadata = {
-  title: "はじめての方へ",
-  description:
-    "AROMA DIAMOND（アロマダイヤモンド）亀戸 をはじめてご利用の方へ。ご予約・お問い合わせ方法とご利用の流れ（STEP1〜5）をご案内します。",
-  alternates: { canonical: abs("first/") },
-  openGraph: { url: abs("first/"), title: "はじめての方へ｜AROMA DIAMOND 亀戸" },
-};
+export const metadata = pageMetadata("first");
 
 const TEL_DIGITS = SITE.telephone.replace(/\D/g, "");
 

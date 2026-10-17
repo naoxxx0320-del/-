@@ -1,4 +1,5 @@
-// sitemap.xml を静的生成する。/secret（パスワード付き裏メニュー）は除外。
+// sitemap.xml を静的生成する。掲載するのは index 対象の正規URLだけ。
+// /secret・抽選関連・会員証（noindex のページ）は載せない。
 import { abs } from "./_lib/site";
 import roster from "../data/roster.json";
 
@@ -24,11 +25,12 @@ export default function sitemap() {
     ["foreigners/", 0.5],
     ["flow/", 0.6],
     ["first/", 0.6],
+    ["faq/", 0.6],
     ["terms/", 0.4],
     ["privacy/", 0.4],
     ["links/", 0.4],
-    ["careers/", 0.5],
-    ["recruit/", 0.5],
+    ["careers/", 0.4],
+    ["recruit/", 0.8],
   ];
 
   const staticEntries = pages.map(([path, priority]) => {

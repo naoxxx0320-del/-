@@ -8,6 +8,7 @@ import Breadcrumbs from "./Breadcrumbs";
 import RecruitForm from "./RecruitForm";
 import { photoSrc } from "./photo";
 import cfg from "../../data/recruit-config.json";
+import { SITE, SITE_URL, abs } from "../_lib/site";
 
 const BASE = "../"; // /careers/ ・ /recruit/ はルートから1階層下
 
@@ -16,6 +17,7 @@ const CONTENT = {
     slug: "careers",
     en: "STAFF RECRUITMENT",
     h1: "スタッフ求人",
+    h1Full: ["受付・運営スタッフ求人"],
     heroTitle: "お店の心地よさを、運営から支える。",
     jobLabel: "受付・店舗運営スタッフ募集",
     intro:
@@ -54,6 +56,7 @@ const CONTENT = {
     slug: "recruit",
     en: "THERAPIST RECRUITMENT",
     h1: "セラピスト求人",
+    h1Full: ["亀戸のメンズエステ", "セラピスト求人・募集"],
     heroTitle: "オープニングセラピスト募集。",
     jobLabel: "セラピスト募集（オープニング）",
     banner: "recruit-therapist-hero.jpg",
@@ -242,6 +245,55 @@ function ApplySec({ c, role }) {
   );
 }
 
+// 求人の構造化データ（Google の JobPosting 仕様）。
+// 募集中（status: open）かつ募集開始日（datePosted）があるときだけ出力する。
+// 報酬は歩合（コース料金の60〜75%）のため、固定の時給・月給に換算した baseSalary は付けない。
+// 業務委託のため employmentType は CONTRACTOR。番地は載せずエリアまで。
+function JobPostingLd({ role, c }) {
+  const rc = cfg.roles[role];
+  if (!rc || rc.status !== "open" || !rc.datePosted) return null;
+  const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const li = (arr) => `<ul>${arr.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`;
+  const description = [
+    `<p>${esc(c.intro)}</p>`,
+    "<p><strong>仕事内容</strong></p>",
+    li((c.jobs || []).map((j) => `${j.t}：${j.d}`)),
+    "<p><strong>報酬</strong></p>",
+    li((c.reward || []).filter((r) => r.v).map((r) => `${r.k}：${r.v}`)),
+    "<p><strong>待遇</strong></p>",
+    li((c.benefits || []).map((b) => `${b.t}：${b.d}`)),
+    c.safetyNote ? `<p>${esc(c.safetyNote)}</p>` : "",
+  ].join("");
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    title: "メンズエステ セラピスト（アロマトリートメント・業務委託）",
+    description,
+    datePosted: rc.datePosted,
+    ...(rc.validThrough ? { validThrough: rc.validThrough } : {}),
+    employmentType: "CONTRACTOR",
+    hiringOrganization: {
+      "@type": "Organization",
+      name: SITE.name,
+      sameAs: SITE_URL,
+      logo: abs("icon-512.png"),
+    },
+    jobLocation: {
+      "@type": "Place",
+      address: {
+        "@type": "PostalAddress",
+        addressCountry: SITE.addressCountry,
+        addressRegion: SITE.addressRegion,
+        addressLocality: `${SITE.addressDistrict}${SITE.addressLocality}`,
+      },
+    },
+    url: abs(`${c.slug}/`),
+  };
+  return (
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />
+  );
+}
+
 export default function RecruitPage({ role }) {
   const c = CONTENT[role];
   const status = cfg.roles[role].status;
@@ -259,6 +311,7 @@ export default function RecruitPage({ role }) {
         }}
       >
         <Breadcrumbs items={[{ name: c.h1, path: `${c.slug}/` }]} />
+        <JobPostingLd role={role} c={c} />
 
         {/* 職種切替リンク */}
         <div className="rec-switch">
@@ -270,7 +323,14 @@ export default function RecruitPage({ role }) {
 
         <div className="page-head">
           <div className="ph-en">{c.en}</div>
-          <h1 className="ph-jp">{c.h1}</h1>
+          <h1 className="ph-jp ph-long">
+            {c.h1Full.map((t, i) => (
+              <span className="ph-line" key={i}>
+                {i > 0 && " "}
+                {t}
+              </span>
+            ))}
+          </h1>
         </div>
 
         <NavGrid base={BASE} />

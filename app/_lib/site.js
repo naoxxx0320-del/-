@@ -33,8 +33,14 @@ export const SITE = {
   hoursBusiness: "10:00〜翌5:00", // 表示用（営業時間）
   hoursPhone: "9:30〜翌4:00", // 表示用（電話受付）
   priceRange: "¥13,000〜",
+  // 最寄駅からの距離（表示を一元管理。変更時はここだけ直す）
+  station: "JR亀戸駅",
+  stationExit: "北口",
+  walkMinutes: 4,
+  // 開業予定（表示用）。開業後は openLabel を空にすると「オープン予定」表記が消える。
+  openLabel: "2026年11月中旬オープン",
   description:
-    "宝石のように美しいセラピスト達。極上の癒しと刺激の空間 men's esthetic AROMA DIAMOND（アロマダイヤモンド）亀戸。",
+    "JR亀戸駅北口から徒歩4分のメンズエステ「AROMA DIAMOND（アロマダイヤモンド）」。完全個室のプライベート空間でアロマトリートメントをご案内します。2026年11月中旬オープン。料金・セラピスト紹介・出勤情報・WEB予約はこちら。",
   ogImage: "hero-banner.jpg",
   locale: "ja_JP",
 };

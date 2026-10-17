@@ -1,16 +1,11 @@
 import SiteChrome from "../_components/SiteChrome";
 import NavGrid from "../_components/NavGrid";
 import { photoSrc } from "../_components/photo";
-import { abs, SITE } from "../_lib/site";
+import { SITE } from "../_lib/site";
 import Breadcrumbs from "../_components/Breadcrumbs";
+import { pageMetadata } from "../_lib/seo";
 
-export const metadata = {
-  title: "料金システム",
-  description:
-    "AROMA DIAMOND（アロマダイヤモンド）亀戸 メンズエステの料金システム・コース・オプション一覧。",
-  alternates: { canonical: abs("system/") },
-  openGraph: { url: abs("system/"), title: "料金システム｜AROMA DIAMOND 亀戸" },
-};
+export const metadata = pageMetadata("system");
 
 const yen = (n) => n.toLocaleString("ja-JP") + "円";
 const SHI = "全身オイルトリートメント、全身アロママッサージ、ヘッドマッサージ、ディープリンパ";
@@ -53,6 +48,25 @@ const COURSE_DETAILS = [
   },
 ];
 
+// 入会金・指名料／オプション（料金表画像と同じ内容をテキストでも掲載。金額を変えるときは画像も更新）
+const FEES = [
+  ["入会金", "無料"],
+  ["写真指名", 1000],
+  ["本指名", 1000],
+  ["姫指名", 2000],
+];
+const FEE_NOTES = ["姫指名はセラピスト経由のご予約です。", "姫指名と本指名の料金は重複しません。"];
+const OPTIONS = [
+  ["パウダートリートメント", 1000],
+  ["ホイップトリートメント", 2000],
+  ["衣装チェンジ", 2000],
+];
+const OPTION_NOTES = [
+  "ホットオイル・リンパトリートメントはコースに含まれます（追加料金なし）。",
+  "オプションはコース時間内での対応となります。",
+  "対応可能なオプションは担当者により異なります。",
+];
+
 // 特定商取引法に基づく表示（法定表示）
 const TOKUSHO = [
   ["事業者名", "アロマダイヤモンド"],
@@ -83,11 +97,11 @@ export default function System() {
             "#f4efe7 url(../bg-marble.jpg) top center / 100% auto repeat",
         }}
       >
-        <Breadcrumbs items={[{ name: "料金システム", path: "system/" }]} />
+        <Breadcrumbs items={[{ name: "料金・コース案内", path: "system/" }]} />
 
         <div className="page-head">
           <div className="ph-en">System</div>
-          <h1 className="ph-jp">料金システム</h1>
+          <h1 className="ph-jp ph-long">亀戸メンズエステの料金・コース案内</h1>
         </div>
 
         <NavGrid base="../" />
@@ -97,7 +111,7 @@ export default function System() {
         <img
           className="sys-img"
           src={photoSrc("system-price.jpg", "../")}
-          alt="料金システム COURSE LIST／OPTION menu｜AROMA DIAMOND 亀戸"
+          alt="料金表：60分13,000円、70分あおむけ18,000円、90分18,000円、120分23,000円、150分28,000円、延長30分6,000円。指名料・オプションは下記に記載｜AROMA DIAMOND 亀戸"
         />
 
         {/* ---- 各コースの説明 ---- */}
@@ -125,6 +139,50 @@ export default function System() {
               </div>
             </article>
           ))}
+        </section>
+
+        {/* ---- 指名料・オプション（テキスト版） ---- */}
+        <section className="rec-sec sys-fees" aria-labelledby="sys-fees-h">
+          <div className="rec-sec-h">
+            <span className="rec-sec-en">Fee &amp; Option</span>
+            <h2 className="rec-sec-jp" id="sys-fees-h">指名料・オプション料金</h2>
+          </div>
+          <h3 className="sys-fees-h3">入会金・指名料</h3>
+          <table className="rec-table">
+            <tbody>
+              {FEES.map(([k, v]) => (
+                <tr key={k}>
+                  <th>{k}</th>
+                  <td>{typeof v === "number" ? yen(v) : v}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <ul className="sys-fees-notes">
+            {FEE_NOTES.map((n) => (
+              <li key={n}>※{n}</li>
+            ))}
+          </ul>
+          <h3 className="sys-fees-h3">オプション</h3>
+          <table className="rec-table">
+            <tbody>
+              {OPTIONS.map(([k, v]) => (
+                <tr key={k}>
+                  <th>{k}</th>
+                  <td>{yen(v)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <ul className="sys-fees-notes">
+            {OPTION_NOTES.map((n) => (
+              <li key={n}>※{n}</li>
+            ))}
+            <li>※表示価格はすべて税込です。</li>
+          </ul>
+          <a className="sys-reserve-link" href="../reserve/">
+            料金を確認してWEB予約へ進む →
+          </a>
         </section>
 
         {/* ---- お支払いについて（クレジット決済バナー） ---- */}

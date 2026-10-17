@@ -51,6 +51,8 @@ export default function RegisterSection({ cfg }) {
     if (r && r.ok) {
       setDone(r);
       track("membership_register_complete", { kind: r.kind });
+      // サーバーで登録成功（ok）かつ VIP 枠での登録のときだけ記録
+      if (r.kind === "VIP") track("vip_registration_complete");
       load();
     } else {
       setError((r && r.reason) || "登録できませんでした。");

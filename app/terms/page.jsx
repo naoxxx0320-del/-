@@ -1,15 +1,9 @@
 import SiteChrome from "../_components/SiteChrome";
 import NavGrid from "../_components/NavGrid";
 import Breadcrumbs from "../_components/Breadcrumbs";
-import { abs } from "../_lib/site";
+import { pageMetadata } from "../_lib/seo";
 
-export const metadata = {
-  title: "ご利用規約",
-  description:
-    "AROMA DIAMOND（アロマダイヤモンド）亀戸 のご利用規約。サービス内容・ご予約・体調と安全・禁止事項・キャンセル/遅刻についてご案内します。",
-  alternates: { canonical: abs("terms/") },
-  openGraph: { url: abs("terms/"), title: "ご利用規約｜AROMA DIAMOND 亀戸" },
-};
+export const metadata = pageMetadata("terms");
 
 const PROHIBITED = [
   "18歳未満の方、および高校生の方のご利用",

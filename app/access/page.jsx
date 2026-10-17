@@ -1,29 +1,24 @@
 import SiteChrome from "../_components/SiteChrome";
 import NavGrid from "../_components/NavGrid";
-import { abs, SITE, telHref } from "../_lib/site";
+import { SITE, telHref } from "../_lib/site";
 import Breadcrumbs from "../_components/Breadcrumbs";
 import links from "../../data/links.json";
+import { pageMetadata } from "../_lib/seo";
 
-export const metadata = {
-  title: "アクセス",
-  description:
-    "AROMA DIAMOND（アロマダイヤモンド）亀戸 へのアクセス。JR亀戸駅から徒歩圏内。詳しい所在地はご予約確定後にご案内します。",
-  alternates: { canonical: abs("access/") },
-  openGraph: { url: abs("access/"), title: "アクセス｜AROMA DIAMOND 亀戸" },
-};
+export const metadata = pageMetadata("access");
 
 /* 駅からの道案内。 */
 const STEPS = [
   { n: "01", t: "JR亀戸駅で下車", d: "JR総武線・東武亀戸線「亀戸駅」が最寄りです。" },
   { n: "02", t: "北口を出る", d: "改札を出て北口方面へ。" },
-  { n: "03", t: "徒歩 5分", d: "大通り沿いを進みます。" },
+  { n: "03", t: `徒歩 ${SITE.walkMinutes}分`, d: "大通り沿いを進みます。" },
   { n: "04", t: "セブンイレブン亀戸十三間通り店に到着", d: "着きましたらお電話ください。お部屋まで丁寧にご案内します。" },
 ];
 
 const INFO = [
   ["店名", "AROMA DIAMOND（アロマダイヤモンド）"],
   ["エリア", "東京都 江東区 亀戸"],
-  ["最寄駅", "JR亀戸駅 北口 徒歩5分"],
+  ["最寄駅", `${SITE.station} ${SITE.stationExit} 徒歩${SITE.walkMinutes}分`],
   ["営業時間", "10:00〜翌5:00"],
   ["電話受付", "9:30〜翌4:00"],
   ["電話番号", SITE.telephoneDisplay],
@@ -52,17 +47,17 @@ export default function Access() {
             "#f4efe7 url(../bg-marble.jpg) top center / 100% auto repeat",
         }}
       >
-        <Breadcrumbs items={[{ name: "アクセス", path: "access/" }]} />
+        <Breadcrumbs items={[{ name: "アクセス・店舗案内", path: "access/" }]} />
         <div className="page-head">
           <div className="ph-en">Access</div>
-          <h1 className="ph-jp">アクセス</h1>
+          <h1 className="ph-jp ph-long">亀戸駅からのアクセス・店舗案内</h1>
         </div>
 
         <NavGrid base="../" />
 
         <section className="acc">
           <p className="acc-lead">
-            <b>東京都 江東区 亀戸</b>／<b>JR亀戸駅</b>より徒歩圏内。
+            <b>東京都 江東区 亀戸</b>／<b>{SITE.station}{SITE.stationExit}</b>から徒歩{SITE.walkMinutes}分。
             プライバシー保護のため、詳しい所在地は
             <b>ご予約確定後</b>にお電話・LINEでご案内しております。
           </p>

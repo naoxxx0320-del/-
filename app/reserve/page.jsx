@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { photoSrc } from "../_components/photo";
 import { SITE } from "../_lib/site";
+import { track, trackOnce } from "../_lib/track";
 import schedule from "../../data/schedule.json";
 import roster from "../../data/roster.json";
 import cfg from "../../data/reserve-config.json";
@@ -441,6 +442,8 @@ export default function Reserve() {
         });
         const r = await res.json(); // ← バックエンドの結果を必ず確認
         if (r && r.ok) {
+          // サーバー側で予約受付が成功したときだけ完了として計測（個人情報は送らない）
+          track("web_reservation_complete", { course: course.label });
           setState({ sending: false, done: true, error: "" });
           window.scrollTo({ top: 0, behavior: "smooth" });
         } else {
@@ -604,7 +607,7 @@ export default function Reserve() {
 
   /* ---------- 入力フォーム ---------- */
   return (
-    <div className="rsv-stage">
+    <div className="rsv-stage" onClickCapture={() => trackOnce("web_reservation_start")}>
       <div className="rsv">
         <div className="rsv-head">
           <div className="rsv-logo">WEB予約</div>

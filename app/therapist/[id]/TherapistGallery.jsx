@@ -21,7 +21,7 @@ export default function TherapistGallery({
         {ribbon && <span className="tp-ribbon">{ribbon}</span>}
         {has ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img className="td-main-img" src={photos[active]} alt={name} />
+          <img className="td-main-img" src={photos[active]} alt={`${name}（AROMA DIAMOND 亀戸 セラピスト）`} />
         ) : (
           <div className={`tp-heart ${heart}`}>
             <svg className="tp-heart-bg" viewBox="0 0 32 29" aria-hidden="true">
