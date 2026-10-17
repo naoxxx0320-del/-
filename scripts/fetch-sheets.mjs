@@ -91,9 +91,13 @@ function toObjects(text, marker) {
   const rows = parseCSV(text).filter((r) => r.some((c) => c.trim() !== ""));
   if (rows.length === 0) return [];
   let headerIdx = 0;
-  if (marker) {
-    const found = rows.findIndex((r) => r.map((c) => c.trim()).includes(marker));
-    if (found >= 0) headerIdx = found;
+  // 見出し行を探す：指定の目印（marker）→ 無ければ「名前」列のある行。
+  for (const m of [marker, "名前"].filter(Boolean)) {
+    const found = rows.findIndex((r) => r.map((c) => c.trim()).includes(m));
+    if (found >= 0) {
+      headerIdx = found;
+      break;
+    }
   }
   const headers = rows[headerIdx].map((h) => h.trim());
   return rows.slice(headerIdx + 1).map((r) => {
@@ -103,8 +107,16 @@ function toObjects(text, marker) {
   });
 }
 
+// Googleスプレッドシートの gviz CSV は、列に数値と空欄などが混在すると上の数行を
+// 「見出し」とみなして1つのセルに連結することがある（例「名前 みお」）。そうなると
+// 「名前」列が見つからず名簿が空になるため、見出しは常に1行目だけに固定する（headers=1）。
+export function withSingleHeader(url) {
+  if (!/\/gviz\/tq/.test(url) || /[?&]headers=/.test(url)) return url;
+  return url + (url.includes("?") ? "&" : "?") + "headers=1";
+}
+
 async function fetchCSV(url) {
-  const res = await fetch(url, { redirect: "follow" });
+  const res = await fetch(withSingleHeader(url), { redirect: "follow" });
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
   const text = await res.text();
   // 共有設定切れ等でCSVの代わりにHTML（ログイン/エラー画面）が返ることがある。
@@ -411,7 +423,9 @@ async function run() {
       }
       const built = j.build(objs);
       if (isEmptyBuilt(built)) {
-        console.log(`skip ${j.file}: 生成結果が空のため既存データを保持`);
+        // 原因を調べやすいよう、読み取れた見出し（列名）だけを出す（値は出さない）
+        const heads = Object.keys(objs[0] || {}).filter(Boolean).slice(0, 30).join(", ");
+        console.log(`skip ${j.file}: 生成結果が空のため既存データを保持（読み取れた列: ${heads || "なし"}）`);
         continue;
       }
       writeJSON(j.file, built);
