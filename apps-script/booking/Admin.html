@@ -397,7 +397,7 @@
       { label: "延長30分", price: 6000 },
     ];
     var STAFF_EMAIL = "<?= staffEmail ?>";
-    var APP_VERSION = "2026-10-17-1"; // Code.gs の CODE_VERSION・lib.gs の LIB_VERSION と同じ値
+    var APP_VERSION = "2026-10-17-2"; // Code.gs の CODE_VERSION・lib.gs の LIB_VERSION と同じ値
 
     // 画面の不具合を「読み込み中」のまま止めず、理由を表示する
     function showVerWarn(msg){ var b=document.getElementById("ver-warn"); b.innerHTML=msg; b.style.display="block"; }
@@ -410,6 +410,7 @@
       google.script.run.withSuccessHandler(function(v){
         if(!v||v.code!==APP_VERSION) showVerWarn("⚠ Code.gs の版が画面と合っていません（Code.gs："+esc(v&&v.code||"不明")+"／画面："+APP_VERSION+"）。<br>"+fix);
         else if(v.lib!==APP_VERSION) showVerWarn("⚠ lib.gs が古いか、途中までしか貼り付けられていません（lib.gs："+esc(v.lib||"不明")+"／画面："+APP_VERSION+"）。<br>"+fix);
+        else runCleanup(true); // 前回の削除で残った写真の削除があれば続きを行う
       }).withFailureHandler(function(e){ showVerWarn("⚠ 版の確認に失敗しました："+esc(e&&e.message?e.message:e)); }).adminVersion();
     }
     var therapists = [];
@@ -991,12 +992,23 @@
         $("del-bg").classList.remove("on"); $("td-bg").classList.remove("on"); $("pf-bg").classList.remove("on");
         toast(delName+" さんを削除しました");
         if(res.note) setTimeout(function(){ alert(res.note); }, 50);
-        if(res.deployed) watchDeploy();
         loadShifts();
+        if(res.cleanup) runCleanup(); // 写真・サイトのデータの削除は裏で続ける（画面は待たない）
       }).withFailureHandler(function(e){ btn.disabled=false; btn.textContent="完全に削除する"; alert("エラー："+(e&&e.message?e.message:e)); })
         .adminTherapistDelete({ name: delName, confirm: inp.value.trim() });
     };
     $("td-del").onclick=function(){ openDelete(tdName); };
+    // 削除したセラピストの写真・サイトのデータを消す（失敗しても次に管理画面を開いたとき再試行）
+    function runCleanup(quiet){
+      if(!hasServer("adminTherapistCleanup")) return;
+      if(!quiet) setDeploySt("サイトから写真・データを削除中…");
+      google.script.run.withSuccessHandler(function(r){
+        if(r&&r.ok&&r.done) watchDeploy();
+        else if(!quiet) setDeploySt("");
+      }).withFailureHandler(function(){
+        setDeploySt("サイトの写真の削除が途中です。次に管理画面を開いたときに自動で続きを行います。");
+      }).adminTherapistCleanup();
+    }
     $("th-addther").onclick=function(){ openProfile(""); };
 
     // ---- 今すぐサイトに反映 ----

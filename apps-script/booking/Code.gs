@@ -1691,6 +1691,37 @@ function gh_(method, path, body) {
 function encPath_(path) {
   return String(path).split("/").map(encodeURIComponent).join("/");
 }
+/* 複数の GET をまとめて並列に送る（待ち時間を短くする）。戻り値は ghRaw_ と同じ形の配列。 */
+function ghGetAll_(paths) {
+  var tok = ghToken_();
+  if (!tok) throw new Error("GitHubの鍵（GITHUB_TOKEN）が設定されていません。");
+  var reqs = paths.map(function (p) {
+    return {
+      url: "https://api.github.com/repos/" + ghRepo_() + p,
+      method: "get",
+      headers: { Authorization: "Bearer " + tok, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
+      muteHttpExceptions: true,
+    };
+  });
+  var res = typeof UrlFetchApp.fetchAll === "function" ? UrlFetchApp.fetchAll(reqs) : reqs.map(function (r) { return UrlFetchApp.fetch(r.url, r); });
+  return res.map(function (x) {
+    var txt = x.getContentText(), json = null;
+    try { json = txt ? JSON.parse(txt) : {}; } catch (e) { json = {}; }
+    return { code: x.getResponseCode(), json: json };
+  });
+}
+/* contents API の結果 → JSON（無い・読めないときは {}） */
+function repoJsonOf_(r) {
+  if (!r || r.code !== 200 || !r.json || !r.json.content) return {};
+  try {
+    var txt = Utilities.newBlob(Utilities.base64Decode(String(r.json.content).replace(/\s/g, ""))).getDataAsString("UTF-8");
+    return JSON.parse(txt || "{}") || {};
+  } catch (e) { return {}; }
+}
+function contentsPath_(path) {
+  return "/contents/" + encPath_(path) + "?ref=" + encodeURIComponent(ghBranch_());
+}
+
 /* リポジトリ内のJSONを読む。鍵があればAPI（最新）、無ければ公開URL。無ければ {}。 */
 function readRepoJson_(path) {
   var txt = "";
@@ -1965,9 +1996,17 @@ function planCounts_(plan) {
     photos: plan.photos.length,
   };
 }
-/* 行をまとめて削除（下の行から消して行番号のずれを防ぐ）。 */
+/* 行をまとめて削除（下の行から消して行番号のずれを防ぐ。連続する行は1回でまとめて消す）。 */
 function deleteRows_(sh, rows) {
-  rows.slice().sort(function (a, b) { return b - a; }).forEach(function (r) { sh.deleteRow(r); });
+  var rs = rows.slice().sort(function (a, b) { return b - a; });
+  for (var i = 0; i < rs.length; ) {
+    var j = i;
+    while (j + 1 < rs.length && rs[j + 1] === rs[j] - 1) j++;
+    var top = rs[j], n = j - i + 1;
+    if (n > 1 && typeof sh.deleteRows === "function") sh.deleteRows(top, n);
+    else for (var k = i; k <= j; k++) sh.deleteRow(rs[k]);
+    i = j + 1;
+  }
 }
 
 /* 削除前の確認：消える件数と、残っている今日以降の予約。 */
@@ -2007,36 +2046,71 @@ function adminTherapistDelete(p) {
     return { ok: true, counts: cnt, photos: plan.photos };
   });
   if (!res.ok) return res;
-
-  // サイト側（写真ファイル・設定ファイル・公開用データ）から消して、サイトを作り直す
-  var note = "", deployed = false, removedFiles = 0;
-  if (ghToken_()) {
-    try {
-      var sha = ghCommit_("管理画面: セラピストを削除", function () {
-        var files = therapistRepoRemovals_(name, res.photos);
-        removedFiles = files.filter(function (f) { return f.remove; }).length;
-        return files;
-      });
-      if (sha) deployed = true;
-      else { ghDispatchDeploy_(); deployed = true; }
-    } catch (e) {
-      note = "シートからは削除しましたが、サイトの写真・データの削除に失敗しました（" + e.message + "）。もう一度「削除」を押すか、時間をおいて「今すぐサイトに反映」を押してください。";
-    }
-  } else {
-    note = "シートからは削除しました。GitHubの鍵（GITHUB_TOKEN）が未設定のため、写真ファイルは削除できていません。サイトの表示からは数時間おきの自動更新で消えます。";
-  }
-  return { ok: true, counts: res.counts, removedFiles: removedFiles, deployed: deployed, note: note };
+  // サイト側（写真ファイル・設定ファイル・公開用データ）の削除は時間がかかるため、
+  // ここでは「後片付け待ち」に登録だけして、すぐに返す（画面が adminTherapistCleanup を続けて呼ぶ）。
+  var note = "";
+  if (ghToken_()) addPendingCleanup_({ name: name, photos: res.photos });
+  else note = "シートからは削除しました。GitHubの鍵（GITHUB_TOKEN）が未設定のため、写真ファイルは削除できていません。サイトの表示からは数時間おきの自動更新で消えます。";
+  return { ok: true, counts: res.counts, cleanup: !!ghToken_(), note: note };
 }
 
-/* サイトのリポジトリから消すファイルと、書き換えるデータファイルの一覧。 */
-function therapistRepoRemovals_(name, sheetPhotos) {
-  var files = [];
-  // 写真：シートの写真列＋旧上書きファイル＋管理画面からこの人の名前で追加した写真
+/* ---- サイト側の後片付け（写真・データファイルの削除）。失敗しても次回に再試行できるよう保存しておく ---- */
+var PENDING_CLEANUP_KEY_ = "PENDING_THERAPIST_CLEANUP";
+function pendingCleanup_() {
+  try { return JSON.parse(props_().getProperty(PENDING_CLEANUP_KEY_) || "[]") || []; } catch (e) { return []; }
+}
+function savePendingCleanup_(list) {
+  if (list.length) props_().setProperty(PENDING_CLEANUP_KEY_, JSON.stringify(list));
+  else props_().deleteProperty(PENDING_CLEANUP_KEY_);
+}
+function addPendingCleanup_(item) {
+  var list = pendingCleanup_().filter(function (x) { return x && x.name !== item.name; });
+  list.push(item);
+  savePendingCleanup_(list);
+}
+
+/* 後片付けを実行（削除の直後と、管理画面を開いたときに呼ばれる）。待ちが無ければすぐ返す。 */
+function adminTherapistCleanup() {
+  requireStaff_();
+  var list = pendingCleanup_();
+  if (!list.length || !ghToken_()) return { ok: true, done: false, pending: list.length };
+  var removed = 0;
+  var sha = ghCommit_("管理画面: セラピストを削除", function () {
+    var files = therapistRepoRemovals_(list);
+    removed = files.filter(function (f) { return f.remove; }).length;
+    return files;
+  });
+  if (!sha) ghDispatchDeploy_(); // 書き換えるファイルが無くても、シートから作り直す
+  // 処理した分だけ待ちから外す（処理中に追加された分は残す）
+  var names = list.map(function (x) { return x.name; });
+  savePendingCleanup_(pendingCleanup_().filter(function (x) { return names.indexOf(x.name) < 0; }));
+  return { ok: true, done: true, removedFiles: removed, deployed: true };
+}
+
+/* サイトのリポジトリから消すファイルと、書き換えるデータファイルの一覧。
+   items = [{name, photos}]。GitHub への問い合わせはまとめて並列に送る。 */
+function therapistRepoRemovals_(items) {
+  var names = items.map(function (x) { return x.name; });
+  var isDel = function (n) { return names.indexOf(n) >= 0; };
+  var JSONS = [PHOTO_OV_PATH_, DETAILS_PATH_, "data/roster.json", "data/schedule.json", "data/guide.json"];
+  var first = ghGetAll_(JSONS.map(contentsPath_).concat(["/commits?path=public&per_page=100&sha=" + encodeURIComponent(ghBranch_())]));
+  var ov = repoJsonOf_(first[0]), det = repoJsonOf_(first[1]), roster = repoJsonOf_(first[2]), sched = repoJsonOf_(first[3]), guide = repoJsonOf_(first[4]);
+  var commits = first[5].code === 200 && Array.isArray(first[5].json) ? first[5].json : [];
+
+  // 写真の候補：シートの写真列＋旧上書きファイル＋管理画面からこの人の名前で追加した写真（保存しなかった分も）
   var cand = {};
-  (sheetPhotos || []).forEach(function (f) { cand[f] = 1; });
-  var ov = readRepoJson_(PHOTO_OV_PATH_);
-  if (ov[name] != null) [].concat(ov[name]).forEach(function (f) { cand[String(f).trim()] = 1; });
-  uploadedPhotosOf_(name).forEach(function (f) { cand[f] = 1; });
+  items.forEach(function (it) {
+    (it.photos || []).forEach(function (f) { cand[String(f).trim()] = 1; });
+    if (ov[it.name] != null) [].concat(ov[it.name]).forEach(function (f) { cand[String(f).trim()] = 1; });
+  });
+  var msgs = names.map(function (n) { return "管理画面: 写真を追加（" + String(n).slice(0, 20) + "）"; });
+  var shas = commits.filter(function (cm) { return cm && cm.commit && msgs.indexOf(cm.commit.message) >= 0; }).map(function (cm) { return cm.sha; });
+  if (shas.length) ghGetAll_(shas.map(function (h) { return "/commits/" + h; })).forEach(function (r) {
+    ((r.json && r.json.files) || []).forEach(function (f) {
+      var m = String(f.filename || "").match(/^public\/(therapist-[\w.\-]+)$/);
+      if (m) cand[m[1]] = 1;
+    });
+  });
   // ほかの人が使っている写真は消さない
   var used = {};
   var P = profileSheet_();
@@ -2044,50 +2118,36 @@ function therapistRepoRemovals_(name, sheetPhotos) {
     var pi = P.head.indexOf("写真");
     if (pi >= 0) for (var k = P.hi + 1; k < P.values.length; k++) String(P.values[k][pi] || "").split(";").forEach(function (x) { if (x.trim()) used[x.trim()] = 1; });
   }
-  Object.keys(ov).forEach(function (n) { if (n !== name) [].concat(ov[n]).forEach(function (f) { used[String(f).trim()] = 1; }); });
-  Object.keys(cand).forEach(function (f) {
-    if (!/^[\w.\-]+\.(jpe?g|png|webp)$/i.test(f) || used[f]) return; // 外部URL・共有中の写真は対象外
-    var path = "public/" + f;
-    var r = ghRaw_("GET", "/contents/" + encPath_(path) + "?ref=" + encodeURIComponent(ghBranch_()));
-    if (r.code === 200) files.push({ path: path, remove: true });
+  Object.keys(ov).forEach(function (n) { if (!isDel(n)) [].concat(ov[n]).forEach(function (f) { used[String(f).trim()] = 1; }); });
+  var photos = Object.keys(cand).filter(function (f) { return /^[\w.\-]+\.(jpe?g|png|webp)$/i.test(f) && !used[f]; }); // 外部URL・共有中は対象外
+
+  var files = [];
+  if (photos.length) ghGetAll_(photos.map(function (f) { return contentsPath_("public/" + f); })).forEach(function (r, i) {
+    if (r.code === 200) files.push({ path: "public/" + photos[i], remove: true }); // 存在するファイルだけ削除
   });
   // 旧設定ファイルの記載
-  if (ov[name] != null) { delete ov[name]; files.push({ path: PHOTO_OV_PATH_, content: JSON.stringify(ov, null, 2) + "\n" }); }
-  var det = readRepoJson_(DETAILS_PATH_);
-  if (det[name] != null) { delete det[name]; files.push({ path: DETAILS_PATH_, content: JSON.stringify(det, null, 2) + "\n" }); }
-  // 公開用データ（取り込みに失敗したときの予備データ）からも消す
-  var roster = readRepoJson_("data/roster.json");
-  if (Array.isArray(roster) && roster.some(function (t) { return t && t.name === name; })) {
-    files.push({ path: "data/roster.json", content: JSON.stringify(roster.filter(function (t) { return !(t && t.name === name); }), null, 2) + "\n" });
+  if (names.some(function (n) { return ov[n] != null; })) {
+    names.forEach(function (n) { delete ov[n]; });
+    files.push({ path: PHOTO_OV_PATH_, content: JSON.stringify(ov, null, 2) + "\n" });
   }
-  var sched = readRepoJson_("data/schedule.json");
-  if (sched && Array.isArray(sched.days) && sched.days.some(function (d) { return (d.list || []).some(function (x) { return x && x.name === name; }); })) {
-    sched.days.forEach(function (d) { d.list = (d.list || []).filter(function (x) { return !(x && x.name === name); }); });
+  if (names.some(function (n) { return det[n] != null; })) {
+    names.forEach(function (n) { delete det[n]; });
+    files.push({ path: DETAILS_PATH_, content: JSON.stringify(det, null, 2) + "\n" });
+  }
+  // 公開用データ（取り込みに失敗したときの予備データ）からも消す
+  var hit = function (x) { return x && isDel(x.name); };
+  if (Array.isArray(roster) && roster.some(hit)) {
+    files.push({ path: "data/roster.json", content: JSON.stringify(roster.filter(function (t) { return !hit(t); }), null, 2) + "\n" });
+  }
+  if (sched && Array.isArray(sched.days) && sched.days.some(function (d) { return (d.list || []).some(hit); })) {
+    sched.days.forEach(function (d) { d.list = (d.list || []).filter(function (x) { return !hit(x); }); });
     files.push({ path: "data/schedule.json", content: JSON.stringify(sched, null, 2) + "\n" });
   }
-  var guide = readRepoJson_("data/guide.json");
-  if (guide && Array.isArray(guide.areas) && guide.areas.some(function (a) { return (a.list || []).some(function (x) { return x && x.name === name; }); })) {
-    guide.areas.forEach(function (a) { a.list = (a.list || []).filter(function (x) { return !(x && x.name === name); }); });
+  if (guide && Array.isArray(guide.areas) && guide.areas.some(function (a) { return (a.list || []).some(hit); })) {
+    guide.areas.forEach(function (a) { a.list = (a.list || []).filter(function (x) { return !hit(x); }); });
     files.push({ path: "data/guide.json", content: JSON.stringify(guide, null, 2) + "\n" });
   }
   return files;
-}
-/* 管理画面で「写真を追加（名前）」として登録した写真のファイル名（保存しなかった写真も含む）。 */
-function uploadedPhotosOf_(name) {
-  var msg = "管理画面: 写真を追加（" + String(name).slice(0, 20) + "）";
-  var out = [];
-  try {
-    var list = gh_("GET", "/commits?path=public&per_page=100&sha=" + encodeURIComponent(ghBranch_()));
-    (list || []).forEach(function (cm) {
-      if (!cm || !cm.commit || cm.commit.message !== msg) return;
-      var d = gh_("GET", "/commits/" + cm.sha);
-      (d.files || []).forEach(function (f) {
-        var m = String(f.filename || "").match(/^public\/(therapist-[\w.\-]+)$/);
-        if (m) out.push(m[1]);
-      });
-    });
-  } catch (e) {}
-  return out;
 }
 
 /* 「今すぐサイトに反映」：サイトの作り直しを開始（出勤やプロフィールをシートから取り込み直す）。 */
@@ -2921,7 +2981,7 @@ function selfTest() {
    管理画面（Admin.html）は開いたときにこの版を確認し、Code.gs / lib.gs が古い・途中までしか
    貼られていない場合に警告を出す。※必ずファイルの「最後」に置く（途中で切れると無くなるので検出できる）。
    コードを変更したら Admin.html の APP_VERSION・lib.gs の LIB_VERSION と一緒に上げる。 */
-var CODE_VERSION = "2026-10-17-1";
+var CODE_VERSION = "2026-10-17-2";
 function adminVersion() {
   return { code: CODE_VERSION, lib: typeof LIB_VERSION === "undefined" ? "" : LIB_VERSION };
 }
