@@ -1616,6 +1616,17 @@ var PROFILE_FIELDS_ = [
   { key: "タグ", hint: "「;」区切り　例：癒し系;スレンダー;笑顔が素敵", group: "紹介" },
   { key: "プロフィール", type: "textarea", label: "紹介文", group: "紹介" },
   { key: "SNS", hint: "「;」区切り", group: "紹介" },
+  // 個別ページの「プロフィール」（質問と回答）。空欄の項目はサイトに表示しない。
+  // ※サイト側（scripts/fetch-sheets.mjs の PROFILE_QA_KEYS）と同じ順・同じ名前にすること。
+  { key: "出身地", hint: "個人が特定されない範囲で（例：関東）。空欄なら表示しません", group: "プロフィール（質問と回答）" },
+  { key: "血液型", hint: "例：A", group: "プロフィール（質問と回答）" },
+  { key: "性格", hint: "例：おっとり、マイペース", group: "プロフィール（質問と回答）" },
+  { key: "チャームポイント", hint: "例：笑顔", group: "プロフィール（質問と回答）" },
+  { key: "現職", hint: "個人が特定されない範囲で（例：学生）。空欄なら表示しません", group: "プロフィール（質問と回答）" },
+  { key: "趣味", hint: "例：旅行", group: "プロフィール（質問と回答）" },
+  { key: "得意な技", hint: "例：ヘッドマッサージ", group: "プロフィール（質問と回答）" },
+  { key: "好きな食べ物・飲み物", group: "プロフィール（質問と回答）" },
+  { key: "メッセージ", type: "textarea", hint: "お客様へのひとこと", group: "プロフィール（質問と回答）" },
   { key: "ハート", hint: "pink / diamond", group: "紹介" },
   { key: "ラベル", hint: "ハートの中の文字", group: "紹介" },
   { key: "出勤", hint: "✖️ で本日はお休み（サイトの「本日出勤」に出ません）。空欄・○＝本日出勤", group: "本日の出勤カード" },
@@ -2981,7 +2992,7 @@ function selfTest() {
    管理画面（Admin.html）は開いたときにこの版を確認し、Code.gs / lib.gs が古い・途中までしか
    貼られていない場合に警告を出す。※必ずファイルの「最後」に置く（途中で切れると無くなるので検出できる）。
    コードを変更したら Admin.html の APP_VERSION・lib.gs の LIB_VERSION と一緒に上げる。 */
-var CODE_VERSION = "2026-10-17-2";
+var CODE_VERSION = "2026-10-17-3";
 function adminVersion() {
   return { code: CODE_VERSION, lib: typeof LIB_VERSION === "undefined" ? "" : LIB_VERSION };
 }

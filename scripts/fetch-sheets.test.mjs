@@ -31,3 +31,16 @@ test("（参考）見出しが連結された CSV では名簿が空になる＝
   const merged = ["名前 みお,出勤 ○,年齢 24", "れいこ,✖️,41"].join("\n");
   assert.equal(buildRoster(toObjects(merged, "スケジュール")).length, 0);
 });
+
+test("プロフィール（質問と回答）：入力のある項目だけを決まった順で出す", async () => {
+  const { PROFILE_QA_KEYS } = await import("./fetch-sheets.mjs");
+  const csv = ["名前,メッセージ,血液型,出身地,趣味", 'れいこ,"よろしく\nお願いします",A,,旅行', "みお,,,,"].join("\n");
+  const r = buildRoster(toObjects(csv, "スケジュール"));
+  assert.deepEqual(r[0].qa, [
+    { q: "血液型", a: "A" },
+    { q: "趣味", a: "旅行" },
+    { q: "メッセージ", a: "よろしく\nお願いします" },
+  ]);
+  assert.equal(r[1].qa, undefined); // 全部空欄なら欄ごと出さない
+  assert.equal(PROFILE_QA_KEYS.length, 9);
+});
