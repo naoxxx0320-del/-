@@ -32,6 +32,14 @@ function match(t, key, favs) {
   }
 }
 
+// 管理画面の「表示順」（rank）が小さい人ほど上。番号の無い人はその後ろに、名簿（シート）の順で並ぶ。
+export function byRank(list) {
+  return list
+    .map((t, i) => ({ t, i, r: Number.isFinite(t.rank) ? t.rank : Infinity }))
+    .sort((a, b) => a.r - b.r || a.i - b.i)
+    .map((x) => x.t);
+}
+
 export default function TherapistDirectory({ roster: baseRoster }) {
   // 「本日出勤」は閲覧時点の週間出勤表（今日の行）で判定
   const todayKey = useTodayKey();
@@ -52,7 +60,7 @@ export default function TherapistDirectory({ roster: baseRoster }) {
     };
   }, []);
 
-  const list = roster.filter((t) => match(t, tab, favs));
+  const list = byRank(roster.filter((t) => match(t, tab, favs)));
 
   return (
     <>

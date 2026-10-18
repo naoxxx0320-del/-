@@ -338,6 +338,11 @@ function buildRoster(objs) {
         return photos.length ? { photo: photos[0], photos } : {};
       })(),
       profile: o["プロフィール"] || o["コメント"] || o["紹介文"] || "",
+      // セラピスト一覧の並び順（管理画面の「表示順」。小さいほど上。空欄なら付けない）
+      ...(() => {
+        const n = parseFloat(String(o["表示順"] || "").replace(/[０-９．]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0)));
+        return Number.isFinite(n) ? { rank: n } : {};
+      })(),
       ...(() => {
         const qa = PROFILE_QA_KEYS.map((q) => ({ q, a: (o[q] || "").trim() })).filter((x) => x.a);
         return qa.length ? { qa } : {};
