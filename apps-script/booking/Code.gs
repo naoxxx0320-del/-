@@ -1613,6 +1613,7 @@ var PROFILE_FIELDS_ = [
   { key: "H", label: "ヒップ（H）", group: "基本" },
   { key: "新人", type: "check", label: "新人（NEWマーク）", group: "基本" },
   { key: "在籍", hint: "「退店」「休業」と入れるとサイトに表示されません（空欄＝在籍）", group: "基本" },
+  { key: "表示順", hint: "セラピスト一覧での並び順。小さい番号ほど上に表示（例：1）。空欄の人は番号のある人の後ろに並びます", group: "基本" },
   { key: "タグ", hint: "「;」区切り　例：癒し系;スレンダー;笑顔が素敵", group: "紹介" },
   { key: "プロフィール", type: "textarea", label: "紹介文", group: "紹介" },
   { key: "SNS", hint: "「;」区切り", group: "紹介" },
@@ -2992,7 +2993,7 @@ function selfTest() {
    管理画面（Admin.html）は開いたときにこの版を確認し、Code.gs / lib.gs が古い・途中までしか
    貼られていない場合に警告を出す。※必ずファイルの「最後」に置く（途中で切れると無くなるので検出できる）。
    コードを変更したら Admin.html の APP_VERSION・lib.gs の LIB_VERSION と一緒に上げる。 */
-var CODE_VERSION = "2026-10-17-3";
+var CODE_VERSION = "2026-10-18-1";
 function adminVersion() {
   return { code: CODE_VERSION, lib: typeof LIB_VERSION === "undefined" ? "" : LIB_VERSION };
 }

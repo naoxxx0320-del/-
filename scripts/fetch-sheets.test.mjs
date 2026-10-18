@@ -44,3 +44,9 @@ test("プロフィール（質問と回答）：入力のある項目だけを�
   assert.equal(r[1].qa, undefined); // 全部空欄なら欄ごと出さない
   assert.equal(PROFILE_QA_KEYS.length, 9);
 });
+
+test("表示順：数字（全角も可）を rank にし、空欄・数字以外は付けない", () => {
+  const csv = ["名前,表示順", "みお,2", "れいこ,１", "花恋,", "さき,あとで"].join("\n");
+  const r = buildRoster(toObjects(csv, "スケジュール"));
+  assert.deepEqual(r.map((t) => t.rank), [2, 1, undefined, undefined]);
+});
