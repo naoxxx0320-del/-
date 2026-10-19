@@ -217,10 +217,6 @@ export default function SiteChrome({ base = "", hideFooterbar = false }) {
             <div className="pay">
               <span className="ic">💳</span>CREDIT決済
             </div>
-            <div className="pay pay-soon">
-              <span className="ic">Ｐ</span>PayPay決済
-              <span className="pay-badge">準備中</span>
-            </div>
           </div>
 
           <div className="menu-social">
