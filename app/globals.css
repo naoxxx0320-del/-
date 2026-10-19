@@ -1594,7 +1594,7 @@ a.tcard-hit:active {
 .menu-pay .pay .ic {
   font-size: 20px;
 }
-/* 準備中の支払い方法（PayPay）は淡く見せ、バッジで案内する */
+/* 準備中の支払い方法は淡く見せ、バッジで案内する（現在は該当なし） */
 .menu-pay .pay.pay-soon {
   position: relative;
   background: linear-gradient(180deg, #c9c2b2, #aca592);
@@ -2450,7 +2450,7 @@ a.tp-card:hover {
   width: 100%;
   height: auto;
 }
-/* お支払い（クレジット決済バナー＋PayPay準備中） */
+/* お支払い（クレジット決済バナー） */
 .sys-pay {
   position: relative;
   z-index: 2;

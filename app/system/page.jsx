@@ -80,7 +80,7 @@ const TOKUSHO = [
     "お支払い確認後、24時間以内にお電話もしくはメールにてご案内",
   ],
   ["お支払い時期", "前払いのみ"],
-  ["お支払い方法", "現金、クレジットカード、PayPay（準備中）"],
+  ["お支払い方法", "現金、クレジットカード"],
   [
     "返品規約",
     "サービスの特性上、お支払いいただいた料金の返金には応じられません。",
@@ -194,8 +194,7 @@ export default function System() {
             alt="クレジット決済可能（VISA／Mastercard／JCB／AMERICAN EXPRESS／Diners Club／Clickで決済）。決済前は必ずお電話にて金額をお確かめください｜AROMA DIAMOND 亀戸"
           />
           <p className="sys-pay-note">
-            <span className="sys-pay-badge">PayPay（準備中）</span>
-            PayPayは現在準備中です。現金・各種クレジットカードがご利用いただけます。
+            現金・各種クレジットカードがご利用いただけます。
           </p>
         </section>
 
