@@ -2204,7 +2204,8 @@ var PRICE_DEFAULTS_ = [
   ["指名", "姫指名", 2000],
   ["オプション", "パウダートリートメント", 1000],
   ["オプション", "ホイップトリートメント", 2000],
-  ["オプション", "衣装チェンジ", 2000],
+  ["オプション", "衣装チェンジA", 3000],
+  ["オプション", "衣装チェンジB", 5000],
 ];
 
 /* 非公開ファイルのシートを取得（無ければ見出し付きで作成。既存のシートは変更しない）。 */
@@ -2993,7 +2994,7 @@ function selfTest() {
    管理画面（Admin.html）は開いたときにこの版を確認し、Code.gs / lib.gs が古い・途中までしか
    貼られていない場合に警告を出す。※必ずファイルの「最後」に置く（途中で切れると無くなるので検出できる）。
    コードを変更したら Admin.html の APP_VERSION・lib.gs の LIB_VERSION と一緒に上げる。 */
-var CODE_VERSION = "2026-10-18-1";
+var CODE_VERSION = "2026-10-22-1";
 function adminVersion() {
   return { code: CODE_VERSION, lib: typeof LIB_VERSION === "undefined" ? "" : LIB_VERSION };
 }
