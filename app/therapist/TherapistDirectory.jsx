@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import StaffCard from "../_components/StaffCard";
 import { readFavs } from "../_components/FavoriteHeart";
 import { HAS_TODAY, useTodayKey, todayList } from "../_components/today";
+import { byRank } from "../_components/rank";
 
 const TABS = [
   { key: "all", label: "すべて" },
@@ -32,14 +33,6 @@ function match(t, key, favs) {
   }
 }
 
-// 管理画面の「表示順」（rank）が小さい人ほど上。番号の無い人はその後ろに、名簿（シート）の順で並ぶ。
-export function byRank(list) {
-  return list
-    .map((t, i) => ({ t, i, r: Number.isFinite(t.rank) ? t.rank : Infinity }))
-    .sort((a, b) => a.r - b.r || a.i - b.i)
-    .map((x) => x.t);
-}
-
 export default function TherapistDirectory({ roster: baseRoster }) {
   // 「本日出勤」は閲覧時点の週間出勤表（今日の行）で判定
   const todayKey = useTodayKey();
@@ -47,6 +40,14 @@ export default function TherapistDirectory({ roster: baseRoster }) {
   const roster = todayNames ? baseRoster.map((t) => ({ ...t, absent: !todayNames.has(t.name) })) : baseRoster;
   const [tab, setTab] = useState("all");
   const [favs, setFavs] = useState(new Set());
+
+  // URL の ?tab=new などで最初に開くタブを指定できる（トップの「新人をすべて見る」から）
+  useEffect(() => {
+    try {
+      const k = new URLSearchParams(window.location.search).get("tab");
+      if (k && TABS.some((tb) => tb.key === k)) setTab(k);
+    } catch (e) {}
+  }, []);
 
   // お気に入り（localStorage）を読み込み、変更に追従
   useEffect(() => {
