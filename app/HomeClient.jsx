@@ -346,16 +346,16 @@ export default function HomeClient() {
                 <StaffCard t={t} href={`therapist/${t.id ?? i + 1}/`} base="" key={i} />
               ))}
             </section>
-
-            <a className="more" href="therapist/">
-              ＞ 出勤セラピストを全て見る ＜
-            </a>
           </>
         ) : (
           <p className="therapists-empty">
             本日の出勤情報は準備中です。しばらくお待ちください。
           </p>
         )}
+        {/* 明日以降の出勤：出勤情報ページを「明日（次の出勤日）」のタブで開く。今日0人の日も表示 */}
+        <a className="more" href="schedule/?day=next">
+          ＞ 明日以降の出勤情報を見る ＜
+        </a>
 
         {/* ---------- CONCEPT ---------- */}
         <div className="section-head">

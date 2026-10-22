@@ -23,7 +23,15 @@ export default function Schedule() {
       setDays(u);
       setActive(0);
     }
-    setTodayKey(bizTodayKey());
+    const tk = bizTodayKey();
+    setTodayKey(tk);
+    // ?day=next（トップの「明日以降の出勤情報を見る」）なら、今日より後で最初の出勤日を開く
+    try {
+      if (new URLSearchParams(window.location.search).get("day") === "next") {
+        const i = u.findIndex((d) => (dayKey(d.date) ?? 0) > tk);
+        if (i >= 0) setActive(i);
+      }
+    } catch (e) {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const day = days[active] || { list: [] };
