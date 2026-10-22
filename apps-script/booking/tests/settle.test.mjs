@@ -27,7 +27,7 @@ t("料金設定・バック率・精算のシートは無ければ作成（料�
   assert.equal(r.ok, true);
   assert.equal(r.config.extend.price, 6000);
   assert.deepEqual(r.config.noms.map((x) => x.name), ["写真指名", "本指名", "姫指名"]);
-  assert.equal(r.config.options.length, 3);
+  assert.equal(r.config.options.length, 4);
   assert.ok(sheets["料金設定"] && sheets["バック率"] && sheets["精算"]);
   assert.equal(r.booking.price, 18000);
   assert.equal(r.settle, null);
@@ -36,16 +36,16 @@ t("料金設定・バック率・精算のシートは無ければ作成（料�
 t("精算：バック率が未設定なら拒否・率を一緒に渡すと設定して保存", () => {
   const { g, sheets } = setup();
   assert.match(plain(g.adminSettleSave({ id: "A", therapistName: "みお" })).reason, /バック率が未設定/);
-  const r = plain(g.adminSettleSave({ id: "A", therapistName: "みお", rate: 50, extendCount: 1, nom: "本指名", options: ["パウダートリートメント", "衣装チェンジ"], discount: 1000 }));
+  const r = plain(g.adminSettleSave({ id: "A", therapistName: "みお", rate: 50, extendCount: 1, nom: "本指名", options: ["パウダートリートメント", "衣装チェンジA"], discount: 1000 }));
   assert.equal(r.ok, true, r.reason);
-  // コース18,000＋延長6,000＝24,000 → 50%＝12,000 ＋指名1,000＋OP3,000
-  assert.equal(r.back, 16000);
-  assert.equal(r.total, 24000 + 1000 + 3000 - 1000);
-  assert.equal(r.shop, 27000 - 16000);
+  // コース18,000＋延長6,000＝24,000 → 50%＝12,000 ＋指名1,000＋OP4,000（パウダー1,000＋衣装A 3,000）
+  assert.equal(r.back, 17000);
+  assert.equal(r.total, 24000 + 1000 + 4000 - 1000);
+  assert.equal(r.shop, 28000 - 17000);
   const row = sheets["精算"].v[1];
   assert.equal(row[0], "A");
   assert.equal(row[1], "2026/10/5"); // 文字列として保存（' 付き）
-  assert.equal(row[9], "パウダートリートメント;衣装チェンジ");
+  assert.equal(row[9], "パウダートリートメント;衣装チェンジA");
   assert.deepEqual(plain(sheets["バック率"].v[1].slice(0, 2)), ["みお", 50]);
 });
 
