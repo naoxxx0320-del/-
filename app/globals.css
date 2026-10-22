@@ -4693,28 +4693,35 @@ body.menu-open {
   border-radius: 50%;
 }
 /* 条件表 */
+/* 情報テーブル：ゴールド×大理石の世界観で統一（旧・薄ピンクの表を廃止） */
 .rec-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13.5px;
+  font-size: 14px;
 }
 .rec-table th,
 .rec-table td {
   text-align: left;
   vertical-align: top;
-  padding: 10px 12px;
-  border-bottom: 1px solid rgba(122, 16, 32, 0.12);
+  padding: 12px 10px;
+  border-bottom: 1px solid rgba(177, 142, 70, 0.3);
   line-height: 1.7;
 }
+.rec-table tr:last-child th,
+.rec-table tr:last-child td {
+  border-bottom: none;
+}
 .rec-table th {
-  width: 38%;
-  color: #7a1020;
-  font-weight: 700;
-  background: rgba(122, 16, 32, 0.04);
+  width: 34%;
+  color: #5b4320;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: transparent;
   font-family: var(--font-serif-jp), serif;
 }
 .rec-table td {
-  color: #4a3f3a;
+  color: #3f352c;
+  font-family: var(--font-serif-jp), serif;
 }
 .rec-pending {
   display: inline-block;
