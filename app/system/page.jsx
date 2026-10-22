@@ -148,33 +148,33 @@ export default function System() {
             <span className="rec-sec-en">Fee &amp; Option</span>
             <h2 className="rec-sec-jp" id="sys-fees-h">指名料・オプション料金</h2>
           </div>
-          <h3 className="sys-fees-h3">入会金・指名料</h3>
-          <table className="rec-table">
-            <tbody>
+          <div className="sys-fee-group">
+            <div className="sys-fee-gh">入会金・指名料</div>
+            <dl className="sys-fee-list">
               {FEES.map(([k, v]) => (
-                <tr key={k}>
-                  <th>{k}</th>
-                  <td>{typeof v === "number" ? yen(v) : v}</td>
-                </tr>
+                <div className="sys-fee-row" key={k}>
+                  <dt>{k}</dt>
+                  <dd>{typeof v === "number" ? yen(v) : v}</dd>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </dl>
+          </div>
           <ul className="sys-fees-notes">
             {FEE_NOTES.map((n) => (
               <li key={n}>※{n}</li>
             ))}
           </ul>
-          <h3 className="sys-fees-h3">オプション</h3>
-          <table className="rec-table">
-            <tbody>
+          <div className="sys-fee-group">
+            <div className="sys-fee-gh">オプション</div>
+            <dl className="sys-fee-list">
               {OPTIONS.map(([k, v]) => (
-                <tr key={k}>
-                  <th>{k}</th>
-                  <td>{yen(v)}</td>
-                </tr>
+                <div className="sys-fee-row" key={k}>
+                  <dt>{k}</dt>
+                  <dd>{yen(v)}</dd>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </dl>
+          </div>
           <ul className="sys-fees-notes">
             {OPTION_NOTES.map((n) => (
               <li key={n}>※{n}</li>
