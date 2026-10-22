@@ -10,6 +10,7 @@ import guideData from "../data/guide.json";
 import rosterData from "../data/roster.json";
 import links from "../data/links.json";
 import banners from "../data/banners.json";
+import { byRank } from "./_components/rank";
 import { HAS_TODAY, useTodayKey, keyLabel, todayList, todayCards, SCHEDULE_UPDATED, SCHEDULE_AREA } from "./_components/today";
 
 /* ---- data ---------------------------------------------------------- */
@@ -57,6 +58,7 @@ const SLIDES = [
 // 只今の案内状況・本日の出勤：週間出勤表（schedule.json）の今日の行から作る（管理画面の「本日」で
 // 空き状況・案内時刻・並び順を変更）。古いデータ（today 無し）のときは従来の guide.json / 名簿を使う。
 const LEGACY_THERAPISTS = rosterData.filter((t) => !t.absent);
+const NEW_FACE_MAX = 4; // トップの NEW FACE に並べる最大人数（超えたら「新人をすべて見る」）
 
 // ステータス表示の色分けクラス
 const STATUS_CLASS = {
@@ -71,6 +73,12 @@ const STATUS_CLASS = {
 export default function HomeClient() {
   const todayKey = useTodayKey();
   const THERAPISTS = HAS_TODAY ? todayCards(todayKey, rosterData) : LEGACY_THERAPISTS;
+  // NEW FACE（新人情報）：管理画面で「新人」にチェックした人。並びは「表示順」→名簿の順。
+  // 「本日出勤」のリボンは週間出勤表の今日の行で判定（出勤していない日は付けない）。
+  const todayNames = HAS_TODAY ? new Set(todayList(todayKey).map((e) => e.name)) : null;
+  const NEW_FACES = byRank(rosterData.filter((t) => t.isNew)).map((t) =>
+    todayNames ? { ...t, absent: !todayNames.has(t.name) } : t
+  );
   const todayRows = HAS_TODAY ? todayList(todayKey) : [];
   const GUIDE = HAS_TODAY
     ? todayRows.length
@@ -294,6 +302,28 @@ export default function HomeClient() {
             ))}
           </div>
         </section>
+
+        {/* ---------- NEW FACE（新人情報） ---------- */}
+        <div className="section-head">
+          <div className="sh-en">New Face</div>
+          <h2 className="sh-jp">新人情報</h2>
+        </div>
+        {NEW_FACES.length > 0 ? (
+          <>
+            <section className="staff-grid">
+              {NEW_FACES.slice(0, NEW_FACE_MAX).map((t, i) => (
+                <StaffCard t={t} href={`therapist/${t.id ?? i + 1}/`} base="" key={t.id ?? i} />
+              ))}
+            </section>
+            {NEW_FACES.length > NEW_FACE_MAX && (
+              <a className="more" href="therapist/?tab=new">
+                ＞ 新人をすべて見る ＜
+              </a>
+            )}
+          </>
+        ) : (
+          <p className="therapists-empty">新人セラピストは、決まり次第こちらでご紹介します。</p>
+        )}
 
         {/* ---------- SECTION HEAD + AREA BAND ---------- */}
         <div className="section-head">
