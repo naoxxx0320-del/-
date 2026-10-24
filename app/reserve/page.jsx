@@ -534,7 +534,7 @@ export default function Reserve() {
               </div>
               <div>
                 <b>セラピスト</b>
-                {therapist}
+                {PROFILE[therapist]?.nameFull || therapist}
               </div>
             </div>
             <a className="rsv-back" href="../">
@@ -552,7 +552,7 @@ export default function Reserve() {
       ["希望日", day.label],
       ["予約時間", time],
       ["コース", `${course.label}（${yen(course.price)}）`],
-      ["セラピスト", therapist],
+      ["セラピスト", PROFILE[therapist]?.nameFull || therapist],
       ["お名前", `${form.name}${form.kana ? `（${form.kana}）` : ""}`],
       ["メール", form.email],
       ["電話番号", form.tel],
@@ -700,7 +700,7 @@ export default function Reserve() {
                       <span className="rsv-theart">◆</span>
                     )}
                   </span>
-                  <span className="rsv-tname">{e.name}</span>
+                  <span className="rsv-tname">{p.nameFull || e.name}</span>
                   {p.age && <span className="rsv-tage">{p.age}歳</span>}
                   <span className="rsv-ttime">{e.time}</span>
                   {on && <span className="rsv-tcheck">✓</span>}
