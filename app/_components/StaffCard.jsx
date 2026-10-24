@@ -46,7 +46,7 @@ export default function StaffCard({
       <div className="staff-card-inner">
         <div className="staff-main">
           {/* カード全体を覆うリンク（ハートと入れ子にならないストレッチリンク方式） */}
-          <a className="staff-hit" href={href} aria-label={`${t.name} の詳細`} />
+          <a className="staff-hit" href={href} aria-label={`${t.nameFull || t.name} の詳細`} />
 
           <div className="staff-photo" style={{ background: t.photoBg }}>
             {rb && <span className={`staff-ribbon ${rb.cls}`}>{rb.label}</span>}
@@ -64,7 +64,7 @@ export default function StaffCard({
             <FavoriteHeart id={t.id} />
 
             <div className="staff-name">
-              <span className="staff-name-text">{t.name}</span>
+              <span className="staff-name-text">{t.nameFull || t.name}</span>
               {t.isNew && <span className="staff-new">NEW</span>}
             </div>
 

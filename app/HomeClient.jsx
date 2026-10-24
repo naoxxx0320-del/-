@@ -58,6 +58,10 @@ const SLIDES = [
 // 只今の案内状況・本日の出勤：週間出勤表（schedule.json）の今日の行から作る（管理画面の「本日」で
 // 空き状況・案内時刻・並び順を変更）。古いデータ（today 無し）のときは従来の guide.json / 名簿を使う。
 const LEGACY_THERAPISTS = rosterData.filter((t) => !t.absent);
+// 名前（照合キー）→ 表示名（nameFull）。案内一覧など、出勤行だけで表示名が無い箇所の補完用。
+const NAME2FULL = Object.fromEntries(
+  rosterData.filter((t) => t.nameFull).map((t) => [t.name, t.nameFull])
+);
 const NEW_FACE_MAX = 4; // トップの NEW FACE に並べる最大人数（超えたら「新人をすべて見る」）
 
 // ステータス表示の色分けクラス
@@ -82,7 +86,7 @@ export default function HomeClient() {
   const todayRows = HAS_TODAY ? todayList(todayKey) : [];
   const GUIDE = HAS_TODAY
     ? todayRows.length
-      ? [{ area: SCHEDULE_AREA, list: todayRows.map((e) => ({ name: e.name, time: e.guideTime || "", status: e.status || "" })) }]
+      ? [{ area: SCHEDULE_AREA, list: todayRows.map((e) => ({ name: e.name, nameFull: NAME2FULL[e.name], time: e.guideTime || "", status: e.status || "" })) }]
       : []
     : guideData.areas;
   const GUIDE_DATE = HAS_TODAY ? keyLabel(todayKey) : guideData.date;
@@ -286,7 +290,7 @@ export default function HomeClient() {
                   {g.list.map((t, j) => (
                     <li key={j}>
                       <span className="gheart" aria-hidden="true">💖</span>
-                      <span className="gname">{t.name}</span>
+                      <span className="gname">{t.nameFull || t.name}</span>
                       {t.time && <span className="gtime">{t.time}〜</span>}
                       {t.status && (
                         <span
