@@ -6497,3 +6497,35 @@ body:has(.rec-page) .aichat-fab {
   border: 1px solid #f2dda6;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
 }
+
+/* =========================================================
+   セラピスト本人のシフト入力（/shift/）：白地＋金の飾り枠
+   ========================================================= */
+.shf { margin: 10px 14px 24px; }
+.shf-note { margin: 0 0 12px; font-size: 12.5px; line-height: 1.8; color: #6f5b48; }
+.shf-err { margin: 6px 0; text-align: center; font-size: 14px; line-height: 1.9; color: #8a1f2b; }
+.shf-msg { margin: 0 0 12px; padding: 8px 10px; font-size: 13px; color: #3a5a2c; background: #f1f6ea; border: 1px solid #cfe0bd; }
+.shf-list { list-style: none; margin: 0; padding: 0; }
+.shf-row { padding: 10px 2px; border-bottom: 1px solid rgba(177, 142, 70, 0.3); }
+.shf-row:last-child { border-bottom: none; }
+.shf-line { display: flex; align-items: center; gap: 10px; font-family: var(--font-serif-jp), serif; }
+.shf-date { min-width: 6.4em; font-size: 14px; color: #5b4320; }
+.shf-time { flex: 1; font-size: 14px; color: #9a8c76; }
+.shf-row.on .shf-time { color: #3a2f20; font-weight: 600; }
+.shf-off { margin-left: 6px; font-size: 11px; padding: 1px 7px; border-radius: 9px; background: #eee6d6; color: #7a6a52; font-weight: 400; }
+.shf-btn, .shf-save, .shf-cancel, .shf-del {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 13px;
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+.shf-btn { color: #8a1a30; background: #fff; border: 1px solid #cdae62; }
+.shf-edit { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; margin-top: 10px; padding: 12px; background: #fbf6ea; border: 1px solid rgba(177, 142, 70, 0.35); }
+.shf-edit label { display: flex; flex-direction: column; gap: 3px; font-size: 11.5px; color: #6f5b48; }
+.shf-edit select { font-size: 16px; padding: 6px 8px; border: 1px solid #cdae62; border-radius: 6px; background: #fff; color: #3a2f20; }
+.shf-actions { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; margin-top: 4px; }
+.shf-save { color: #4a0d18; font-weight: 700; background: linear-gradient(180deg, #f0d288 0%, #d9b25f 60%, #caa257 100%); border: 1px solid #f2dda6; }
+.shf-cancel { color: #6b5d44; background: #fff; border: 1px solid #cfc6b3; }
+.shf-del { margin-left: auto; color: #9a3b3b; background: #fff; border: 1px solid #d9a3a3; }
+.shf-btn:disabled, .shf-save:disabled, .shf-cancel:disabled, .shf-del:disabled { opacity: 0.55; cursor: default; }

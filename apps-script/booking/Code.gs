@@ -1068,6 +1068,10 @@ function doPost(e) {
     }
 
     if (action === "member_register") return json_(memberRegister_(body));
+    // セラピスト本人のシフト入力（専用URLの鍵で本人を確認。お客様情報は返さない）
+    if (action === "shift_me") return json_(therapistShiftMe_(body));
+    if (action === "shift_set") return json_(therapistShiftSet_(body));
+    if (action === "shift_del") return json_(therapistShiftDel_(body));
 
     return json_({ ok: false, reason: "unknown action" });
   } catch (err) {
@@ -1299,7 +1303,11 @@ function timeColHasValues_(S) {
 /* 出勤の登録・変更。p = {row?, origName?, origDate?, name, date, start, end, status?, kbn?}
    row 無し＝新規（同じ人・同じ日の行があればそれを更新）。 */
 function adminShiftSave(p) {
-  var staff = requireStaff_();
+  return shiftUpsert_(p, requireStaff_());
+}
+/* 出勤の登録・変更の本体（管理画面とセラピスト用入力の共通）。actor は履歴に残す操作者。 */
+function shiftUpsert_(p, actor) {
+  var staff = actor;
   p = p || {};
   var name = String(p.name || "").trim();
   if (!name) return { ok: false, reason: "セラピストを選んでください。" };
@@ -1419,6 +1427,175 @@ function adminShiftDelete(p) {
   var dstr = keyToDate_(normDate_(p.date));
   var dep = autoDeployIfToday_(dstr);
   return { ok: true, deployed: dep.deployed, warning: outsideWarning_(bookingsOutside_(readLedger_(), String(p.name).trim(), dstr, null, null), "この日に") };
+}
+
+/* ==========================================================================
+ * セラピスト本人のシフト入力（専用URL）
+ *   ・管理画面でセラピストごとに専用URLを発行（URLの鍵はハッシュだけを非公開ファイルに保存）
+ *   ・本人は今日から4週間先までの自分の出勤を登録・変更・取消できる（承認なしで即反映）
+ *   ・お客様の予約が入っている日は、予約が出勤時間の外に出る変更・取消を受け付けない
+ *   ・お客様情報・予約状況は一切返さない
+ *   ・書き込みは管理画面と同じ shiftUpsert_ を使う（出勤情報シートの書き方は共通）
+ * ========================================================================== */
+var SHIFT_LINK_SHEET = "シフト入力URL";
+var SHIFT_LINK_HEADER = ["名前", "鍵(ハッシュ)", "発行日時(JST)", "発行者"];
+var SHIFT_SELF_DAYS = 28;
+
+function keyHash_(s) {
+  var b = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(s), Utilities.Charset.UTF_8);
+  return b.map(function (x) { return ((x + 256) % 256).toString(16).padStart(2, "0"); }).join("");
+}
+function shiftLinkUrl_(key) {
+  return String(cfg_("SITE_URL", "https://aroma-daiamond.com/")).replace(/\/?$/, "/") + "shift/?k=" + encodeURIComponent(key);
+}
+/* 鍵 → セラピスト名（無効なら ""）。短時間に大量に試されないよう回数を制限。 */
+function shiftNameByKey_(key) {
+  key = String(key || "");
+  if (!/^[0-9a-f]{40}$/.test(key)) return "";
+  var h = keyHash_(key), name = "";
+  sheetObjs_(privSheet_(SHIFT_LINK_SHEET, SHIFT_LINK_HEADER)).forEach(function (o) {
+    if (String(o["鍵(ハッシュ)"]) === h) name = String(o["名前"] || "").trim();
+  });
+  return name;
+}
+function shiftRateOk_(key) {
+  try {
+    var c = CacheService.getScriptCache(), k = "shiftrate_" + keyHash_(key).slice(0, 16);
+    var n = parseInt(c.get(k) || "0", 10) + 1;
+    c.put(k, String(n), 600);
+    return n <= 120;
+  } catch (e) { return true; }
+}
+/* 管理画面：専用URLの発行（再発行すると前のURLは使えなくなる） */
+function adminShiftLinkIssue(name) {
+  var staff = requireStaff_();
+  name = String(name || "").trim();
+  if (!name) return { ok: false, reason: "セラピストが指定されていません。" };
+  if (therapistNames_().indexOf(name) < 0) return { ok: false, reason: name + " さんは名簿にいません。" };
+  var key = (Utilities.getUuid() + Utilities.getUuid()).replace(/-/g, "").slice(0, 40);
+  withLock_(function () {
+    var sh = privSheet_(SHIFT_LINK_SHEET, SHIFT_LINK_HEADER);
+    var old = sheetObjs_(sh).filter(function (o) { return String(o["名前"]).trim() === name; }).map(function (o) { return o._row; });
+    deleteRows_(sh, old);
+    sh.appendRow([name, keyHash_(key), Utilities.formatDate(new Date(), "Asia/Tokyo", "yyyy/MM/dd HH:mm:ss"), staff]);
+  });
+  logHistory_("SHIFTLINK", staff, "シフト入力URLを発行 " + name, null, null);
+  return { ok: true, url: shiftLinkUrl_(key) };
+}
+/* 管理画面：専用URLの無効化 */
+function adminShiftLinkRevoke(name) {
+  var staff = requireStaff_();
+  name = String(name || "").trim();
+  var n = 0;
+  withLock_(function () {
+    var sh = privSheet_(SHIFT_LINK_SHEET, SHIFT_LINK_HEADER);
+    var rows = sheetObjs_(sh).filter(function (o) { return String(o["名前"]).trim() === name; }).map(function (o) { return o._row; });
+    n = rows.length;
+    deleteRows_(sh, rows);
+  });
+  if (n) logHistory_("SHIFTLINK", staff, "シフト入力URLを無効化 " + name, null, null);
+  return { ok: true, revoked: n > 0 };
+}
+/* 管理画面：発行状況（URLそのものは保存していないので返せない） */
+function adminShiftLinkStatus(name) {
+  requireStaff_();
+  name = String(name || "").trim();
+  var at = "";
+  sheetObjs_(privSheet_(SHIFT_LINK_SHEET, SHIFT_LINK_HEADER)).forEach(function (o) {
+    if (String(o["名前"]).trim() === name) at = cellStr_(o["発行日時(JST)"]);
+  });
+  return { ok: true, issued: !!at, issuedAt: at };
+}
+
+/* 本人の出勤一覧（今日から4週間）。予約・お客様の情報は含めない。 */
+function therapistShiftMe_(b) {
+  if (!shiftRateOk_(b.key)) return { ok: false, reason: "しばらく時間をおいてからお試しください。" };
+  var name = shiftNameByKey_(b.key);
+  if (!name) return { ok: false, reason: "このURLは使えません。お店に新しいURLをお問い合わせください。" };
+  var from = bizTodayStr_(), keys = {}, days = [];
+  for (var i = 0; i < SHIFT_SELF_DAYS; i++) {
+    var d = addDays_(from, i);
+    keys[normDate_(d)] = days.length;
+    days.push({ date: d, label: dateLabel_(d), start: "", end: "", absent: false });
+  }
+  var S = schedSheet_();
+  for (var r = S.hi + 1; r < S.values.length; r++) {
+    var info = shiftRowInfo_(S, S.values[r]);
+    if (info.name !== name || keys[info.dateKey] == null) continue;
+    var day = days[keys[info.dateKey]];
+    var base = parseJstDateTime(day.date, "0:00");
+    day.start = minLabel_((info.startMs - base) / 60000);
+    day.end = minLabel_((info.endMs - base) / 60000);
+    day.absent = !!info.absent;
+  }
+  return jsonSafe_({ ok: true, name: name, days: days });
+}
+/* その日の0:00からの分 → "13:00" / "翌2:00"（読めないときは ""） */
+function minLabel_(min) {
+  if (!isFinite(min) || min < 0) return "";
+  var h = Math.floor(min / 60), m = Math.round(min % 60);
+  return (h >= 24 ? "翌" + (h - 24) : String(h)) + ":" + (m < 10 ? "0" : "") + m;
+}
+/* 受け付ける日付（今日〜4週間後）か */
+function selfDateOk_(dateStr) {
+  var k = normDate_(dateStr), t = normDate_(bizTodayStr_());
+  if (!k || !t) return "";
+  var last = normDate_(addDays_(bizTodayStr_(), SHIFT_SELF_DAYS - 1));
+  return k >= t && k <= last ? keyToDate_(k) : "";
+}
+/* サイトへの反映（連続で押されても1分に1回まで） */
+function selfDeploy_() {
+  try {
+    var c = CacheService.getScriptCache();
+    if (c.get("shift_self_deploy")) return;
+    c.put("shift_self_deploy", "1", 60);
+  } catch (e) {}
+  autoDeploy_();
+}
+/* 本人による登録・変更 */
+function therapistShiftSet_(b) {
+  if (!shiftRateOk_(b.key)) return { ok: false, reason: "しばらく時間をおいてからお試しください。" };
+  var name = shiftNameByKey_(b.key);
+  if (!name) return { ok: false, reason: "このURLは使えません。お店に新しいURLをお問い合わせください。" };
+  var dstr = selfDateOk_(b.date);
+  if (!dstr) return { ok: false, reason: "登録できるのは今日から4週間先までです。" };
+  var start = String(b.start || "").trim(), end = String(b.end || "").trim();
+  if (!/^(翌)?\d{1,2}:(00|30)$/.test(start) || !/^(翌)?\d{1,2}:(00|30)$/.test(end)) return { ok: false, reason: "時間は30分単位で選んでください。" };
+  var sMs = parseJstDateTime(dstr, start), eMs = parseJstDateTime(dstr, end);
+  if (sMs == null || eMs == null || eMs <= sMs) return { ok: false, reason: "終了は開始より後にしてください（深夜は「翌2:00」のように選んでください）。" };
+  // 予約が出勤時間の外に出る変更は受け付けない（お客様の予約を守る）
+  if (bookingsOutside_(readLedger_(), name, dstr, sMs, eMs).length)
+    return { ok: false, reason: "この日はご予約が入っているため、この時間には変更できません。お店にご連絡ください。" };
+  var r = shiftUpsert_({ name: name, date: dstr, start: start, end: end }, "セラピスト本人（" + name + "）");
+  if (!r.ok) return { ok: false, reason: r.reason };
+  selfDeploy_();
+  return { ok: true };
+}
+/* 本人による取消（その日の出勤を消す） */
+function therapistShiftDel_(b) {
+  if (!shiftRateOk_(b.key)) return { ok: false, reason: "しばらく時間をおいてからお試しください。" };
+  var name = shiftNameByKey_(b.key);
+  if (!name) return { ok: false, reason: "このURLは使えません。お店に新しいURLをお問い合わせください。" };
+  var dstr = selfDateOk_(b.date);
+  if (!dstr) return { ok: false, reason: "取り消せるのは今日から4週間先までです。" };
+  if (bookingsOutside_(readLedger_(), name, dstr, null, null).length)
+    return { ok: false, reason: "この日はご予約が入っているため取り消せません。お店にご連絡ください。" };
+  var dkey = normDate_(dstr);
+  var res = withLock_(function () {
+    var S = schedSheet_(), rows = [];
+    for (var i = S.hi + 1; i < S.values.length; i++) {
+      var inf = shiftRowInfo_(S, S.values[i]);
+      if (inf.name === name && inf.dateKey === dkey) rows.push(i + 1);
+    }
+    if (!rows.length) return { ok: false, reason: "この日の出勤は登録されていません。" };
+    var before = S.values[rows[0] - 1];
+    deleteRows_(S.sh, rows);
+    logHistory_("SHIFT", "セラピスト本人（" + name + "）", "出勤削除 " + name + " " + dstr, before, null);
+    return { ok: true };
+  });
+  if (!res.ok) return res;
+  selfDeploy_();
+  return { ok: true };
 }
 
 /* ==========================================================================
@@ -1944,7 +2121,7 @@ function adminPhotoUpload(p) {
      ・今日以降の有効な予約（仮予約・確定）が残っている間は削除しない（お客様への連絡漏れ防止）
    ※GitHub の変更履歴には過去の写真が残る（履歴の書き換えはしない）。
    ※削除の記録は「予約履歴」に件数だけ残す（名前・お客様情報は残さない）。 */
-var PROFILE_LOG_TYPES_ = ["SHIFT", "PROFILE", "RATE"];
+var PROFILE_LOG_TYPES_ = ["SHIFT", "PROFILE", "RATE", "SHIFTLINK"];
 
 /* 予約履歴の「操作」欄の語（空白区切り）に名前がちょうど含まれるか（部分一致はしない）。 */
 function logMentions_(action, name) {
@@ -1979,6 +2156,10 @@ function therapistDeletePlan_(name) {
   sheetObjs_(privSheet_(RATE_SHEET, RATE_HEADER)).forEach(function (o) {
     if (String(o["名前"]).trim() === name) plan.rateRows.push(o._row);
   });
+  // シフト入力用URL（あれば無効化）
+  plan.linkRows = sheetObjs_(privSheet_(SHIFT_LINK_SHEET, SHIFT_LINK_HEADER))
+    .filter(function (o) { return String(o["名前"]).trim() === name; })
+    .map(function (o) { return o._row; });
   // 出勤情報（過去分を含むすべて）
   var S = schedSheet_();
   for (var r = S.hi + 1; r < S.values.length; r++) {
@@ -2051,6 +2232,7 @@ function adminTherapistDelete(p) {
     deleteRows_(history_(), plan.historyRows);
     deleteRows_(privSheet_(SETTLE_SHEET, SETTLE_HEADER), plan.settleRows);
     deleteRows_(privSheet_(RATE_SHEET, RATE_HEADER), plan.rateRows);
+    deleteRows_(privSheet_(SHIFT_LINK_SHEET, SHIFT_LINK_HEADER), plan.linkRows || []);
     deleteRows_(schedSheet_().sh, plan.shiftRows);
     if (plan.profileRow) profileSheet_().sh.deleteRow(plan.profileRow);
     // 削除の記録は件数のみ（名前・お客様情報は残さない）
@@ -2994,7 +3176,7 @@ function selfTest() {
    管理画面（Admin.html）は開いたときにこの版を確認し、Code.gs / lib.gs が古い・途中までしか
    貼られていない場合に警告を出す。※必ずファイルの「最後」に置く（途中で切れると無くなるので検出できる）。
    コードを変更したら Admin.html の APP_VERSION・lib.gs の LIB_VERSION と一緒に上げる。 */
-var CODE_VERSION = "2026-10-22-1";
+var CODE_VERSION = "2026-10-27-1";
 function adminVersion() {
   return { code: CODE_VERSION, lib: typeof LIB_VERSION === "undefined" ? "" : LIB_VERSION };
 }
