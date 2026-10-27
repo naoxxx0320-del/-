@@ -397,7 +397,7 @@
       { label: "延長30分", price: 6000 },
     ];
     var STAFF_EMAIL = "<?= staffEmail ?>";
-    var APP_VERSION = "2026-10-22-1"; // Code.gs の CODE_VERSION・lib.gs の LIB_VERSION と同じ値
+    var APP_VERSION = "2026-10-27-1"; // Code.gs の CODE_VERSION・lib.gs の LIB_VERSION と同じ値
 
     // 画面の不具合を「読み込み中」のまま止めず、理由を表示する
     function showVerWarn(msg){ var b=document.getElementById("ver-warn"); b.innerHTML=msg; b.style.display="block"; }
@@ -410,7 +410,7 @@
       google.script.run.withSuccessHandler(function(v){
         if(!v||v.code!==APP_VERSION) showVerWarn("⚠ Code.gs の版が画面と合っていません（Code.gs："+esc(v&&v.code||"不明")+"／画面："+APP_VERSION+"）。<br>"+fix);
         else if(v.lib!==APP_VERSION) showVerWarn("⚠ lib.gs が古いか、途中までしか貼り付けられていません（lib.gs："+esc(v.lib||"不明")+"／画面："+APP_VERSION+"）。<br>"+fix);
-        else runCleanup(true); // 前回の削除で残った写真の削除があれば続きを行う
+        else if(typeof window.runCleanup==="function") window.runCleanup(true); // 前回の削除で残った写真の削除があれば続きを行う（別の<script>内で定義）
       }).withFailureHandler(function(e){ showVerWarn("⚠ 版の確認に失敗しました："+esc(e&&e.message?e.message:e)); }).adminVersion();
     }
     var therapists = [];
@@ -822,8 +822,47 @@
         res.profile.forEach(function(x){ h+='<dt>'+esc(x.label)+'</dt><dd>'+esc(x.value)+'</dd>'; });
         h+='</dl>';
       }
+      // シフト入力用URL（本人に渡して、自分で出勤を入力してもらう）
+      h+='<div class="sec-h">シフト入力用URL（本人用）</div><div id="td-link"><div class="note">確認中…</div></div>';
       $("td-body").innerHTML=h;
       $("td-body").__shifts=res.shifts;
+      loadShiftLink(tdName);
+    }
+    function loadShiftLink(name, url){
+      var box=$("td-link"); if(!box) return;
+      if(!hasServer("adminShiftLinkStatus")){ box.innerHTML='<div class="note">Code.gs を最新に貼り替えると使えます。</div>'; return; }
+      google.script.run.withSuccessHandler(function(r){
+        var h='';
+        if(url){
+          h+='<p class="note">このURLを '+esc(name)+' さん本人にだけ送ってください（LINEなど）。URLを知っている人は誰でもこの方の出勤を変更できます。<b>この画面を閉じるとURLは再表示できません</b>（必要なら再発行してください）。</p>';
+          h+='<div class="field"><input id="td-link-url" readonly value="'+esc(url).replace(/"/g,"&quot;")+'" /></div>';
+          h+='<div class="modal-actions" style="justify-content:flex-start"><button class="primary" id="td-link-copy">URLをコピー</button></div>';
+        } else if(r&&r.issued){
+          h+='<p class="note">発行済み（'+esc(r.issuedAt)+'）。URLをなくした・漏れた場合は「再発行」すると、前のURLは使えなくなります。</p>';
+        } else {
+          h+='<p class="note">まだ発行していません。発行したURLを本人に送ると、今日から4週間先までの出勤を本人が登録・変更・取消できます（すぐサイトに反映）。</p>';
+        }
+        h+='<div class="modal-actions" style="justify-content:flex-start">';
+        h+='<button class="ghost" id="td-link-issue">'+((r&&r.issued)||url?'再発行':'URLを発行')+'</button>';
+        if((r&&r.issued)||url) h+='<button class="danger" id="td-link-revoke">無効にする</button>';
+        h+='</div>';
+        box.innerHTML=h;
+        var cp=$("td-link-copy");
+        if(cp) cp.onclick=function(){ var i=$("td-link-url"); i.select(); try{ navigator.clipboard.writeText(i.value).then(function(){ toast("URLをコピーしました"); }, function(){ document.execCommand("copy"); toast("URLをコピーしました"); }); }catch(e){ document.execCommand("copy"); toast("URLをコピーしました"); } };
+        $("td-link-issue").onclick=function(){
+          if((r&&r.issued) && !confirm("再発行すると、今のURLは使えなくなります。よろしいですか？")) return;
+          this.disabled=true;
+          google.script.run.withSuccessHandler(function(x){
+            if(!x||!x.ok){ alert("発行できませんでした："+((x&&x.reason)||"不明")); loadShiftLink(name); return; }
+            loadShiftLink(name, x.url);
+          }).withFailureHandler(function(e){ alert("エラー："+(e&&e.message?e.message:e)); loadShiftLink(name); }).adminShiftLinkIssue(name);
+        };
+        var rv=$("td-link-revoke");
+        if(rv) rv.onclick=function(){
+          if(!confirm(name+" さんのシフト入力用URLを無効にします。よろしいですか？")) return;
+          google.script.run.withSuccessHandler(function(){ toast("URLを無効にしました"); loadShiftLink(name); }).adminShiftLinkRevoke(name);
+        };
+      }).withFailureHandler(function(e){ box.innerHTML='<div class="err">'+esc(e&&e.message?e.message:e)+'</div>'; }).adminShiftLinkStatus(name);
     }
     $("td-body").addEventListener("click", function(ev){
       var li=ev.target.closest("[data-tds]"); if(!li) return;
@@ -999,6 +1038,7 @@
     };
     $("td-del").onclick=function(){ openDelete(tdName); };
     // 削除したセラピストの写真・サイトのデータを消す（失敗しても次に管理画面を開いたとき再試行）
+    window.runCleanup = function(q){ runCleanup(q); }; // 版の確認（別の<script>）から呼ぶため
     function runCleanup(quiet){
       if(!hasServer("adminTherapistCleanup")) return;
       if(!quiet) setDeploySt("サイトから写真・データを削除中…");
