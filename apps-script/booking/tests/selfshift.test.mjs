@@ -50,27 +50,54 @@ t("無効化すると使えない・でたらめな鍵も使えない", () => {
   assert.equal(plain(g.therapistShiftSet_({ key: "0".repeat(40), date: g.bizTodayStr_(), start: "13:00", end: "翌2:00" })).ok, false);
 });
 
-t("本人の登録・変更・取消（出勤情報シートに書き、他の人の行は触らない）", () => {
+t("本人は登録だけ：登録済みの日の変更はできず、他の人の行は触らない", () => {
   const { g, sheets, day } = setup();
   const km = keyOf(g.adminShiftLinkIssue("みお").url);
   const kr = keyOf(g.adminShiftLinkIssue("れいこ").url);
-  assert.equal(plain(g.therapistShiftSet_({ key: km, date: day(1), start: "13:00", end: "翌2:00" })).ok, true);
-  assert.equal(plain(g.therapistShiftSet_({ key: kr, date: day(1), start: "15:00", end: "23:00" })).ok, true);
+  assert.equal(plain(g.therapistShiftSet_({ key: km, date: day(1), start: "13:00", end: "18:00" })).ok, true);
+  assert.equal(plain(g.therapistShiftSet_({ key: kr, date: day(1), start: "18:00", end: "翌2:00" })).ok, true); // ちょうど境目はOK
   assert.deepEqual(names(sheets["出勤情報"]), ["みお@" + day(1), "れいこ@" + day(1)]);
-  // 変更は同じ行を更新（行は増えない）
-  assert.equal(plain(g.therapistShiftSet_({ key: km, date: day(1), start: "18:00", end: "翌4:00" })).ok, true);
+  const again = plain(g.therapistShiftSet_({ key: km, date: day(1), start: "10:00", end: "12:00" }));
+  assert.equal(again.ok, false);
+  assert.match(again.reason, /すでに登録されています/);
   assert.equal(sheets["出勤情報"].v.length, 3);
+  assert.equal(g.therapistShiftDel_, undefined); // 本人の取消は無い
+  const post = (body) => JSON.parse(g.doPost({ postData: { contents: JSON.stringify(body) } }).s);
+  assert.equal(post({ action: "shift_del", key: km, date: day(1) }).ok, false); // 取消のアクションも無い
+  assert.equal(sheets["出勤情報"].v.length, 3);
+  assert.ok(g.__history.some((h) => String(h[1]).includes("セラピスト本人（みお）")));
+});
+
+t("ほかの人の出勤と1分でも重なる時間は登録できない（休みの人は除く）", () => {
+  const { g, sheets, day } = setup();
+  const km = keyOf(g.adminShiftLinkIssue("みお").url);
+  const kr = keyOf(g.adminShiftLinkIssue("れいこ").url);
+  assert.equal(plain(g.therapistShiftSet_({ key: km, date: day(2), start: "13:00", end: "翌2:00" })).ok, true);
+  const r = plain(g.therapistShiftSet_({ key: kr, date: day(2), start: "翌1:30", end: "翌4:00" }));
+  assert.equal(r.ok, false);
+  assert.match(r.reason, /みお さんの出勤（13:00〜翌2:00）と重なる/);
+  assert.equal(plain(g.therapistShiftSet_({ key: kr, date: day(2), start: "翌2:00", end: "翌4:00" })).ok, true);
+  // 休み（✖️）の人の時間は空き扱い
+  assert.equal(plain(g.therapistShiftSet_({ key: km, date: day(3), start: "13:00", end: "20:00" })).ok, true);
+  const row = sheets["出勤情報"].v.findIndex((x) => x[2] === "みお" && x[0] === day(3));
+  sheets["出勤情報"].v[row][6] = "✖️";
+  assert.equal(plain(g.therapistShiftSet_({ key: kr, date: day(3), start: "15:00", end: "18:00" })).ok, true);
+});
+
+t("本人の画面：自分の登録と、ほかの人の出勤（名前と時間・休みは除く）を返す", () => {
+  const { g, sheets, day } = setup();
+  const km = keyOf(g.adminShiftLinkIssue("みお").url);
+  const kr = keyOf(g.adminShiftLinkIssue("れいこ").url);
+  g.therapistShiftSet_({ key: km, date: day(1), start: "13:00", end: "翌2:00" });
+  g.therapistShiftSet_({ key: kr, date: day(2), start: "15:00", end: "23:00" });
   const me = plain(g.therapistShiftMe_({ key: km }));
   assert.equal(me.days.length, 28);
-  assert.deepEqual([me.days[1].start, me.days[1].end], ["18:00", "翌4:00"]);
-  assert.equal(me.days[0].start, ""); // 未登録の日
-  assert.ok(!JSON.stringify(me).includes("れいこ")); // 他の人の情報は返さない
-  // 取消
-  assert.equal(plain(g.therapistShiftDel_({ key: km, date: day(1) })).ok, true);
-  assert.deepEqual(names(sheets["出勤情報"]), ["れいこ@" + day(1)]);
-  assert.equal(plain(g.therapistShiftDel_({ key: km, date: day(1) })).ok, false); // もう無い
-  // 操作者は本人として履歴に残る
-  assert.ok(g.__history.some((h) => String(h[1]).includes("セラピスト本人（みお）")));
+  assert.equal(me.days[1].registered, true);
+  assert.deepEqual([me.days[1].start, me.days[1].end], ["13:00", "翌2:00"]);
+  assert.deepEqual(me.days[1].others, []);
+  assert.equal(me.days[2].registered, false);
+  assert.deepEqual(me.days[2].others, [{ name: "れいこ", start: "15:00", end: "23:00" }]);
+  assert.ok(!JSON.stringify(me).includes("予約")); // 予約・お客様の情報は返さない
 });
 
 t("受け付ける範囲：今日〜4週間・30分単位・終了は開始より後", () => {
@@ -81,20 +108,6 @@ t("受け付ける範囲：今日〜4週間・30分単位・終了は開始よ�
   assert.equal(plain(g.therapistShiftSet_({ key: k, date: day(27), start: "13:00", end: "20:00" })).ok, true);
   assert.equal(plain(g.therapistShiftSet_({ key: k, date: day(2), start: "13:15", end: "20:00" })).ok, false);
   assert.equal(plain(g.therapistShiftSet_({ key: k, date: day(2), start: "20:00", end: "13:00" })).ok, false);
-});
-
-t("予約が入っている日：予約が時間外になる変更・取消はできない", () => {
-  const { g, day } = setup();
-  const k = keyOf(g.adminShiftLinkIssue("みお").url);
-  assert.equal(plain(g.therapistShiftSet_({ key: k, date: day(3), start: "13:00", end: "翌2:00" })).ok, true);
-  const s = g.parseJstDateTime(day(3), "20:00");
-  g.__ledger = [{ status: g.STATUS.CONFIRMED, therapistName: "みお", therapistId: "みお", startAt: s, endAt: s + 90 * 60000 }];
-  const r1 = plain(g.therapistShiftSet_({ key: k, date: day(3), start: "13:00", end: "19:00" }));
-  assert.equal(r1.ok, false);
-  assert.match(r1.reason, /ご予約が入っている/);
-  assert.equal(plain(g.therapistShiftDel_({ key: k, date: day(3) })).ok, false);
-  // 予約を含む時間への変更はできる
-  assert.equal(plain(g.therapistShiftSet_({ key: k, date: day(3), start: "18:00", end: "翌2:00" })).ok, true);
 });
 
 t("公開API（doPost）から呼べる・不明な鍵は拒否", () => {

@@ -6529,3 +6529,7 @@ body:has(.rec-page) .aichat-fab {
 .shf-cancel { color: #6b5d44; background: #fff; border: 1px solid #cfc6b3; }
 .shf-del { margin-left: auto; color: #9a3b3b; background: #fff; border: 1px solid #d9a3a3; }
 .shf-btn:disabled, .shf-save:disabled, .shf-cancel:disabled, .shf-del:disabled { opacity: 0.55; cursor: default; }
+.shf-done { font-size: 11.5px; color: #8a6a2c; border: 1px solid rgba(177, 142, 70, 0.5); border-radius: 999px; padding: 3px 10px; background: #fffdf8; }
+.shf-busy { list-style: none; margin: 6px 0 0 6.4em; padding: 0; font-size: 12px; line-height: 1.8; color: #7a6a52; }
+.shf-busy-tag { display: inline-block; margin-right: 6px; font-size: 10.5px; padding: 0 7px; border-radius: 9px; background: #f3e6e6; color: #9a3b3b; }
+@media (max-width: 360px) { .shf-busy { margin-left: 0; } }

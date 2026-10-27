@@ -397,7 +397,7 @@
       { label: "延長30分", price: 6000 },
     ];
     var STAFF_EMAIL = "<?= staffEmail ?>";
-    var APP_VERSION = "2026-10-27-1"; // Code.gs の CODE_VERSION・lib.gs の LIB_VERSION と同じ値
+    var APP_VERSION = "2026-10-27-2"; // Code.gs の CODE_VERSION・lib.gs の LIB_VERSION と同じ値
 
     // 画面の不具合を「読み込み中」のまま止めず、理由を表示する
     function showVerWarn(msg){ var b=document.getElementById("ver-warn"); b.innerHTML=msg; b.style.display="block"; }
@@ -840,7 +840,7 @@
         } else if(r&&r.issued){
           h+='<p class="note">発行済み（'+esc(r.issuedAt)+'）。URLをなくした・漏れた場合は「再発行」すると、前のURLは使えなくなります。</p>';
         } else {
-          h+='<p class="note">まだ発行していません。発行したURLを本人に送ると、今日から4週間先までの出勤を本人が登録・変更・取消できます（すぐサイトに反映）。</p>';
+          h+='<p class="note">まだ発行していません。発行したURLを本人に送ると、今日から4週間先までの出勤を本人が登録できます（すぐサイトに反映。ほかの人と重なる時間は登録不可。変更・取消はお店がこの画面で行います）。</p>';
         }
         h+='<div class="modal-actions" style="justify-content:flex-start">';
         h+='<button class="ghost" id="td-link-issue">'+((r&&r.issued)||url?'再発行':'URLを発行')+'</button>';
