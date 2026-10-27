@@ -1071,7 +1071,6 @@ function doPost(e) {
     // セラピスト本人のシフト入力（専用URLの鍵で本人を確認。お客様情報は返さない）
     if (action === "shift_me") return json_(therapistShiftMe_(body));
     if (action === "shift_set") return json_(therapistShiftSet_(body));
-    if (action === "shift_del") return json_(therapistShiftDel_(body));
 
     return json_({ ok: false, reason: "unknown action" });
   } catch (err) {
@@ -1326,6 +1325,11 @@ function shiftUpsert_(p, actor) {
       c = S.c;
     if (c.date < 0 || c.name < 0 || (c.time < 0 && !(c.start >= 0 && c.end >= 0)))
       return { ok: false, reason: "出勤情報シートに「日付」「名前」「出勤時間」（または「開始」「終了」）の列が必要です。" };
+    // 追加の確認（セラピスト本人の入力で使う：登録済み・ほかの人との重なり）。ロック内で最新のシートを見て判定する
+    if (typeof p.guard === "function") {
+      var gerr = p.guard(S, sMs, eMs);
+      if (gerr) return { ok: false, reason: gerr };
+    }
     var target = -1,
       orig = null;
     if (p.row) {
@@ -1432,8 +1436,10 @@ function adminShiftDelete(p) {
 /* ==========================================================================
  * セラピスト本人のシフト入力（専用URL）
  *   ・管理画面でセラピストごとに専用URLを発行（URLの鍵はハッシュだけを非公開ファイルに保存）
- *   ・本人は今日から4週間先までの自分の出勤を登録・変更・取消できる（承認なしで即反映）
- *   ・お客様の予約が入っている日は、予約が出勤時間の外に出る変更・取消を受け付けない
+ *   ・本人は今日から4週間先までの自分の出勤を「登録」だけできる（承認なしで即反映）。
+ *     登録済みの日の変更・取消はお店（管理画面）が行う
+ *   ・ほかのセラピストの出勤（休み以外）と1分でも重なる時間は登録できない（部屋が1室のため）。
+ *     本人の画面には、各日のほかの人の出勤（名前と時間）を表示する
  *   ・お客様情報・予約状況は一切返さない
  *   ・書き込みは管理画面と同じ shiftUpsert_ を使う（出勤情報シートの書き方は共通）
  * ========================================================================== */
@@ -1518,15 +1524,22 @@ function therapistShiftMe_(b) {
     keys[normDate_(d)] = days.length;
     days.push({ date: d, label: dateLabel_(d), start: "", end: "", absent: false });
   }
+  days.forEach(function (d) { d.registered = false; d.others = []; });
   var S = schedSheet_();
   for (var r = S.hi + 1; r < S.values.length; r++) {
     var info = shiftRowInfo_(S, S.values[r]);
-    if (info.name !== name || keys[info.dateKey] == null) continue;
+    if (!info.name || keys[info.dateKey] == null) continue;
     var day = days[keys[info.dateKey]];
     var base = parseJstDateTime(day.date, "0:00");
-    day.start = minLabel_((info.startMs - base) / 60000);
-    day.end = minLabel_((info.endMs - base) / 60000);
-    day.absent = !!info.absent;
+    var st = minLabel_((info.startMs - base) / 60000), en = minLabel_((info.endMs - base) / 60000);
+    if (info.name === name) {
+      day.registered = true;
+      day.start = st;
+      day.end = en;
+      day.absent = !!info.absent;
+    } else if (!info.absent && st && en) {
+      day.others.push({ name: info.name, start: st, end: en }); // 休み以外は「埋まり」
+    }
   }
   return jsonSafe_({ ok: true, name: name, days: days });
 }
@@ -1566,38 +1579,26 @@ function therapistShiftSet_(b) {
   // 予約が出勤時間の外に出る変更は受け付けない（お客様の予約を守る）
   if (bookingsOutside_(readLedger_(), name, dstr, sMs, eMs).length)
     return { ok: false, reason: "この日はご予約が入っているため、この時間には変更できません。お店にご連絡ください。" };
-  var r = shiftUpsert_({ name: name, date: dstr, start: start, end: end }, "セラピスト本人（" + name + "）");
+  var dkey = normDate_(dstr);
+  var guard = function (S, s0, e0) {
+    for (var i = S.hi + 1; i < S.values.length; i++) {
+      var inf = shiftRowInfo_(S, S.values[i]);
+      if (!inf.name) continue;
+      if (inf.name === name && inf.dateKey === dkey)
+        return "この日はすでに登録されています。変更・取消はお店にご連絡ください。";
+      if (inf.name !== name && !inf.absent && inf.startMs != null && inf.endMs != null && inf.startMs < e0 && s0 < inf.endMs) {
+        var b0 = parseJstDateTime(inf.date, "0:00");
+        return "この時間は " + inf.name + " さんの出勤（" + minLabel_((inf.startMs - b0) / 60000) + "〜" + minLabel_((inf.endMs - b0) / 60000) +
+          "）と重なるため登録できません。空いている時間を選んでください。";
+      }
+    }
+    return "";
+  };
+  var r = shiftUpsert_({ name: name, date: dstr, start: start, end: end, guard: guard }, "セラピスト本人（" + name + "）");
   if (!r.ok) return { ok: false, reason: r.reason };
   selfDeploy_();
   return { ok: true };
 }
-/* 本人による取消（その日の出勤を消す） */
-function therapistShiftDel_(b) {
-  if (!shiftRateOk_(b.key)) return { ok: false, reason: "しばらく時間をおいてからお試しください。" };
-  var name = shiftNameByKey_(b.key);
-  if (!name) return { ok: false, reason: "このURLは使えません。お店に新しいURLをお問い合わせください。" };
-  var dstr = selfDateOk_(b.date);
-  if (!dstr) return { ok: false, reason: "取り消せるのは今日から4週間先までです。" };
-  if (bookingsOutside_(readLedger_(), name, dstr, null, null).length)
-    return { ok: false, reason: "この日はご予約が入っているため取り消せません。お店にご連絡ください。" };
-  var dkey = normDate_(dstr);
-  var res = withLock_(function () {
-    var S = schedSheet_(), rows = [];
-    for (var i = S.hi + 1; i < S.values.length; i++) {
-      var inf = shiftRowInfo_(S, S.values[i]);
-      if (inf.name === name && inf.dateKey === dkey) rows.push(i + 1);
-    }
-    if (!rows.length) return { ok: false, reason: "この日の出勤は登録されていません。" };
-    var before = S.values[rows[0] - 1];
-    deleteRows_(S.sh, rows);
-    logHistory_("SHIFT", "セラピスト本人（" + name + "）", "出勤削除 " + name + " " + dstr, before, null);
-    return { ok: true };
-  });
-  if (!res.ok) return res;
-  selfDeploy_();
-  return { ok: true };
-}
-
 /* ==========================================================================
  * 本日の出勤（トップページの「本日の出勤」「只今の案内状況」）
  *   ・出る人は週間出勤表（出勤情報）の今日の行から自動（休み・申請中は出ない）
@@ -3176,7 +3177,7 @@ function selfTest() {
    管理画面（Admin.html）は開いたときにこの版を確認し、Code.gs / lib.gs が古い・途中までしか
    貼られていない場合に警告を出す。※必ずファイルの「最後」に置く（途中で切れると無くなるので検出できる）。
    コードを変更したら Admin.html の APP_VERSION・lib.gs の LIB_VERSION と一緒に上げる。 */
-var CODE_VERSION = "2026-10-27-1";
+var CODE_VERSION = "2026-10-27-2";
 function adminVersion() {
   return { code: CODE_VERSION, lib: typeof LIB_VERSION === "undefined" ? "" : LIB_VERSION };
 }
