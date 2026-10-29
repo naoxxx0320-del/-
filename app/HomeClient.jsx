@@ -11,6 +11,7 @@ import rosterData from "../data/roster.json";
 import links from "../data/links.json";
 import banners from "../data/banners.json";
 import { byRank } from "./_components/rank";
+import RelaxiTimeline from "./_components/RelaxiTimeline";
 import { HAS_TODAY, useTodayKey, keyLabel, todayList, todayCards, SCHEDULE_UPDATED, SCHEDULE_AREA } from "./_components/today";
 
 /* ---- data ---------------------------------------------------------- */
@@ -463,6 +464,9 @@ export default function HomeClient() {
             </a>
           </div>
         </section>
+
+        {/* ---------- Relaxi タイムライン ---------- */}
+        <RelaxiTimeline />
 
         {/* ---------- リンクバナー（求人・提携サイト） ---------- */}
         <section className="home-links">

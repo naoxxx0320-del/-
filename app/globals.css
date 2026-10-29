@@ -6533,3 +6533,19 @@ body:has(.rec-page) .aichat-fab {
 .shf-busy { list-style: none; margin: 6px 0 0 6.4em; padding: 0; font-size: 12px; line-height: 1.8; color: #7a6a52; }
 .shf-busy-tag { display: inline-block; margin-right: 6px; font-size: 10.5px; padding: 0 7px; border-radius: 9px; background: #f3e6e6; color: #9a3b3b; }
 @media (max-width: 360px) { .shf-busy { margin-left: 0; } }
+
+/* Relaxi タイムライン（トップ・リンク集） */
+.relaxi-tl { position: relative; z-index: 2; }
+.relaxi-tl-frame {
+  display: flex;
+  justify-content: center;
+  margin: 14px 14px 6px;
+}
+.relaxi-tl-frame iframe {
+  display: block;
+  width: 550px;
+  max-width: 100%;
+  height: 800px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(70, 48, 30, 0.12);
+}
