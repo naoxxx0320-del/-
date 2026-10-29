@@ -1,4 +1,4 @@
-/* Relaxi（メンズエステ専用SNS）の公式タイムライン埋め込み（トップページ・リンク集で共用）。
+/* Relaxi（メンズエステ専用SNS）の公式タイムライン埋め込み（トップページ）。
    埋め込みは Relaxi 指定のコード（幅550・高さ800、スマホでは画面幅に合わせて縮む）。 */
 const SRC = "https://rx-sns.jp/embed/timeline/aromadiamond?resize=fixed&limit=10";
 

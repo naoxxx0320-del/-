@@ -6534,7 +6534,7 @@ body:has(.rec-page) .aichat-fab {
 .shf-busy-tag { display: inline-block; margin-right: 6px; font-size: 10.5px; padding: 0 7px; border-radius: 9px; background: #f3e6e6; color: #9a3b3b; }
 @media (max-width: 360px) { .shf-busy { margin-left: 0; } }
 
-/* Relaxi タイムライン（トップ・リンク集） */
+/* Relaxi タイムライン（トップページ） */
 .relaxi-tl { position: relative; z-index: 2; }
 .relaxi-tl-frame {
   display: flex;
