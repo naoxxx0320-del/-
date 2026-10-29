@@ -2,6 +2,7 @@ import SiteChrome from "../_components/SiteChrome";
 import NavGrid from "../_components/NavGrid";
 import Breadcrumbs from "../_components/Breadcrumbs";
 import banners from "../../data/banners.json";
+import RelaxiTimeline from "../_components/RelaxiTimeline";
 import { pageMetadata } from "../_lib/seo";
 
 export const metadata = pageMetadata("links");
@@ -66,6 +67,8 @@ export default function Links() {
             </div>
           ))}
         </section>
+
+        <RelaxiTimeline />
 
         <SiteChrome base="../" />
       </div>
