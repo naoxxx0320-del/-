@@ -20,16 +20,6 @@ import { HAS_TODAY, useTodayKey, keyLabel, todayList, todayCards, SCHEDULE_UPDAT
 // すべて実バナー（3:2に正規化済み。余白は各バナーの背景色に馴染ませて切れなし）。
 const SLIDES = [
   {
-    t: "10月限定\nLINE友だち追加特典",
-    img: "slide-line3000.jpg",
-    alt: "10月中のLINE友だち追加で3,000円OFF｜AROMA DIAMOND 亀戸（友だち追加期限 2026年10月31日）",
-  },
-  {
-    t: "11月中旬\nOPEN",
-    img: "slide-open.jpg",
-    alt: "2026年11月中旬 亀戸にグランドオープン｜AROMA DIAMOND アロマダイヤモンド",
-  },
-  {
     t: "新規・新人\n特別割引",
     img: "slide-shinki.jpg",
     alt: "新規・新人特別割引 2000円OFF｜AROMA DIAMOND アロマダイヤモンド 亀戸",
@@ -48,13 +38,7 @@ const SLIDES = [
     t: "会員様\n限定特典",
     img: "slide-member.jpg",
     alt: "会員様限定特典 VIP会員様だけの特別なサービス｜AROMA DIAMOND アロマダイヤモンド 亀戸",
-  },
-  {
-    t: "アクセス\n公開予定",
-    img: "slide-access.jpg",
-    alt: "11月上旬アクセス公開予定 駅近・好立地のプライベート空間｜AROMA DIAMOND アロマダイヤモンド 亀戸",
-  },
-];
+  },];
 
 // 只今の案内状況・本日の出勤：週間出勤表（schedule.json）の今日の行から作る（管理画面の「本日」で
 // 空き状況・案内時刻・並び順を変更）。古いデータ（today 無し）のときは従来の guide.json / 名簿を使う。
@@ -246,7 +230,7 @@ export default function HomeClient() {
             {SITE.station}{SITE.stationExit}から徒歩{SITE.walkMinutes}分。完全個室の落ち着いた空間で、アロマオイルを使用したトリートメントをご提供します。
             料金やセラピスト情報をご確認のうえ、WEB・LINE・お電話からお問い合わせください。
           </p>
-          {SITE.openLabel && <p className="home-intro-open">{SITE.openLabel}予定</p>}
+          <p className="home-intro-open">{SITE.openLabel ? `${SITE.openLabel}予定` : SITE.grandOpenLabel}</p>
           <nav className="home-intro-links" aria-label="主要ページ">
             <a href="system/">料金・コース</a>
             <a href="therapist/">セラピスト紹介</a>
