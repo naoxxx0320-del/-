@@ -80,7 +80,7 @@ const FIRST_STEPS = [
   },
   {
     t: "待ち合わせ・ご来店",
-    d: `${SITE.station}${SITE.stationExit}から亀戸十三間通りをお進みください。ご予約時間の10分前（ルームにより5分前）を目安に、セブン-イレブン亀戸十三間通り店に着きましたらお電話ください。お部屋までご案内します。`,
+    d: `${SITE.station}${SITE.stationExit}から亀戸十三間通りをお進みください。ご予約時間の10分前を目安に、セブン-イレブン亀戸十三間通り店に着きましたらお電話ください。お部屋までご案内します。`,
   },
   {
     t: "ご案内・施術",
@@ -516,8 +516,7 @@ export default function HomeClient() {
         </div>
         <section className="concept">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="concept-img" src={photoSrc("environment.jpg")} alt="落ち着いたプライベート空間のイメージ" width="1024" height="559" loading="lazy" decoding="async" />
-          <p className="img-note">※写真はイメージです</p>
+          <img className="concept-img" src={photoSrc("room-lounge.jpg")} alt="ソファでくつろげるAROMA DIAMOND 亀戸のルーム（実際の写真）" width="880" height="660" loading="lazy" decoding="async" />
           <h3 className="concept-h">
             完全個室の
             <br />
@@ -529,6 +528,9 @@ export default function HomeClient() {
             自分だけの隠れ家として、心と身体を解きほぐす特別な時間をお過ごしください。
           </p>
         </section>
+        <a className="more" href="room/">
+          ＞ ルーム紹介を見る ＜
+        </a>
 
         {/* ---------- RESERVATION ---------- */}
         <div className="section-head">

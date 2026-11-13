@@ -20,7 +20,8 @@ const DRAWER = [
   { jp: "スタッフ求人", slug: "careers" },
   { jp: "料金システム", slug: "system" },
   { jp: "セラピスト求人", slug: "recruit" },
-  { jp: "フォトギャラリー", slug: "gallery", wide: true },
+  { jp: "ルーム紹介", slug: "room" },
+  { jp: "フォトギャラリー", slug: "gallery" },
 ];
 
 const FOOT = [
@@ -29,6 +30,7 @@ const FOOT = [
   { en: "Therapist", jp: "セラピスト", slug: "therapist" },
   { en: "System", jp: "料金システム", slug: "system" },
   { en: "Access", jp: "アクセス", slug: "access" },
+  { en: "Room", jp: "ルーム紹介", slug: "room" },
   { en: "Foreigner", jp: "外国人の方へ", slug: "foreigners" },
   { en: "Careers", jp: "スタッフ求人", slug: "careers" },
   { en: "Recruit", jp: "セラピスト求人", slug: "recruit" },

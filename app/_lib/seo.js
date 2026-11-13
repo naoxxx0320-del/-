@@ -38,6 +38,12 @@ export const PAGES = {
     title: `アクセス・店舗案内｜亀戸駅徒歩${SITE.walkMinutes}分｜${BRAND}`,
     description: `AROMA DIAMOND（アロマダイヤモンド）は${WALK}、東京都江東区亀戸のメンズエステです。プライバシー保護のため、詳しい所在地はご予約確定後にご案内します。`,
   },
+  room: {
+    path: "room/",
+    title: `ルーム紹介｜${KAMEIDO} ${BRAND}`,
+    description: `AROMA DIAMOND（アロマダイヤモンド）亀戸のルーム紹介。${WALK}、1室だけの完全個室。ソファでくつろげる空間、ゆったりとした施術スペース、シャワー完備のバスルームを実際の写真でご紹介します。`,
+    image: "room-lounge.jpg",
+  },
   flow: {
     path: "flow/",
     title: `ご利用の流れ｜${KAMEIDO} ${BRAND}`,

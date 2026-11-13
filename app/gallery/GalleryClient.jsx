@@ -8,8 +8,11 @@ const BASE = "../"; // /gallery/ はルートから1階層下
 // 表示する写真。実写真をいただければ public/ に追加し、この配列に足すだけで反映されます。
 // ※セラピスト個人の写真はここに直接書かない（退店・削除で画像が消えるとリンク切れになるため）。
 //   「みお」「花恋」は 2026/11/10 に管理画面から削除済みで、画像ファイルも無いため外した。
-// ※空間・イメージ写真は実際の店舗写真ではないため、キャプションに（イメージ）と明記する。
+// ※「ルーム｜」は実際のルーム写真。それ以外の空間・イメージ写真は実写ではないため（イメージ）と明記する。
 const GALLERY = [
+  { photo: "room-lounge.jpg", caption: "ルーム｜くつろぎスペース" },
+  { photo: "room-bed.jpg", caption: "ルーム｜施術スペース" },
+  { photo: "room-bath.jpg", caption: "ルーム｜バスルーム" },
   { photo: "environment.jpg", caption: "プライベート空間（イメージ）" },
   { photo: "concept.jpg", caption: "上質なひとときを（イメージ）" },
   { photo: "therapist-intro.jpg", caption: "セラピスト（イメージ）" },
