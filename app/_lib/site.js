@@ -29,7 +29,10 @@ export const SITE = {
   telephoneDisplay: "090-4391-8013",
   email: "naoxxx0320@gmail.com",
   // [営業時間]10:00〜翌5:00 [電話受付]9:30〜翌4:00
-  openingHours: "Mo-Su 10:00-29:00",
+  // 構造化データ用。日をまたぐ営業は「opens 10:00 / closes 05:00」で表す
+  // （"29:00" のような24時超の表記は schema.org の時刻として不正）。
+  opens: "10:00",
+  closes: "05:00",
   hoursBusiness: "10:00〜翌5:00", // 表示用（営業時間）
   hoursPhone: "9:30〜翌4:00", // 表示用（電話受付）
   priceRange: "¥13,000〜",

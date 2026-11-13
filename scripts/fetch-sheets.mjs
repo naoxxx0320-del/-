@@ -292,7 +292,7 @@ function buildSchedule(objs) {
 // 全員ぶんを出力し、欠勤(✖️)は absent:true を付与（表示側で除外／案内に利用）。
 // 個別ページの「プロフィール」（質問と回答）。管理画面のプロフィール編集で入力し、空欄の項目は出さない。
 // ※管理画面側の一覧（apps-script/booking/Code.gs の PROFILE_FIELDS_）と同じ順・同じ名前にすること。
-export const PROFILE_QA_KEYS = ["出身地", "血液型", "性格", "チャームポイント", "現職", "趣味", "得意な技", "好きな食べ物・飲み物", "メッセージ"];
+export const PROFILE_QA_KEYS = ["出身地", "血液型", "性格", "チャームポイント", "現職", "趣味", "得意な技", "接客スタイル", "対応コース", "好きな食べ物・飲み物", "メッセージ"];
 function buildRoster(objs) {
   const truthy = (v) => /^(1|true|○|◯|〇|はい|yes|y)$/i.test((v || "").trim());
   const bgs = [

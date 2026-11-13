@@ -4,68 +4,20 @@ import { photoSrc } from "../_components/photo";
 import { SITE } from "../_lib/site";
 import Breadcrumbs from "../_components/Breadcrumbs";
 import { pageMetadata } from "../_lib/seo";
+import price from "../../data/price.json";
 
 export const metadata = pageMetadata("system");
 
 const yen = (n) => n.toLocaleString("ja-JP") + "円";
 const SHI = "全身オイルトリートメント、全身アロママッサージ、ヘッドマッサージ、ディープリンパ";
 
-// 各コースの説明（＋1,000版の料金に合わせて表示）
-const COURSE_DETAILS = [
-  {
-    title: "60分コース",
-    price: 13000,
-    hi: "当日予約・空き枠限定",
-    desc: "のコースです。短いお時間ですが、当店の施術を一通りお楽しみいただけます。「お時間がない方」や「まずはお試し」という方にお勧めです。",
-  },
-  {
-    title: "70分あおむけコース",
-    price: 18000,
-    desc: "うつぶせが苦手なお客様でも最初から最後まで楽しんでいただく事が可能な、オールあおむけコースとなります。",
-  },
-  {
-    title: "90分コース",
-    price: 18000,
-    desc: "当店の基本となるコースになります。全身アロマ＆リンパマッサージとご希望の箇所を重点的にマッサージするフリーマッサージがつきます。",
-  },
-  {
-    title: "120分コース",
-    price: 23000,
-    hi: "おすすめ",
-    desc: "のコースです。全身アロマ＆リンパマッサージとご希望の箇所を重点的にマッサージするフリーマッサージがつきます。",
-  },
-  {
-    title: "150分コース",
-    price: 28000,
-    hi: "本指名のセラピストにのみ",
-    desc: "ご利用いただける特別なコースです。全身アロマ＆リンパマッサージとご希望の箇所を重点的にマッサージするフリーマッサージがつきます。",
-  },
-  {
-    title: "延長30分",
-    price: 6000,
-    desc: "担当セラピストに直接お申し出下さい。尚ご予約の都合上お断りさせて頂く場合がございます。",
-    note: "※本指名のご予約に限りますが、150分より長いお時間でのご利用も承っております。お問い合わせ時にお気軽にお尋ねください。",
-  },
-];
-
-// 入会金・指名料／オプション（料金表画像と同じ内容をテキストでも掲載。金額を変えるときは画像も更新）
-const FEES = [
-  ["入会金", "無料"],
-  ["写真指名", 1000],
-  ["本指名", 1000],
-  ["姫指名", 2000],
-];
-const FEE_NOTES = ["姫指名はセラピスト経由のご予約です。", "姫指名と本指名の料金は重複しません。"];
-const OPTIONS = [
-  ["パウダートリートメント", 1000],
-  ["ホイップトリートメント", 2000],
-  ["衣装チェンジ", 3000],
-];
-const OPTION_NOTES = [
-  "ホットオイル・リンパトリートメントはコースに含まれます（追加料金なし）。",
-  "オプションはコース時間内での対応となります。",
-  "対応可能なオプションは担当者により異なります。",
-];
+// 料金・指名料・オプションは data/price.json（トップページの料金まとめと共通）から表示する。
+// 金額を変えるときは price.json・reserve-config.json・料金表画像をあわせて更新。
+const COURSE_DETAILS = [...price.courses, price.extension];
+const FEES = price.fees;
+const FEE_NOTES = price.feeNotes;
+const OPTIONS = price.options;
+const OPTION_NOTES = price.optionNotes;
 
 // 特定商取引法に基づく表示（法定表示）
 const TOKUSHO = [
@@ -110,6 +62,8 @@ export default function System() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           className="sys-img"
+          width="1024"
+          height="1536"
           src={photoSrc("system-price.jpg", "../")}
           alt="料金表：60分13,000円、70分あおむけ18,000円、90分18,000円、120分23,000円、150分28,000円、延長30分6,000円。指名料・オプションは下記に記載｜AROMA DIAMOND 亀戸"
         />
@@ -178,7 +132,7 @@ export default function System() {
             {OPTION_NOTES.map((n) => (
               <li key={n}>※{n}</li>
             ))}
-            <li>※表示価格はすべて税込です。</li>
+            <li>※{price.taxNote}</li>
           </ul>
           <a className="sys-reserve-link" href="../reserve/">
             料金を確認してWEB予約へ進む →
@@ -190,6 +144,10 @@ export default function System() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             className="sys-pay-img"
+            width="1000"
+            height="281"
+            loading="lazy"
+            decoding="async"
             src={photoSrc("payment-credit.jpg", "../")}
             alt="クレジット決済可能（VISA／Mastercard／JCB／AMERICAN EXPRESS／Diners Club／Clickで決済）。決済前は必ずお電話にて金額をお確かめください｜AROMA DIAMOND 亀戸"
           />

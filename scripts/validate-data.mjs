@@ -131,6 +131,19 @@ if (rc != null) {
   }
 }
 
+// ---- price.json（料金ページ・トップの料金まとめ）と予約フォームのコース料金が一致するか ----
+// 食い違ったまま公開すると、ページによって金額が違って見えるためデプロイを止める。
+const price = load("price.json", { required: true });
+if (price != null && rc != null && Array.isArray(rc.courses)) {
+  const shown = new Map((price.courses || []).map((c) => [c.title, c.price]));
+  const booked = new Map(rc.courses.map((c) => [c.label, c.price]));
+  for (const [k, v] of booked) {
+    if (!shown.has(k)) err(`price.json: 予約フォームのコース「${k}」が料金表にありません`);
+    else if (shown.get(k) !== v) err(`price.json: 「${k}」の料金が予約フォーム（${v}円）と違います（${shown.get(k)}円）`);
+  }
+  for (const k of shown.keys()) if (!booked.has(k)) err(`price.json: 料金表のコース「${k}」が予約フォームにありません`);
+}
+
 // ---- 上書きファイル（名簿に無い名前は警告） ----
 for (const name of ["photo-overrides.json", "therapist-details.json"]) {
   const ov = load(name);
