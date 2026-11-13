@@ -153,7 +153,7 @@ export default function FirstVisit() {
               <span className="no">STEP.4</span> ご到着前の連絡
             </div>
             <p>
-              ご予約時間の<b>10分前</b>（ルームにより5分前）になりましたら、
+              ご予約時間の<b>10分前</b>になりましたら、
               指定の場所より店舗へお電話またはSMSにてご連絡ください。
               詳細な入室方法をご案内いたします。
             </p>
@@ -164,7 +164,7 @@ export default function FirstVisit() {
               height="800"
               decoding="async"
               src={photoSrc("first-step4.jpg", "../")}
-              alt="STEP.4 ご到着前の連絡｜ご予約時間の10分前（ルームにより5分前）に、指定の場所からお電話またはSMSでご連絡ください"
+              alt="STEP.4 ご到着前の連絡｜ご予約時間の10分前に、指定の場所からお電話またはSMSでご連絡ください"
               loading="lazy"
             />
           </div>
