@@ -6,11 +6,10 @@ import roster from "../data/roster.json";
 export const dynamic = "force-static";
 
 export default function sitemap() {
-  // 明確な更新日時を管理しているページだけ lastModified を付ける。
-  // 出勤情報（schedule/）はスプレッドシート取り込みで頻繁に更新されるため付与、
-  // それ以外はビルド毎に更新扱いになるのを避けて省略する（SEO上の不自然さ回避）。
-  const dynamicPaths = new Set(["schedule/"]);
-  const now = new Date();
+  // lastmod（更新日時）は付けない。
+  // このサイトは15分ごとの自動ビルドで作り直されるため、ビルド時刻を入れると
+  // 内容が変わっていなくても「更新された」と伝えてしまう（実際の更新日時ではない）。
+  // ページごとの本当の更新日時を管理できるようになったら、その値だけを入れること。
 
   // 主要ページ（末尾スラッシュ運用に合わせる）。値は [パス, 優先度]。
   const pages = [
@@ -39,7 +38,6 @@ export default function sitemap() {
       changeFrequency: path === "" || path === "schedule/" ? "daily" : "weekly",
       priority,
     };
-    if (dynamicPaths.has(path)) entry.lastModified = now;
     return entry;
   });
 

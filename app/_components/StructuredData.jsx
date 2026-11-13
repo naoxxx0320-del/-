@@ -24,6 +24,8 @@ export default function StructuredData() {
     // 準備中の支払い方法は「受付可能」として構造化データに含めない。
     paymentAccepted: (reserveConfig?.pays || ["現金", "クレジットカード"])
       .filter((p) => !p.includes("準備中"))
+      // 予約フォームの短い表記「カード」を、公開ページと同じ「クレジットカード」にそろえる
+      .map((p) => (p === "カード" ? "クレジットカード" : p))
       .join(", "),
     address: {
       "@type": "PostalAddress",
@@ -32,7 +34,19 @@ export default function StructuredData() {
       addressLocality: `${SITE.addressDistrict}${SITE.addressLocality}`,
     },
     areaServed: { "@type": "Place", name: `${SITE.addressRegion}${SITE.addressDistrict}${SITE.area}` },
-    ...(SITE.openLabel ? {} : { openingHours: SITE.openingHours }),
+    // 毎日 10:00〜翌5:00（年中無休）。閉店が開店より前の時刻＝翌日にまたがる営業。
+    ...(SITE.openLabel
+      ? {}
+      : {
+          openingHoursSpecification: [
+            {
+              "@type": "OpeningHoursSpecification",
+              dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+              opens: SITE.opens,
+              closes: SITE.closes,
+            },
+          ],
+        }),
     ...(courses.length
       ? {
           hasOfferCatalog: {

@@ -102,6 +102,9 @@ export default function FirstVisit() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               className="fv-step-img"
+              width="1200"
+              height="800"
+              decoding="async"
               src={photoSrc("first-step1.jpg", "../")}
               alt="STEP.1 セラピストの選択｜お好みのセラピスト、またはフリー（指名なし）をお選びいただけます"
               loading="lazy"
@@ -116,6 +119,9 @@ export default function FirstVisit() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               className="fv-step-img"
+              width="1200"
+              height="800"
+              decoding="async"
               src={photoSrc("first-step2.jpg", "../")}
               alt="STEP.2 ご予約｜お電話、または24時間対応のWEB予約フォームよりご予約ください"
               loading="lazy"
@@ -133,6 +139,9 @@ export default function FirstVisit() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               className="fv-step-img"
+              width="1200"
+              height="800"
+              decoding="async"
               src={photoSrc("first-step3.jpg", "../")}
               alt="STEP.3 確認メールへのご返信｜ご予約当日の約1時間前に確認のSMSをお送りします。必ずSMSにてご返信ください"
               loading="lazy"
@@ -151,6 +160,9 @@ export default function FirstVisit() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               className="fv-step-img"
+              width="1200"
+              height="800"
+              decoding="async"
               src={photoSrc("first-step4.jpg", "../")}
               alt="STEP.4 ご到着前の連絡｜ご予約時間の10分前（ルームにより5分前）に、指定の場所からお電話またはSMSでご連絡ください"
               loading="lazy"
@@ -168,6 +180,9 @@ export default function FirstVisit() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               className="fv-step-img"
+              width="1200"
+              height="800"
+              decoding="async"
               src={photoSrc("first-step5.jpg", "../")}
               alt="STEP.5 ご入室・施術開始｜インターホン（チャイム）を鳴らしてご入室、セラピストとの素敵な癒やしの時間をお楽しみください"
               loading="lazy"

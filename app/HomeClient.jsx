@@ -10,6 +10,7 @@ import guideData from "../data/guide.json";
 import rosterData from "../data/roster.json";
 import links from "../data/links.json";
 import banners from "../data/banners.json";
+import price from "../data/price.json";
 import { byRank } from "./_components/rank";
 import RelaxiTimeline from "./_components/RelaxiTimeline";
 import { HAS_TODAY, useTodayKey, keyLabel, todayList, todayCards, SCHEDULE_UPDATED, SCHEDULE_AREA } from "./_components/today";
@@ -40,6 +41,9 @@ const SLIDES = [
     alt: "会員様限定特典 VIP会員様だけの特別なサービス｜AROMA DIAMOND アロマダイヤモンド 亀戸",
   },];
 
+// スマホ表示用の縮小版（public/ の「〜-860.jpg」）。元画像を差し替えたら縮小版も作り直すこと。
+const smallOf = (img) => img.replace(/\.jpg$/, "-860.jpg");
+
 // 只今の案内状況・本日の出勤：週間出勤表（schedule.json）の今日の行から作る（管理画面の「本日」で
 // 空き状況・案内時刻・並び順を変更）。古いデータ（today 無し）のときは従来の guide.json / 名簿を使う。
 const LEGACY_THERAPISTS = rosterData.filter((t) => !t.absent);
@@ -56,6 +60,37 @@ const STATUS_CLASS = {
   満員: "full",
   受付終了: "closed",
 };
+
+// 料金のまとめ（料金ページと同じ data/price.json から表示。割引は条件が複雑なため載せない）
+const yen = (n) => (typeof n === "number" ? n.toLocaleString("ja-JP") + "円" : n);
+const PRICE_NOTE = {
+  "60分コース": "当日予約・空き枠限定",
+  "150分コース": "本指名のみ",
+};
+
+// はじめての方へ：ご予約からお帰りまで（「ご利用の流れ」「はじめての方へ」ページと同じ内容の要約）
+const FIRST_STEPS = [
+  {
+    t: "ご予約",
+    d: `WEB予約（24時間受付）・公式LINE・お電話（受付 ${SITE.hoursPhone}）で、ご希望の日時・コース・セラピストをお伝えください。指名なし（フリー）でのご案内も可能です。`,
+  },
+  {
+    t: "ご予約確定",
+    d: "当店から日時と内容を確認してご案内した時点でご予約確定です。ご予約当日の約1時間前に確認のSMSをお送りしますので、ご返信をお願いします。",
+  },
+  {
+    t: "待ち合わせ・ご来店",
+    d: `${SITE.station}${SITE.stationExit}から亀戸十三間通りをお進みください。ご予約時間の10分前（ルームにより5分前）を目安に、セブン-イレブン亀戸十三間通り店に着きましたらお電話ください。お部屋までご案内します。`,
+  },
+  {
+    t: "ご案内・施術",
+    d: "お部屋でご予約内容と料金をご確認いただき（お支払いは前払い）、お着替えのうえ施術を始めます。力加減や室温などはお気軽にお申し付けください。",
+  },
+  {
+    t: "お支度・お帰り",
+    d: "施術後はお支度をしていただき、お忘れ物がないかご確認のうえお帰りください。",
+  },
+];
 
 /* ---- page ---------------------------------------------------------- */
 
@@ -173,8 +208,12 @@ export default function HomeClient() {
                 key={i}
                 className={`hm-slide ${i === activeSlide ? "on" : ""}`}
                 src={photoSrc(s.img)}
+                srcSet={`${photoSrc(smallOf(s.img))} 860w, ${photoSrc(s.img)} 1500w`}
+                sizes="(max-width: 430px) 100vw, 430px"
                 alt={s.alt || s.t.replace("\n", " ")}
                 loading={i === 0 ? "eager" : "lazy"}
+                width="1500"
+                height="1000"
               />
             ) : (
               <div
@@ -205,7 +244,7 @@ export default function HomeClient() {
               style={
                 s.img
                   ? {
-                      backgroundImage: `url(${photoSrc(s.img)})`,
+                      backgroundImage: `url(${photoSrc(smallOf(s.img))})`,
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                     }
@@ -235,6 +274,8 @@ export default function HomeClient() {
             <a href="system/">料金・コース</a>
             <a href="therapist/">セラピスト紹介</a>
             <a href="schedule/">出勤情報</a>
+            <a href="access/">アクセス</a>
+            <a href="faq/">よくある質問</a>
             <a href="reserve/">WEB予約</a>
           </nav>
         </section>
@@ -346,6 +387,88 @@ export default function HomeClient() {
           ＞ 明日以降の出勤情報を見る ＜
         </a>
 
+        {/* ---------- 料金のご案内（料金ページの要約。金額は data/price.json） ---------- */}
+        <div className="section-head" id="price">
+          <div className="sh-en">Price</div>
+          <h2 className="sh-jp">料金のご案内</h2>
+        </div>
+        <section className="home-price" aria-label="料金のご案内">
+          <div className="sys-fee-group">
+            <div className="sys-fee-gh">コース料金</div>
+            <dl className="sys-fee-list">
+              {price.courses.map((c) => (
+                <div className="sys-fee-row" key={c.title}>
+                  <dt>
+                    {c.title}
+                    {PRICE_NOTE[c.title] && <small className="hp-note">{PRICE_NOTE[c.title]}</small>}
+                  </dt>
+                  <dd>{yen(c.price)}</dd>
+                </div>
+              ))}
+              <div className="sys-fee-row">
+                <dt>{price.extension.title}</dt>
+                <dd>{yen(price.extension.price)}</dd>
+              </div>
+            </dl>
+          </div>
+          <div className="sys-fee-group">
+            <div className="sys-fee-gh">入会金・指名料</div>
+            <dl className="sys-fee-list">
+              {price.fees.map(([k, v]) => (
+                <div className="sys-fee-row" key={k}>
+                  <dt>{k}</dt>
+                  <dd>{yen(v)}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+          <div className="sys-fee-group">
+            <div className="sys-fee-gh">オプション（追加料金）</div>
+            <dl className="sys-fee-list">
+              {price.options.map(([k, v]) => (
+                <div className="sys-fee-row" key={k}>
+                  <dt>{k}</dt>
+                  <dd>{yen(v)}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+          <ul className="sys-fees-notes">
+            <li>※{price.taxNote}</li>
+            <li>※{price.feeNotes.join("")}</li>
+            <li>※{price.optionNotes[0]}</li>
+            <li>※{price.optionNotes[2]}</li>
+            <li>※お支払い：{price.payment}</li>
+          </ul>
+          <div className="hp-links">
+            <a className="hp-link" href="system/">料金・コースの詳細</a>
+            <a className="hp-link hp-link-dark" href="reserve/">WEB予約へ進む</a>
+          </div>
+        </section>
+
+        {/* ---------- はじめての方へ（ご予約からお帰りまで） ---------- */}
+        <div className="section-head" id="first-visit">
+          <div className="sh-en">First Visit</div>
+          <h2 className="sh-jp">はじめての方へ</h2>
+        </div>
+        <section className="home-flow" aria-label="ご予約からお帰りまでの流れ">
+          <ol className="hf-list">
+            {FIRST_STEPS.map((s, i) => (
+              <li className="hf-step" key={s.t}>
+                <span className="hf-no" aria-hidden="true">{i + 1}</span>
+                <div className="hf-body">
+                  <h3 className="hf-t">{s.t}</h3>
+                  <p className="hf-d">{s.d}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <div className="hp-links">
+            <a className="hp-link" href="flow/">ご利用の流れ</a>
+            <a className="hp-link" href="access/">アクセス</a>
+          </div>
+        </section>
+
         {/* ---------- CONCEPT ---------- */}
         <div className="section-head">
           <div className="sh-en">Concept</div>
@@ -353,7 +476,8 @@ export default function HomeClient() {
         </div>
         <section className="concept">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="concept-img" src="concept.jpg" alt="AROMA DIAMOND 亀戸のコンセプトイメージ" />
+          <img className="concept-img" src={photoSrc("concept.jpg")} alt="AROMA DIAMOND 亀戸のコンセプトイメージ" width="1452" height="736" loading="lazy" decoding="async" />
+          <p className="img-note">※写真はイメージです</p>
           <h3 className="concept-h">
             極上の癒やしと
             <br />
@@ -373,7 +497,8 @@ export default function HomeClient() {
         </div>
         <section className="concept">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="concept-img" src="therapist-intro.jpg" alt="AROMA DIAMOND のセラピスト紹介イメージ" />
+          <img className="concept-img" src={photoSrc("therapist-intro.jpg")} alt="AROMA DIAMOND のセラピスト紹介イメージ" width="1024" height="576" loading="lazy" decoding="async" />
+          <p className="img-note">※写真はイメージです</p>
           <h3 className="concept-h">容姿端麗で確かな技術</h3>
           <p className="concept-p">
             当店には、モデルやアイドルを思わせる華やかな女性から、清楚で可憐な学生、
@@ -391,16 +516,16 @@ export default function HomeClient() {
         </div>
         <section className="concept">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="concept-img" src="environment.jpg" alt="夜景を望む落ち着いた空間のイメージ" />
+          <img className="concept-img" src={photoSrc("environment.jpg")} alt="落ち着いたプライベート空間のイメージ" width="1024" height="559" loading="lazy" decoding="async" />
+          <p className="img-note">※写真はイメージです</p>
           <h3 className="concept-h">
             完全個室の
             <br />
             ラグジュアリー空間
           </h3>
           <p className="concept-p">
-            リゾートホテルを思わせる上質な内装と、洗練されたおもてなし。
             すべて完全個室のプライベートな空間で、周りを気にせず心からくつろいでいただけます。
-            夜景を眺めながら、日常の喧騒を忘れるひととき——
+            {SITE.station}{SITE.stationExit}から徒歩{SITE.walkMinutes}分。プライバシー保護のため、詳しい場所はご予約確定後にご案内します。
             自分だけの隠れ家として、心と身体を解きほぐす特別な時間をお過ごしください。
           </p>
         </section>

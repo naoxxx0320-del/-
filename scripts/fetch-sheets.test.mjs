@@ -42,7 +42,7 @@ test("プロフィール（質問と回答）：入力のある項目だけを�
     { q: "メッセージ", a: "よろしく\nお願いします" },
   ]);
   assert.equal(r[1].qa, undefined); // 全部空欄なら欄ごと出さない
-  assert.equal(PROFILE_QA_KEYS.length, 9);
+  assert.equal(PROFILE_QA_KEYS.length, 11);
 });
 
 test("表示順：数字（全角も可）を rank にし、空欄・数字以外は付けない", () => {
