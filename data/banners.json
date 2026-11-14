@@ -17,6 +17,7 @@
     { "href": "https://mensesthe.cocoa-job.jp/8/shop/43761/", "src": "https://cocoa-job.jp/assets/img/user/pc/link/30050_cocoa_mensesthe_cp.gif", "w": 300, "h": 50, "alt": "「アロマダイヤモンド」への応募はココア求人！ココアご利用でもらえるお仕事応援キャンペーン中♪", "label": "ココア求人（応募）", "wide": true, "top": true, "group": "recruit" },
     { "href": "https://menesth-job.jp/8/area36/", "src": "https://menesth-job.jp/assets/img/user/link/46860_rj.jpg", "w": 468, "h": 60, "alt": "メンズエステ求人を錦糸町でお探しなら「リラクジョブ」", "label": "リラクジョブ｜錦糸町のメンズエステ求人", "wide": true, "top": true, "group": "recruit" },
     { "href": "https://mens-est.jp/", "src": "https://mens-est.jp/assets/img/common/sp_mens_banner1_1_640_80.gif", "w": 640, "h": 80, "alt": "メンズエステ情報サイト【メンエスじゃぱん】", "label": "メンエスじゃぱん（メンズエステ情報サイト）", "wide": true, "top": true, "group": "guest" },
-    { "href": "https://www.esthe-ranking.jp/esthe-ranking/58f1b0e2-d162-4f94-920d-8bb2598e1b22/", "src": "https://www.esthe-ranking.jp/assets/img/banner/in/area47.gif", "alt": "亀戸・小岩エリア メンズエステランキング", "label": "亀戸・小岩エリア メンズエステランキング", "wide": true, "top": true, "group": "guest" }
+    { "href": "https://www.esthe-ranking.jp/esthe-ranking/58f1b0e2-d162-4f94-920d-8bb2598e1b22/", "src": "https://www.esthe-ranking.jp/assets/img/banner/in/area47.gif", "alt": "亀戸・小岩エリア メンズエステランキング", "label": "亀戸・小岩エリア メンズエステランキング", "wide": true, "top": true, "group": "guest" },
+    { "href": "https://es-ban.com/p/4061", "src": "https://es-ban.com/lp/banner/300-60.jpg", "w": 300, "h": 60, "alt": "東京都のメンズエステ情報ならエステ番長", "label": "エステ番長（東京都のメンズエステ情報）", "wide": true, "top": true, "group": "guest" }
   ]
 }
