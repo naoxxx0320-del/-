@@ -103,6 +103,9 @@ export default function HomeClient() {
   const NEW_FACES = byRank(rosterData.filter((t) => t.isNew)).map((t) =>
     todayNames ? { ...t, absent: !todayNames.has(t.name) } : t
   );
+  // カードに出す出勤時間（例「16:00〜翌3:00」）。左上に「本日出勤」リボンがあるので「本日」は付けない。
+  const timeOnly = (s) => String(s || "").replace(/^本日\s*/, "");
+  const TODAY_TIME = new Map(THERAPISTS.map((t) => [t.name, timeOnly(t.sched)]));
   const todayRows = HAS_TODAY ? todayList(todayKey) : [];
   const GUIDE = HAS_TODAY
     ? todayRows.length
@@ -342,7 +345,13 @@ export default function HomeClient() {
           <>
             <section className="staff-grid">
               {NEW_FACES.slice(0, NEW_FACE_MAX).map((t, i) => (
-                <StaffCard t={t} href={`therapist/${t.id ?? i + 1}/`} base="" key={t.id ?? i} />
+                <StaffCard
+                  t={t}
+                  href={`therapist/${t.id ?? i + 1}/`}
+                  base=""
+                  sched={t.absent ? "" : TODAY_TIME.get(t.name) || ""}
+                  key={t.id ?? i}
+                />
               ))}
             </section>
             {NEW_FACES.length > NEW_FACE_MAX && (
@@ -373,7 +382,14 @@ export default function HomeClient() {
           <>
             <section className="staff-grid">
               {THERAPISTS.map((t, i) => (
-                <StaffCard t={t} href={`therapist/${t.id ?? i + 1}/`} base="" key={i} />
+                <StaffCard
+                  t={t}
+                  href={`therapist/${t.id ?? i + 1}/`}
+                  base=""
+                  sched={timeOnly(t.sched)}
+                  status={t.status}
+                  key={i}
+                />
               ))}
             </section>
           </>
