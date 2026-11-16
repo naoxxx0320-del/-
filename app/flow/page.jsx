@@ -2,6 +2,7 @@ import SiteChrome from "../_components/SiteChrome";
 import NavGrid from "../_components/NavGrid";
 import Breadcrumbs from "../_components/Breadcrumbs";
 import { pageMetadata } from "../_lib/seo";
+import { SITE } from "../_lib/site";
 
 export const metadata = pageMetadata("flow");
 
@@ -30,9 +31,9 @@ const STEPS = [
   {
     n: "02",
     t: "亀戸駅からお越しください",
-    body: "亀戸駅北口を出て、亀戸十三間通りをまっすぐお進みください。",
+    body: `${SITE.station}${SITE.stationExit}を出て、徒歩${SITE.walkMinutes}分の「なか卯 亀戸店」へお越しください。`,
     highlight:
-      "セブン-イレブン亀戸十三間通り店に着きましたら、お電話ください。そこからお部屋までご案内いたします。",
+      "「なか卯 亀戸店」に着きましたら、お電話ください。そこからお部屋までご案内いたします。",
     note: "ご予約時にご案内した時刻に合わせてお越しください。道に迷われた場合も、お電話でお知らせください。",
   },
   {
