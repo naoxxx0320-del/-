@@ -103,9 +103,8 @@ export default function HomeClient() {
   const NEW_FACES = byRank(rosterData.filter((t) => t.isNew)).map((t) =>
     todayNames ? { ...t, absent: !todayNames.has(t.name) } : t
   );
-  // カードに出す出勤時間（例「16:00〜翌3:00」）。左上に「本日出勤」リボンがあるので「本日」は付けない。
+  // 「本日の出勤」カードに出す出勤時間（例「16:00〜翌3:00」。新人情報には出さない）。左上に「本日出勤」リボンがあるので「本日」は付けない。
   const timeOnly = (s) => String(s || "").replace(/^本日\s*/, "");
-  const TODAY_TIME = new Map(THERAPISTS.map((t) => [t.name, timeOnly(t.sched)]));
   const todayRows = HAS_TODAY ? todayList(todayKey) : [];
   const GUIDE = HAS_TODAY
     ? todayRows.length
@@ -349,7 +348,6 @@ export default function HomeClient() {
                   t={t}
                   href={`therapist/${t.id ?? i + 1}/`}
                   base=""
-                  sched={t.absent ? "" : TODAY_TIME.get(t.name) || ""}
                   key={t.id ?? i}
                 />
               ))}
