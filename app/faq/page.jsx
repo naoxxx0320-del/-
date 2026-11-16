@@ -191,6 +191,9 @@ export default function Faq() {
             </a>
           </div>
           <p className="terms-p">
+            ご来店いただいたお客様のご意見・ご評価は<a href="../feedback/">ご意見フォーム</a>からお寄せください。
+          </p>
+          <p className="terms-p">
             セラピスト求人へのご応募・ご質問は<a href="../recruit/">セラピスト求人</a>ページからお願いします。
           </p>
         </section>

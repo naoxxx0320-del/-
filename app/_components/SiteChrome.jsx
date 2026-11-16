@@ -40,6 +40,7 @@ const FOOT = [
   { en: "Privacy", jp: "プライバシーポリシー", slug: "privacy" },
   { en: "Link", jp: "リンク集", slug: "links" },
   { en: "Contact", jp: "お問い合わせ", slug: "faq", hash: "contact" },
+  { en: "Feedback", jp: "ご意見フォーム", slug: "feedback" },
 ];
 
 export default function SiteChrome({ base = "", hideFooterbar = false }) {

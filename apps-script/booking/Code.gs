@@ -668,13 +668,14 @@ function mailTemplate_(type, r) {
 }
 
 /* 1通送信（TEST_MODE中はログのみ・宛先なしはスキップ）。 */
-function sendMail_(to, subject, body) {
+function sendMail_(to, subject, body, opt) {
   if (!to) {
     Logger.log("[mail skip:宛先なし] " + subject);
     return false;
   }
   if (isTestMode_()) {
-    Logger.log("[TEST_MODE 送信抑止] to=" + to + " / " + subject + "\n" + body);
+    // opt.noLogBody：本文（お客様の記入内容）をログに残さない
+    Logger.log("[TEST_MODE 送信抑止] to=" + to + " / " + subject + (opt && opt.noLogBody ? "" : "\n" + body));
     return false;
   }
   try {
@@ -1071,6 +1072,8 @@ function doPost(e) {
     // セラピスト本人のシフト入力（専用URLの鍵で本人を確認。お客様情報は返さない）
     if (action === "shift_me") return json_(therapistShiftMe_(body));
     if (action === "shift_set") return json_(therapistShiftSet_(body));
+    // ご意見フォーム（/feedback/）：店舗へメール＋「ご意見」シートに記録
+    if (action === "feedback") return json_(feedbackSubmit_(body));
 
     return json_({ ok: false, reason: "unknown action" });
   } catch (err) {
@@ -3175,11 +3178,85 @@ function selfTest() {
   return { create_confirmed: a, overlap_rejected: b, idempotent: c };
 }
 
+/* ================================================================
+   ご意見フォーム（サイトの /feedback/）
+   ・店舗アドレス（STORE_EMAIL／OWNER_EMAIL）へメールし、お客様情報用のブック（ledgerBook_）の
+     「ご意見」シートに1件1行で記録する（公開用の出勤シートのブックには書かない）。
+   ・記入内容はログに出さない。いたずら対策として、隠し項目（website）が埋まっていたら
+     受け付けたふりをして捨て、同じ内容の連続送信と短時間の大量送信を断る。
+   ================================================================ */
+var FEEDBACK_SHEET = "ご意見";
+var FEEDBACK_LEVELS = ["とても満足", "満足", "普通", "不満", "とても不満"];
+var FEEDBACK_ITEMS = [
+  ["treatment", "施術"],
+  ["service", "サービス"],
+  ["therapist", "セラピスト"],
+  ["clean", "お店の清潔感"],
+  ["phone", "電話受付"],
+];
+var FEEDBACK_HEAD = ["受付日時", "お名前", "来店日", "担当セラピスト", "コース"]
+  .concat(FEEDBACK_ITEMS.map(function (x) { return x[1]; }))
+  .concat(["よかった点・悪かった点"]);
+
+function feedbackClean_(v, max) {
+  return String(v == null ? "" : v).replace(/\r\n?/g, "\n").replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, "").trim().slice(0, max);
+}
+
+function feedbackSubmit_(b) {
+  b = b || {};
+  if (String(b.website || "").trim()) return { ok: true }; // 隠し項目が埋まっている＝自動投稿。記録しない
+  var name = feedbackClean_(b.name, 30);
+  var date = feedbackClean_(b.visitDate, 10);
+  var th = feedbackClean_(b.therapist, 30);
+  var course = feedbackClean_(b.course, 40);
+  var comment = feedbackClean_(b.comment, 2000);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, reason: "来店日を選んでください。" };
+  if (!th) return { ok: false, reason: "担当セラピストを選んでください。" };
+  var r = b.ratings || {};
+  var levels = [];
+  for (var i = 0; i < FEEDBACK_ITEMS.length; i++) {
+    var lv = String(r[FEEDBACK_ITEMS[i][0]] || "");
+    if (FEEDBACK_LEVELS.indexOf(lv) < 0) return { ok: false, reason: FEEDBACK_ITEMS[i][1] + "についての評価を選んでください。" };
+    levels.push(lv);
+  }
+
+  // 連続送信の制限（同じ内容は10分間1回・全体で10分間に30件まで）
+  var cache = CacheService.getScriptCache();
+  var digest = keyHash_([name, date, th, course, levels.join(","), comment].join("\u0001"));
+  if (cache.get("fb:" + digest)) return { ok: true, duplicate: true };
+  var count = Number(cache.get("fb:count") || 0);
+  if (count >= 30) return { ok: false, reason: "ただいま送信が混み合っています。時間をおいてもう一度お試しください。" };
+
+  var now = Utilities.formatDate(new Date(nowMs_()), "Asia/Tokyo", "yyyy/MM/dd HH:mm");
+  var row = [now, name, date, th, course].concat(levels).concat([comment]);
+  var saved = withLock_(function () {
+    var bk = ledgerBook_();
+    var sh = bk.getSheetByName(FEEDBACK_SHEET);
+    if (!sh) {
+      sh = bk.insertSheet(FEEDBACK_SHEET);
+      sh.appendRow(FEEDBACK_HEAD);
+      sh.setFrozenRows(1);
+    }
+    sh.appendRow(row.map(safeCell_));
+    return true;
+  });
+
+  var lines = ["サイトの「ご意見フォーム」から届きました。", "", "受付日時：" + now, "お名前：" + (name || "（未記入）"), "来店日：" + date, "担当セラピスト：" + th, "コース：" + (course || "（未選択）"), ""];
+  for (var j = 0; j < FEEDBACK_ITEMS.length; j++) lines.push(FEEDBACK_ITEMS[j][1] + "について：" + levels[j]);
+  lines.push("", "よかった点・悪かった点：", comment || "（未記入）", "", "※「" + FEEDBACK_SHEET + "」シートにも記録しています。");
+  var mailed = sendMail_(storeEmail_(), "【ご意見】" + th + "／来店日 " + date, lines.join("\n"), { noLogBody: true });
+
+  cache.put("fb:" + digest, "1", 600);
+  cache.put("fb:count", String(count + 1), 600);
+  return { ok: !!saved, mailed: !!mailed };
+}
+
+
 /* ---------- 版の確認（貼り替え漏れ・途中で切れたコピーの検出用） ----------
    管理画面（Admin.html）は開いたときにこの版を確認し、Code.gs / lib.gs が古い・途中までしか
    貼られていない場合に警告を出す。※必ずファイルの「最後」に置く（途中で切れると無くなるので検出できる）。
    コードを変更したら Admin.html の APP_VERSION・lib.gs の LIB_VERSION と一緒に上げる。 */
-var CODE_VERSION = "2026-11-13-1";
+var CODE_VERSION = "2026-11-16-1";
 function adminVersion() {
   return { code: CODE_VERSION, lib: typeof LIB_VERSION === "undefined" ? "" : LIB_VERSION };
 }
