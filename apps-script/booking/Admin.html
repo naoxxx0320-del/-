@@ -360,7 +360,10 @@
         <div class="field"><label>延長</label><select id="st-ext"></select></div>
         <div class="field"><label>指名</label><select id="st-nom"></select></div>
       </div>
-      <div class="field"><label>オプション</label><div class="opt-list" id="st-opts"></div></div>
+      <div class="two">
+        <div class="field"><label>オプション料金（円）</label><input type="number" id="st-optfee" min="0" max="100000" step="500" inputmode="numeric" placeholder="0" /></div>
+        <div class="field"><label>オプションの内容（任意）</label><input type="text" id="st-optnote" maxlength="100" placeholder="例：パウダー・衣装" /></div>
+      </div>
       <div class="field"><label>割引（円・お店の負担）</label><input type="number" id="st-disc" min="0" step="500" inputmode="numeric" /></div>
       <div class="field"><label>メモ（任意）</label><input type="text" id="st-memo" maxlength="500" /></div>
       <div class="calc" id="st-calc"></div>
@@ -397,7 +400,7 @@
       { label: "延長30分", price: 6000 },
     ];
     var STAFF_EMAIL = "<?= staffEmail ?>";
-    var APP_VERSION = "2026-11-16-1"; // Code.gs の CODE_VERSION・lib.gs の LIB_VERSION と同じ値
+    var APP_VERSION = "2026-11-16-2"; // Code.gs の CODE_VERSION・lib.gs の LIB_VERSION と同じ値
 
     // 画面の不具合を「読み込み中」のまま止めず、理由を表示する
     function showVerWarn(msg){ var b=document.getElementById("ver-warn"); b.innerHTML=msg; b.style.display="block"; }
@@ -1121,7 +1124,8 @@
       $("st-ext").innerHTML=ext; $("st-ext").value=String(s?s.extendCount:0);
       $("st-nom").innerHTML='<option value="">なし（フリー）</option>'+c.noms.map(function(x){ return '<option value="'+esc(x.name)+'">'+esc(x.name)+'（'+yen(x.price)+'）</option>'; }).join("");
       $("st-nom").value=s?s.nom:"";
-      $("st-opts").innerHTML=c.options.length?c.options.map(function(x,i){ return '<label><input type="checkbox" data-opt="'+i+'"'+(s&&s.options.indexOf(x.name)>=0?' checked':'')+' />'+esc(x.name)+'（'+yen(x.price)+'）</label>'; }).join(""):'<span class="note">オプションの設定がありません</span>';
+      $("st-optfee").value=s&&s.optionFee?s.optionFee:"";
+      $("st-optnote").value=s?s.options.join("・"):"";
       $("st-course").value=s?s.coursePrice:(b.price||"");
       $("st-disc").value=s&&s.discount?s.discount:"";
       $("st-memo").value=s?s.memo:"";
@@ -1135,11 +1139,11 @@
       $("st-rate-hint").textContent = !name ? "" : (st.rates[name]==null ? "⚠ "+name+" さんのバック率は未設定です。入力すると保存されます。" : "変更すると、この人の今後の精算にも使われます（過去の精算はそのまま）。");
     }
     function curInput(){
-      var c=st.config, nom=$("st-nom").value, nomFee=0, opts=[], optFee=0;
+      var c=st.config, nom=$("st-nom").value, nomFee=0;
       c.noms.forEach(function(x){ if(x.name===nom) nomFee=x.price; });
-      [].forEach.call($("st-opts").querySelectorAll("[data-opt]"),function(el){ if(el.checked){ var o=c.options[+el.getAttribute("data-opt")]; opts.push(o.name); optFee+=o.price; } });
+      // オプションは金額の自由入力（空欄＝0円）。内容は記録用
       return { therapistName:$("st-ther").value, rate:$("st-rate").value, coursePrice:$("st-course").value, extendCount:+$("st-ext").value, extendPrice:c.extend.price,
-               nom:nom, nomFee:nomFee, options:opts, optionFee:optFee, discount:$("st-disc").value, memo:$("st-memo").value };
+               nom:nom, nomFee:nomFee, optionFee:num($("st-optfee").value), optionNote:$("st-optnote").value, discount:$("st-disc").value, memo:$("st-memo").value };
     }
     function updCalc(){
       if(!st) return;
@@ -1152,8 +1156,7 @@
         +'<span class="big">バック'+(noRate?'（率が未入力）':'（'+esc(p.rate)+'%）')+'</span><b class="big">'+(noRate?'—':yen(r.back))+'</b>'
         +'<span>店取り分</span><b>'+(noRate?'—':yen(r.shop))+'</b>';
     }
-    ["st-rate","st-course","st-ext","st-nom","st-disc"].forEach(function(id){ $(id).addEventListener("input",updCalc); $(id).addEventListener("change",updCalc); });
-    $("st-opts").addEventListener("change",updCalc);
+    ["st-rate","st-course","st-ext","st-nom","st-optfee","st-disc"].forEach(function(id){ $(id).addEventListener("input",updCalc); $(id).addEventListener("change",updCalc); });
     $("st-ther").addEventListener("change",function(){ setRateFor(this.value, null); updCalc(); });
     $("st-close").onclick=function(){ $("st-bg").classList.remove("on"); };
     function settleDone(msg){
