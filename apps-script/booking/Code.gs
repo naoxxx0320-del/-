@@ -582,12 +582,26 @@ function mailBookingDetail_(r) {
   return [
     "日時: " + fmtJst(r.startAt) + " 〜 " + fmtJst(r.endAt).split(" ")[1],
     "セラピスト: " + (r.therapistName || ""),
-    "コース: " + (r.course || "") + (r.price ? "（¥" + Number(r.price).toLocaleString("en-US") + "）" : ""),
+    // 料金は「18,000円」のような文字でも届くため、数字だけを取り出して表示する（以前は ¥NaN になっていた）
+    "コース: " + (r.course || "") + (yenNum_(r.price) ? "（¥" + yenNum_(r.price).toLocaleString("en-US") + "）" : ""),
     "お名前: " + (r.customerName || ""),
   ].join("\n");
 }
 
 /* 種別→{subject,body}。type: tentative/confirmed/expired/cancelled。 */
+/* 予約確定メールに入れる「ご来店時のご案内」。
+   スクリプトプロパティ CONFIRM_MAIL_NOTE を設定するとその文面に差し替わる（改行は \n）。
+   空白1文字だけを設定すると案内を出さない。 */
+var CONFIRM_MAIL_NOTE_DEFAULT_ = [
+  "ご予約のお時間になりましたら「なか卯 亀戸店」までお越しください。",
+  "到着されましたら「080-4885-5430」までお電話をお願いいたします。",
+].join("\n");
+function confirmMailNote_() {
+  var v = cfg_("CONFIRM_MAIL_NOTE", "");
+  if (v === "") return CONFIRM_MAIL_NOTE_DEFAULT_;
+  return String(v).replace(/\\n/g, "\n").trim();
+}
+
 function mailTemplate_(type, r) {
   var nm = senderName_();
   var tel = storeTel_();
@@ -626,9 +640,13 @@ function mailTemplate_(type, r) {
         "▼ご予約内容",
         detail,
         "",
+      ]
+        .concat(confirmMailNote_() ? ["▼ご来店時のご案内", confirmMailNote_(), ""] : [])
+        .concat([
         "変更・キャンセルはお電話（" + tel + "）までご連絡ください。",
         nm,
-      ].join("\n"),
+        ])
+        .join("\n"),
     };
   }
   if (type === "expired") {
@@ -3268,7 +3286,7 @@ function feedbackSubmit_(b) {
    管理画面（Admin.html）は開いたときにこの版を確認し、Code.gs / lib.gs が古い・途中までしか
    貼られていない場合に警告を出す。※必ずファイルの「最後」に置く（途中で切れると無くなるので検出できる）。
    コードを変更したら Admin.html の APP_VERSION・lib.gs の LIB_VERSION と一緒に上げる。 */
-var CODE_VERSION = "2026-11-16-2";
+var CODE_VERSION = "2026-11-16-3";
 function adminVersion() {
   return { code: CODE_VERSION, lib: typeof LIB_VERSION === "undefined" ? "" : LIB_VERSION };
 }
