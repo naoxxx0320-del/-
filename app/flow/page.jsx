@@ -31,7 +31,7 @@ const STEPS = [
   {
     n: "02",
     t: "亀戸駅からお越しください",
-    body: `${SITE.station}${SITE.stationExit}を出て、徒歩${SITE.walkMinutes}分の「なか卯 亀戸店」へお越しください。`,
+    body: `${SITE.station}${SITE.stationExit}を出て、亀戸十三間通りをまっすぐお進みください。徒歩${SITE.walkMinutes}分の「なか卯 亀戸店」が待ち合わせ場所です。`,
     highlight:
       "「なか卯 亀戸店」に着きましたら、お電話ください。そこからお部屋までご案内いたします。",
     note: "ご予約時にご案内した時刻に合わせてお越しください。道に迷われた場合も、お電話でお知らせください。",
