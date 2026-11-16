@@ -2481,6 +2481,7 @@ function settleOut_(o) {
     therapistName: String(o["担当者名"] || ""), coursePrice: yenNum_(o["コース料金"]),
     extendCount: yenNum_(o["延長(回)"]), nom: String(o["指名"] || ""),
     options: String(o["オプション"] || "").split(";").map(function (x) { return x.trim(); }).filter(Boolean),
+    optionFee: yenNum_(o["オプション料金"]),
     discount: yenNum_(o["割引"]), total: yenNum_(o["お支払い合計"]), back: yenNum_(o["バック"]),
     shop: Number(o["店取り分"]) || 0, rate: Number(o["バック率(%)"]) || 0, memo: String(o["メモ"] || ""),
     by: String(o["入力者"] || ""), at: cellStr_(o["入力日時(JST)"]), bizDate: bizStr_(o["営業日"]),
@@ -2506,7 +2507,9 @@ function adminSettleGet(id) {
 }
 
 /* 精算の保存（同じ予約は上書き）。金額はサーバーで計算し直す（画面の値は信用しない）。
-   p = {id, therapistName, coursePrice, extendCount, nom, options:[名前], discount, memo, rate?}
+   p = {id, therapistName, coursePrice, extendCount, nom, optionFee, optionNote, discount, memo, rate?}
+   オプションは金額の自由入力（optionFee）＋内容（optionNote・任意）。
+   旧画面の options:[名前]（料金設定シートの金額で計算）も引き続き受け付ける。
    rate を渡すと、その人のバック率も更新（未設定なら必須）。 */
 function adminSettleSave(p) {
   var staff = requireStaff_();
@@ -2520,12 +2523,21 @@ function adminSettleSave(p) {
     if (!nm) return { ok: false, reason: "指名の種類が料金設定にありません：" + nom };
     nomFee = nm.price;
   }
-  var opts = [].concat(p.options || []).map(function (x) { return String(x).trim(); }).filter(Boolean);
-  var optFee = 0;
-  for (var i = 0; i < opts.length; i++) {
-    var op = cfg.options.filter(function (x) { return x.name === opts[i]; })[0];
-    if (!op) return { ok: false, reason: "オプションが料金設定にありません：" + opts[i] };
-    optFee += op.price;
+  var opts, optFee = 0;
+  if (p.optionFee != null && String(p.optionFee).trim() !== "") {
+    // 自由入力：0〜100,000円の整数。内容は100文字まで（記録用）
+    var of = Number(String(p.optionFee).replace(/[,，円\s]/g, ""));
+    if (!isFinite(of) || of < 0 || of > 100000) return { ok: false, reason: "オプション料金は0〜100,000円の数字で入力してください。" };
+    optFee = Math.round(of);
+    opts = String(p.optionNote || "").replace(/[;\r\n\t]+/g, " ").trim().slice(0, 100);
+    opts = opts ? [opts] : [];
+  } else {
+    opts = [].concat(p.options || []).map(function (x) { return String(x).trim(); }).filter(Boolean);
+    for (var i = 0; i < opts.length; i++) {
+      var op = cfg.options.filter(function (x) { return x.name === opts[i]; })[0];
+      if (!op) return { ok: false, reason: "オプションが料金設定にありません：" + opts[i] };
+      optFee += op.price;
+    }
   }
   var ext = Math.round(Number(p.extendCount) || 0);
   if (ext < 0 || ext > 10) return { ok: false, reason: "延長の回数が不正です。" };
@@ -2547,7 +2559,7 @@ function adminSettleSave(p) {
     var coursePrice = c.courseSales - cfg.extend.price * ext;
     var row = [
       String(r.id), "'" + bizDateOf(r.startAt), safeCell_(name), safeCell_(r.course), coursePrice, ext, cfg.extend.price * ext,
-      nom, nomFee, opts.join(";"), optFee, c.discount, c.total, c.rate, c.back, c.shop,
+      nom, nomFee, safeCell_(opts.join(";")), optFee, c.discount, c.total, c.rate, c.back, c.shop,
       safeCell_(String(p.memo || "").slice(0, 500)), staff,
       Utilities.formatDate(new Date(), "Asia/Tokyo", "yyyy/MM/dd HH:mm:ss"),
     ];
@@ -3256,7 +3268,7 @@ function feedbackSubmit_(b) {
    管理画面（Admin.html）は開いたときにこの版を確認し、Code.gs / lib.gs が古い・途中までしか
    貼られていない場合に警告を出す。※必ずファイルの「最後」に置く（途中で切れると無くなるので検出できる）。
    コードを変更したら Admin.html の APP_VERSION・lib.gs の LIB_VERSION と一緒に上げる。 */
-var CODE_VERSION = "2026-11-16-1";
+var CODE_VERSION = "2026-11-16-2";
 function adminVersion() {
   return { code: CODE_VERSION, lib: typeof LIB_VERSION === "undefined" ? "" : LIB_VERSION };
 }

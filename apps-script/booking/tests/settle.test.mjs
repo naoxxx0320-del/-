@@ -117,3 +117,24 @@ t("精算の取り消し・一覧に精算済みの印", () => {
 });
 
 console.log(`\n✅ 全 ${passed} 件 パス`);
+
+t("精算：オプションは金額の自由入力（内容は任意）・範囲外は拒否", () => {
+  const { g, sheets } = setup();
+  g.adminSetBackRate("みお", 50);
+  const r = plain(g.adminSettleSave({ id: "A", therapistName: "みお", optionFee: "2,500", optionNote: "パウダー・延長タオル" }));
+  assert.equal(r.ok, true, r.reason);
+  // コース18,000 → 50%＝9,000 ＋オプション2,500（全額セラピスト）
+  assert.equal(r.back, 11500);
+  assert.equal(r.total, 20500);
+  const row = sheets["精算"].v[1];
+  assert.equal(row[9], "パウダー・延長タオル");
+  assert.equal(row[10], 2500);
+  const s = plain(g.adminSettleGet("A")).settle;
+  assert.equal(s.optionFee, 2500);
+  assert.deepEqual(s.options, ["パウダー・延長タオル"]);
+  // 0円・内容なしも保存できる
+  assert.equal(plain(g.adminSettleSave({ id: "A", therapistName: "みお", optionFee: 0 })).back, 9000);
+  assert.equal(plain(g.adminSettleSave({ id: "A", therapistName: "みお", optionFee: -1 })).ok, false);
+  assert.equal(plain(g.adminSettleSave({ id: "A", therapistName: "みお", optionFee: 100001 })).ok, false);
+  assert.equal(plain(g.adminSettleSave({ id: "A", therapistName: "みお", optionFee: "abc" })).ok, false);
+});
