@@ -42,4 +42,6 @@ export function todayCards(k, roster) {
 }
 
 export const SCHEDULE_UPDATED = schedule.updated || "";
+// 出勤情報を取り込んだ日時（暦の日付＋時刻 例 "2026/11/18 02:48"）。古いデータでは空。
+export const SCHEDULE_UPDATED_AT = schedule.updatedAt || "";
 export const SCHEDULE_AREA = schedule.area || "亀戸";

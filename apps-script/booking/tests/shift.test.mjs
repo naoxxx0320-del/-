@@ -133,6 +133,26 @@ t("createBooking: WEB で出勤表に無い人（休み）は拒否・おまか�
   assert.equal(g.createBooking({ ...base, dateStr: "2026/10/20", source: "WEB", therapistName: "花恋", tel: "093" }).ok, true);
 });
 
+t("createBooking: WEB・LINE は過去・30分以内の開始を拒否（電話は受け付け）・翌5時までは前日の出勤として扱う", () => {
+  const g = load({ 出勤情報: makeSheet("出勤情報", baseSched()) });
+  g.appendRow_ = () => {};
+  g.notifyCustomer_ = () => {};
+  g.genId_ = (p) => p + Math.random();
+  g.Utilities.formatDate = () => "2026/10/07 00:00:00";
+  const base = { dateStr: "2026/10/7", course: "60分コース", customerName: "x", therapistName: "みお" };
+  g.nowMs_ = () => g.parseJstDateTime("2026/10/7", "18:00");
+  const past = g.createBooking({ ...base, timeLabel: "17:00", source: "WEB", tel: "1" });
+  assert.equal(past.ok, false);
+  assert.match(past.reason, /開始時刻/);
+  assert.equal(g.createBooking({ ...base, timeLabel: "18:20", source: "LINE", tel: "2" }).ok, false); // 30分以内
+  assert.equal(g.createBooking({ ...base, timeLabel: "18:30", source: "WEB", tel: "3" }).ok, true);
+  assert.equal(g.createBooking({ ...base, timeLabel: "17:00", source: "電話", tel: "4", asConfirmed: true }).ok, true);
+  // 10/8 0:30（＝10/7 の営業日の深夜）に「10/7 翌1:00」の予約は受け付け、「10/7 23:00」は過去として拒否
+  g.nowMs_ = () => g.parseJstDateTime("2026/10/7", "翌0:30");
+  assert.equal(g.createBooking({ ...base, timeLabel: "翌1:00", source: "WEB", tel: "5" }).ok, true);
+  assert.equal(g.createBooking({ ...base, timeLabel: "23:00", source: "WEB", tel: "6" }).ok, false);
+});
+
 
 t("名簿シート：応募シート（名前・年齢）を名簿と誤認しない", () => {
   const apply = makeSheet("応募", [["名前", "年齢", "電話"], ["応募者", "22", "090"]]);
@@ -244,3 +264,16 @@ t("本日：今日（営業日）の行を並び順で返し、保存で ステ�
 });
 
 console.log(`\n✅ 全 ${passed} 件 パス`);
+
+t("出勤を変えたら、今日（営業日）以降の日ならサイトを作り直す・過去の日は作り直さない", () => {
+  const g = load({ 出勤情報: makeSheet("出勤情報", baseSched()) });
+  let n = 0;
+  g.ghToken_ = () => "x";
+  g.ghDispatchDeploy_ = () => { n++; };
+  g.bizTodayStr_ = () => "2026/10/7";
+  assert.equal(g.autoDeployIfToday_("2026/10/7").deployed, true);
+  assert.equal(g.autoDeployIfToday_("2026/10/20").deployed, true); // 先の日も反映（以前は今日だけ）
+  assert.equal(g.autoDeployIfToday_("2026/10/6").deployed, false);
+  assert.equal(g.autoDeployIfToday_("").deployed, false);
+  assert.equal(n, 2);
+});

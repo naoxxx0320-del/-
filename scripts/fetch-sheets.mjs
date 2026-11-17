@@ -280,8 +280,10 @@ function buildSchedule(objs) {
     .filter((d) => { const k = dayKeyNum(d.date); return k == null || k >= today; })
     .sort((a, b) => (dayKeyNum(a.date) ?? 0) - (dayKeyNum(b.date) ?? 0));
   const now = jstNow();
-  // today: 公開時点の営業日（表示側は閲覧時点の営業日で選び直す）。updated: 取り込んだ時刻
-  return { area: objs[0]?.["エリア"] || "亀戸", today: keyToSlash(today), updated: now.time, days };
+  // today: 公開時点の営業日（表示側は閲覧時点の営業日で選び直す）。updated: 取り込んだ時刻（時:分）
+  // updatedAt: 取り込んだ日時（暦の日付＋時刻）。深夜は営業日（today）と暦の日付が違うため、
+  //   「更新」の表示には today ではなくこちらを使う（例：11/18 2:48 の取り込みを「11/17 02:48」と出さない）。
+  return { area: objs[0]?.["エリア"] || "亀戸", today: keyToSlash(today), updated: now.time, updatedAt: `${now.date} ${now.time}`, days };
 }
 
 // セラピスト名簿（本日の出勤カード／出勤情報／セラピスト一覧・詳細ページの照合元）:

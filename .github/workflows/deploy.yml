@@ -9,6 +9,9 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "*/15 * * * *" # 約15分ごとにシートを取得して再公開
+    # 営業日が切り替わる朝6時台（日本時間）にも作り直す。GitHub の定期実行は混雑時に
+    # 数時間遅れることがあるため、確実に必要な時刻を別に指定しておく（管理画面の毎朝の作り直しと併用）。
+    - cron: "7 21 * * *"
 
 permissions:
   contents: read
@@ -58,7 +61,7 @@ jobs:
           node scripts/build-lottery-url.mjs
 
       - name: Check lottery behavior and public link configuration
-        run: node --test scripts/lottery-server.test.cjs scripts/lottery-setup.test.cjs scripts/lottery-url.test.cjs scripts/lottery-public.test.mjs scripts/fetch-sheets.test.mjs
+        run: node --test scripts/lottery-server.test.cjs scripts/lottery-setup.test.cjs scripts/lottery-url.test.cjs scripts/lottery-public.test.mjs scripts/fetch-sheets.test.mjs scripts/names.test.mjs
 
       - name: Build static export
         run: npm run build

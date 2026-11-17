@@ -13,7 +13,7 @@ const src = readFileSync(join(here, "..", "..", "line-booking.gs"), "utf8");
 const NOW = Date.UTC(2026, 9, 8, 3, 0); // 2026/10/8 12:00 JST
 const sheet = (rows) => ({ getDataRange: () => ({ getValues: () => rows }) });
 
-function boot({ busy = [], bookingResult = { ok: true, id: "BK1" } } = {}) {
+function boot({ busy = [], bookingResult = { ok: true, id: "BK1" }, profRows = null } = {}) {
   const replies = [], posts = [];
   const calls = { sheet: 0, avail: 0 };
   const cache = new Map();
@@ -27,7 +27,7 @@ function boot({ busy = [], bookingResult = { ok: true, id: "BK1" } } = {}) {
       ["2026/10/8", "", "亀戸", "れな", "", "13:00", "2:00", "空きあり", "✖️", "", ""],
       ["2026/10/9", "", "亀戸", "ゆな", "", "13:00", "22:00", "空きあり", "○", "", ""],
     ]),
-    本日の出勤: sheet([
+    本日の出勤: sheet(profRows || [
       ["名前", "年齢", "T", "カップ", "タグ", "写真"],
       ["みお", "23", "158", "D", "癒し系;笑顔", "therapist-mio.jpg"],
       ["花恋", "21", "160", "F", "", ""],
@@ -181,6 +181,27 @@ t("予約の流れ：日付 → 写真カード → 空き時間だけ → 入�
   assert.equal(b.posts[0].course, "90分コース");
   assert.equal(b.posts[0].tel, "09012345678");
   assert.equal(b.state(), null);
+});
+
+t("表示名：カード・確認画面は名簿の「表示名」、予約の送信は照合キー（名前）のまま", () => {
+  const b = boot({ profRows: [["名前", "年齢", "表示名"], ["みお", "23", "ひなた"], ["花恋", "21", ""]] });
+  b.pb("a=start");
+  let m = b.pb("a=date&v=2026%2F10%2F8&l=10%2F8(%E6%9C%A8)");
+  const car = m[0].contents.contents;
+  assert.equal(car[0].body.contents[0].text, "花恋"); // 表示名が空なら名前
+  assert.equal(car[1].body.contents[0].text, "ひなた");
+  assert.ok(buttons(car[1]).some((a) => a.displayText === "ひなたを選ぶ" && a.data === "a=th&v=" + encodeURIComponent("みお")));
+  m = b.pb("a=th&v=" + encodeURIComponent("みお"));
+  assert.match(texts(m), /ひなた（出勤 /);
+  assert.doesNotMatch(texts(m), /みお/);
+  m = b.pb("a=time&v=" + encodeURIComponent("15:30"));
+  m = b.pb("a=course&v=2");
+  m = b.say("田中");
+  m = b.say("09012345678");
+  assert.match(texts(m), /ひなた/);
+  assert.doesNotMatch(texts(m), /みお/);
+  b.pb("a=confirm");
+  assert.equal(b.posts[0].therapistName, "みお");
 });
 
 t("戻る：コース → 時間 → セラピスト → 日付", () => {

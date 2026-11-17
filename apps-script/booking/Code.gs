@@ -377,6 +377,8 @@ function resolveTherapistId_(nameOrId) {
 }
 
 /* ---------- コア操作 ---------- */
+// WEB・LINE予約は、今から何分後以降の開始だけ受け付けるか（サイト・LINEの時間選択と同じ30分）
+var MIN_LEAD_MIN_ = 30;
 /* 予約を作成する（WEB/LINE/電話 共通）。
  * payload: {source, therapistId?, therapistName, dateStr, timeLabel, course,
  *           price, customerName, tel?, email?, lineUserId?, idempotencyKey?,
@@ -423,6 +425,12 @@ function createBooking(payload) {
       );
     })[0];
     if (dup) return { ok: true, id: dup.id, status: dup.status, duplicated: true };
+
+    // WEB・LINE：過去・開始直前の時刻は受け付けない（画面の表示が古いままでも、ここで必ず断る）。
+    // 電話・管理画面からの登録は、店が確認済みのため対象外。
+    if ((p.source === SOURCE.WEB || p.source === SOURCE.LINE) && startMs < nowMs_() + MIN_LEAD_MIN_ * 60000) {
+      return { ok: false, reason: "開始時刻が過ぎているか、間近のためWEBでは受け付けできません。別の時間をお選びいただくか、お電話でご相談ください。" };
+    }
 
     // 出勤内判定
     var shift = readShift_(p.therapistName, p.dateStr);
@@ -578,10 +586,33 @@ function confirmUrl_(token) {
 }
 
 /* 予約内容の共通テキスト。 */
+/* 照合キー（名前）→ お客様に見せる表示名（名簿の「表示名」。空なら名前のまま）。
+   管理画面で表示名だけを変えた人（名前「つばさ」→表示名「ひなた」等）のメールで、
+   サイトと違う名前が出ないようにする。読めないときは名前のまま返す。 */
+var DISPLAY_NAME_CACHE_ = null;
+function displayNameOf_(key) {
+  var k = String(key || "").trim();
+  if (!k) return "";
+  if (!DISPLAY_NAME_CACHE_) {
+    DISPLAY_NAME_CACHE_ = {};
+    try {
+      var P = profileSheet_();
+      if (P) {
+        var ni = P.head.indexOf("名前"), di = P.head.indexOf("表示名");
+        for (var i = P.hi + 1; i < P.values.length && ni >= 0 && di >= 0; i++) {
+          var n = String(P.values[i][ni]).trim(), d = String(P.values[i][di]).trim();
+          if (n && d) DISPLAY_NAME_CACHE_[n] = d;
+        }
+      }
+    } catch (e) {}
+  }
+  return DISPLAY_NAME_CACHE_[k] || k;
+}
+
 function mailBookingDetail_(r) {
   return [
     "日時: " + fmtJst(r.startAt) + " 〜 " + fmtJst(r.endAt).split(" ")[1],
-    "セラピスト: " + (r.therapistName || ""),
+    "セラピスト: " + displayNameOf_(r.therapistName),
     // 料金は「18,000円」のような文字でも届くため、数字だけを取り出して表示する（以前は ¥NaN になっていた）
     "コース: " + (r.course || "") + (yenNum_(r.price) ? "（¥" + yenNum_(r.price).toLocaleString("en-US") + "）" : ""),
     "お名前: " + (r.customerName || ""),
@@ -1720,10 +1751,26 @@ function autoDeploy_() {
     return { deployed: false, note: "シートには保存しましたが、サイトへの反映の開始に失敗しました（" + e.message + "）。" };
   }
 }
-/* 今日（営業日）の出勤を変えたときだけ自動反映（本日の出勤・案内状況が変わるため）。 */
+/* 今日（営業日）以降の出勤を変えたら自動反映。
+   GitHub の「15分ごと」の定期実行は実際には数時間おきになることがあり、
+   今日だけ反映していると、出勤情報ページ・WEB予約の日付が古いまま残るため。過去の日の修正は反映しない。 */
 function autoDeployIfToday_(dateStr) {
-  if (normDate_(dateStr) !== normDate_(bizTodayStr_())) return { deployed: false, note: "" };
+  var k = normDate_(dateStr), today = normDate_(bizTodayStr_()); // YYYYMMDD の数値（読めなければ ""）
+  if (k === "" || today === "" || k < today) return { deployed: false, note: "" };
   return autoDeploy_();
+}
+
+/* 毎朝（営業日が切り替わる6時台）にサイトを作り直す。
+   setupDailySiteRebuild() をエディタで1回実行すると、毎日 6時台に dailySiteRebuild が動く。 */
+function dailySiteRebuild() {
+  if (ghToken_()) ghDispatchDeploy_();
+}
+function setupDailySiteRebuild() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === "dailySiteRebuild") ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger("dailySiteRebuild").timeBased().everyDays(1).atHour(6).nearMinute(5).inTimezone("Asia/Tokyo").create();
+  return "毎朝6時台にサイトを作り直す設定をしました。";
 }
 
 /* セラピスト個別ページ：プロフィール（名簿シートの値）・今後2週間の出勤・今後の予約・件数。 */
@@ -3286,7 +3333,7 @@ function feedbackSubmit_(b) {
    管理画面（Admin.html）は開いたときにこの版を確認し、Code.gs / lib.gs が古い・途中までしか
    貼られていない場合に警告を出す。※必ずファイルの「最後」に置く（途中で切れると無くなるので検出できる）。
    コードを変更したら Admin.html の APP_VERSION・lib.gs の LIB_VERSION と一緒に上げる。 */
-var CODE_VERSION = "2026-11-16-3";
+var CODE_VERSION = "2026-11-17-1";
 function adminVersion() {
   return { code: CODE_VERSION, lib: typeof LIB_VERSION === "undefined" ? "" : LIB_VERSION };
 }

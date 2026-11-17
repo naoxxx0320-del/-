@@ -30,3 +30,12 @@ test("料金が「18,000円」の文字でも ¥18,000 と表示する（¥NaN �
   assert.match(ctx.mailTemplate_("confirmed", { ...r, price: 23000 }).body, /（¥23,000）/);
   assert.doesNotMatch(ctx.mailTemplate_("confirmed", { ...r, price: "" }).body, /¥/);
 });
+
+test("メールのセラピスト名は名簿の表示名（名前と表示名が違う人）", async () => {
+  const { makeSheet } = await import("./harness.mjs");
+  const sheets = { 本日の出勤: makeSheet("本日の出勤", [["名前", "年齢", "表示名"], ["つばさ", "21", "ひなた"], ["さら", "26", ""]]) };
+  const ctx = load(sheets, {});
+  assert.match(ctx.mailTemplate_("confirmed", { ...r, therapistName: "つばさ" }).body, /セラピスト: ひなた/);
+  assert.match(ctx.mailTemplate_("confirmed", { ...r, therapistName: "さら" }).body, /セラピスト: さら/); // 表示名が空なら名前
+  assert.match(ctx.mailTemplate_("confirmed", { ...r, therapistName: "いない" }).body, /セラピスト: いない/);
+});

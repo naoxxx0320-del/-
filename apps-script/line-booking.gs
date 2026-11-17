@@ -517,6 +517,13 @@ function getTherapistsOn(date) {
 function readProfiles_() {
   return memo_("prof", 300, readProfilesRaw_);
 }
+/* 照合キー（名前）→ お客様に見せる表示名。サイト・メールと同じ名前で案内する。
+   選択・予約の送信には照合キーのまま使う（ここは表示専用）。 */
+function dispName_(name) {
+  if (!name || name === "おまかせ") return name;
+  const p = readProfiles_()[name];
+  return (p && p.disp) || name;
+}
 function readProfilesRaw_() {
   const out = {};
   try {
@@ -539,6 +546,7 @@ function readProfilesRaw_() {
         height: g(v[i], "T"),
         cup: g(v[i], "カップ"),
         tags: g(v[i], "タグ").split(";").map((x) => x.trim()).filter(Boolean).slice(0, 2),
+        disp: g(v[i], "表示名"), // お客様に見せる名前（空なら名前）
       };
     }
   } catch (e) {}
@@ -753,7 +761,7 @@ function therapistBubble_(r, prof, opts) {
   const img = photoUrl_(p.photo);
   const spec = [p.age ? p.age + "歳" : "", p.height ? "T" + p.height : "", p.cup ? p.cup + "カップ" : ""].filter(Boolean).join(" / ");
   const body = [
-    txt_(r.name, { size: "xl", weight: "bold", color: C.wine }),
+    txt_((p.disp || r.name), { size: "xl", weight: "bold", color: C.wine }),
   ];
   if (spec) body.push(txt_(spec, { size: "xs", color: C.sub }));
   if (p.tags && p.tags.length) body.push(txt_(p.tags.join("・"), { size: "xs", color: C.gold, wrap: true }));
@@ -768,7 +776,7 @@ function therapistBubble_(r, prof, opts) {
       type: "box", layout: "vertical", contents: [
         opts.full
           ? txt_("満員", { align: "center", color: "#999999", size: "sm" })
-          : postBtn_(opts.label || "この人を選ぶ", opts.data, "primary", r.name + "を選ぶ"),
+          : postBtn_(opts.label || "この人を選ぶ", opts.data, "primary", (p.disp || r.name) + "を選ぶ"),
       ],
     },
   };
@@ -814,7 +822,7 @@ function timeMessage(st) {
   const rows = getTherapistsOn(st.date);
   const slots = timeSlots_(st, rows, busyOn_(st.date));
   const r = rows.find((x) => x.name === st.therapist);
-  const sub = st.label + "　" + (st.therapist === "おまかせ" ? "おまかせ" : st.therapist + "（出勤 " + (r ? r.time : "未定") + "）");
+  const sub = st.label + "　" + (st.therapist === "おまかせ" ? "おまかせ" : dispName_(st.therapist) + "（出勤 " + (r ? r.time : "未定") + "）");
   if (!slots.length) {
     return card_("空いている時間がありません", 3, [
       txt_("申し訳ございません。この日はご予約いただける時間がありません。", { size: "sm", wrap: true }),
@@ -830,7 +838,7 @@ function timeMessage(st) {
 // STEP4 コース
 function courseMessage(st) {
   const opts = courseOptions_(st);
-  const sub = st.label + " " + st.time + "〜　" + (st.therapist === "おまかせ" ? "おまかせ" : st.therapist);
+  const sub = st.label + " " + st.time + "〜　" + (st.therapist === "おまかせ" ? "おまかせ" : dispName_(st.therapist));
   if (!opts.length) {
     return card_("この時間から入るコースがありません", 4, [
       txt_("出勤終了や次のご予約までの時間が足りません。開始時間を選び直してください。", { size: "sm", wrap: true }),
@@ -869,7 +877,7 @@ function telMessage_(st) {
 function confirmMessage(st) {
   return card_("ご予約内容の確認", null, [
     kv_("日時", st.label + "　" + st.time + "〜"),
-    kv_("セラピスト", st.therapist === "おまかせ" ? "おまかせ（指名なし）" : st.therapist),
+    kv_("セラピスト", st.therapist === "おまかせ" ? "おまかせ（指名なし）" : dispName_(st.therapist)),
     kv_("コース", st.course),
     kv_("料金", yen(st.price)),
     kv_("お名前", st.name + " 様"),
@@ -893,7 +901,7 @@ function doneMessage(st) {
       ] },
       body: { type: "box", layout: "vertical", spacing: "sm", contents: [
         kv_("日時", st.label + "　" + st.time + "〜"),
-        kv_("セラピスト", st.therapist === "おまかせ" ? "おまかせ（指名なし）" : st.therapist),
+        kv_("セラピスト", st.therapist === "おまかせ" ? "おまかせ（指名なし）" : dispName_(st.therapist)),
         kv_("コース", st.course + "（" + yen(st.price) + "）"),
         kv_("お名前", st.name + " 様"),
         kv_("お電話", st.tel),

@@ -4,6 +4,7 @@
    出勤情報ページ用に sched（出勤時間）/ status（空き状況）/ reserveHref（予約）を任意で表示。 */
 import { photoSrc } from "./photo";
 import FavoriteHeart from "./FavoriteHeart";
+import { displayName } from "./names";
 
 // 表示するリボン（優先度：本日出勤 > 人気 > おすすめ）。新人は名前横のNEWバッジで表示。
 export function ribbonOf(t) {
@@ -46,13 +47,13 @@ export default function StaffCard({
       <div className="staff-card-inner">
         <div className="staff-main">
           {/* カード全体を覆うリンク（ハートと入れ子にならないストレッチリンク方式） */}
-          <a className="staff-hit" href={href} aria-label={`${t.nameFull || t.name} の詳細`} />
+          <a className="staff-hit" href={href} aria-label={`${displayName(t)} の詳細`} />
 
           <div className="staff-photo" style={{ background: t.photoBg }}>
             {rb && <span className={`staff-ribbon ${rb.cls}`}>{rb.label}</span>}
             {src ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img className="staff-photo-img" src={src} alt={t.name} loading="lazy" />
+              <img className="staff-photo-img" src={src} alt={displayName(t)} loading="lazy" />
             ) : (
               <span className="staff-ph-dia" aria-hidden="true">
                 ◆
@@ -64,7 +65,7 @@ export default function StaffCard({
             <FavoriteHeart id={t.id} />
 
             <div className="staff-name">
-              <span className="staff-name-text">{t.nameFull || t.name}</span>
+              <span className="staff-name-text">{displayName(t)}</span>
               {t.isNew && <span className="staff-new">NEW</span>}
             </div>
 
