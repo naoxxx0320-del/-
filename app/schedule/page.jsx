@@ -66,8 +66,9 @@ export default function Schedule() {
           <div className="ph-en">Schedule</div>
           <h1 className="ph-jp ph-long">セラピスト出勤スケジュール</h1>
         </div>
-        {schedule.today && schedule.updated && (
-          <p className="sch-updated">更新：{schedule.today} {schedule.updated}</p>
+        {/* 取り込んだ日時（暦の日付）。営業日（朝6時まで前日）の日付と混ぜない */}
+        {(schedule.updatedAt || schedule.updated) && (
+          <p className="sch-updated">出勤情報の更新：{schedule.updatedAt || schedule.updated}</p>
         )}
 
         <NavGrid base="../" />

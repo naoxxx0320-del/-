@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { photoSrc } from "../_components/photo";
+import { resolveTherapistKey } from "../_components/names";
+import { bizTodayKey, upcomingDays } from "../_components/scheduleDays";
 import { SITE } from "../_lib/site";
 import { track, trackOnce } from "../_lib/track";
 import schedule from "../../data/schedule.json";
@@ -84,8 +86,24 @@ function epochToDayMin(epochMs, dateStr) {
   return Math.round((Number(epochMs) - base) / 60000);
 }
 
+// WEB予約は今から何分後以降の開始だけ選べるか（予約管理API・LINE予約と同じ30分）
+const MIN_LEAD_MIN = 30;
+
 export default function Reserve() {
-  const days = schedule.days || [];
+  // 公開時点の出勤日を初期表示に使い、表示後に端末の時刻（日本時間・朝6時までは前日の営業日）で
+  // 過ぎた日を外す。ページを開いたままでも1分ごとに時刻を更新し、過ぎた開始時刻を選べなくする。
+  const [nowMs, setNowMs] = useState(0);
+  useEffect(() => {
+    setNowMs(Date.now());
+    const id = setInterval(() => setNowMs(Date.now()), 60000);
+    return () => clearInterval(id);
+  }, []);
+  const days = useMemo(
+    () => (nowMs ? upcomingDays(schedule.days || [], nowMs) : schedule.days || []),
+    // 日付が変わったときだけ並びを作り直す（毎分作り直すと選択中の日がずれるため）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [nowMs ? bizTodayKey(nowMs) : 0]
+  );
   const [dayIdx, setDayIdx] = useState(0);
   const [therapist, setTherapist] = useState("");
   const [time, setTime] = useState("");
@@ -108,6 +126,7 @@ export default function Reserve() {
   const [availState, setAvailState] = useState("loading");
   // 指定担当者の出勤が今日以降に無い等の案内（通常フォームは引き続き利用可）
   const [notice, setNotice] = useState("");
+  const [paramsApplied, setParamsApplied] = useState(false); // URLの ?t= ?d= を反映済みか（1回だけ）
 
   const day = days[dayIdx] || { list: [], label: "" };
 
@@ -117,9 +136,11 @@ export default function Reserve() {
   //  ・過去日は自動選択しない。URLの値は実際の出勤データに存在するか確認して使う（HTMLとして挿入しない）。
   //  ・今日以降の出勤が無い場合は別担当者で進めず、案内を表示する。
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !nowMs || paramsApplied) return;
+    setParamsApplied(true);
     const q = new URLSearchParams(window.location.search);
-    const t = q.get("t");
+    // ?t= は照合キー（従来のリンク）でも表示名でも受け付け、照合キーに直す
+    const t = resolveTherapistKey(q.get("t"), roster) || q.get("t");
     const d = q.get("d");
     if (!t && !d) return;
 
@@ -129,11 +150,8 @@ export default function Reserve() {
       const m = String(dateStr || "").match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
       return m ? +m[1] * 10000 + +m[2] * 100 + +m[3] : null;
     };
-    // 日本時間(JST)の「今日 0:00」を YYYYMMDD の数値キーに（利用者の端末TZに依存しない）
-    const now = new Date();
-    const jst = new Date(now.getTime() + (now.getTimezoneOffset() + 540) * 60000);
-    const todayKey =
-      jst.getFullYear() * 10000 + (jst.getMonth() + 1) * 100 + jst.getDate();
+    // 日本時間の営業日（朝6時までは前日。深夜の出勤を前日の日付で扱うため）
+    const todayKey = bizTodayKey(nowMs);
 
     // d が出勤データに存在するか（存在すればそのインデックス）
     let dIdx = -1;
@@ -170,13 +188,13 @@ export default function Reserve() {
       } else if (tExists) {
         // 出勤データに居るが今日以降の掲載が無い（過去のみ）→ 別担当者で進めず案内
         setNotice(
-          `${t}さんの出勤予定は現在掲載されていません。出勤情報をご確認いただくか、店舗へお問い合わせください。`
+          `${PROFILE[t]?.nameFull || t}さんの出勤予定は現在掲載されていません。出勤情報をご確認いただくか、店舗へお問い合わせください。`
         );
       }
       // tExists=false（存在しない担当者名）は何もしない＝通常の予約フォームとして利用可
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [nowMs]);
 
   // 現在の予約状況を JSONP で取得（重複予約を防ぐ）。GET+JSONPでCORSを回避。
   // ・セラピストを選ぶたび／日付変更／ページ復帰時に取り直し
@@ -288,13 +306,16 @@ export default function Reserve() {
   //  overlap: 新規区間[開始, 開始+コース所要] が既存予約区間と一部でも重なる
   //           （一般的な区間重複判定: 新規開始 < 既存終了 && 新規終了 > 既存開始）
   //  exceed : コース終了時刻が、そのセラピストの勤務終了時刻を超える
+  //  past   : 開始時刻が過ぎている、または30分以内（WEBでは受け付けない）
   const slotBlock = (slot) => {
     const m = labelToMin(slot);
-    if (m == null) return { overlap: false, exceed: false, disabled: false };
+    if (m == null) return { overlap: false, exceed: false, past: false, disabled: false };
     const end = m + effCourseMin;
     const overlap = occupied.some((r) => m < r.e && end > r.s);
     const exceed = !!shiftRange && end > shiftRange.end;
-    return { overlap, exceed, disabled: overlap || exceed };
+    const base = dayMidnightMs(day.date);
+    const past = !!nowMs && base != null && base + m * 60000 < nowMs + MIN_LEAD_MIN * 60000;
+    return { overlap, exceed, past, disabled: overlap || exceed || past };
   };
 
   // 予約可能スロットを「時間帯（〜時台）」ごとにまとめる。
@@ -311,6 +332,9 @@ export default function Reserve() {
         cur = { h, label, slots: [] };
         groups.push(cur);
       }
+      // 過ぎた開始時刻・30分以内の開始は出さない（日付の0:00からの分で比べる。翌○時は1440分超）
+      const base = dayMidnightMs(day.date);
+      if (nowMs && base != null && base + min * 60000 < nowMs + MIN_LEAD_MIN * 60000) continue;
       const end = min + effCourseMin;
       const overlap = occupied.some((r) => min < r.e && end > r.s);
       const exceed = !!shiftRange && end > shiftRange.end;
@@ -321,8 +345,8 @@ export default function Reserve() {
         disabled: overlap || exceed,
       });
     }
-    return groups;
-  }, [slots, occupied, effCourseMin, shiftRange]);
+    return groups.filter((g) => g.slots.length > 0);
+  }, [slots, occupied, effCourseMin, shiftRange, nowMs, day]);
 
   // 空きスロット総数（サマリー表示用）
   const availCount = useMemo(
@@ -334,7 +358,7 @@ export default function Reserve() {
   useEffect(() => {
     if (time && slotBlock(time).disabled) setTime("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [effCourseMin, shiftStr, occupied]);
+  }, [effCourseMin, shiftStr, occupied, nowMs]);
 
   // 進捗ステッパー用：各ステップの完了状態
   const steps = [
@@ -361,6 +385,8 @@ export default function Reserve() {
       return "空き状況を取得できませんでした。少し時間をおいて再読み込みいただくか、お電話でご予約ください。";
     if (!time) return "予約時間を選んでください。";
     const blk = slotBlock(time);
+    if (blk.past)
+      return "選択中の開始時間は過ぎたか、間近のためWEBでは受け付けできません。別の時間をお選びいただくか、お電話でご相談ください。";
     if (blk.exceed)
       return "選択中のコースでは、その開始時間だと勤務終了時間を超えてしまいます。開始時間またはコースをご変更ください。";
     if (blk.overlap)
@@ -695,7 +721,7 @@ export default function Reserve() {
                   <span className="rsv-tphoto" style={{ background: p.photoBg }}>
                     {p.photo ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={photoSrc(p.photo, BASE)} alt={e.name} />
+                      <img src={photoSrc(p.photo, BASE)} alt={p.nameFull || e.name} />
                     ) : (
                       <span className="rsv-theart">◆</span>
                     )}
@@ -762,7 +788,7 @@ export default function Reserve() {
             ) : slotGroups.length > 0 ? (
               <>
                 <p className="rsv-avail">
-                  <b>{therapist}</b>：{day.label} は
+                  <b>{PROFILE[therapist]?.nameFull || therapist}</b>：{day.label} は
                   <span className="rsv-avail-num">{availCount}</span>
                   枠が予約可能です（開始時間をお選びください）
                 </p>
@@ -809,7 +835,7 @@ export default function Reserve() {
               </>
             ) : (
               <p className="rsv-hint">
-                この日の {therapist} さんは受付可能な時間がありません。
+                この日の {PROFILE[therapist]?.nameFull || therapist} さんは受付可能な時間がありません。
                 別の日・セラピストをお選びください。
               </p>
             )

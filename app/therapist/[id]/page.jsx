@@ -91,7 +91,7 @@ export default function TherapistDetail({ params }) {
         <section className="td-wrap">
           <TherapistGallery
             photos={photos}
-            name={t.name}
+            name={t.nameFull || t.name}
             ribbon={t.ribbon || (t.absent ? null : "出勤")}
             heart={t.heart === "diamond" ? "dia" : "aj"}
             heartLabel={t.heartLabel || "◆"}

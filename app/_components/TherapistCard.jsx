@@ -2,6 +2,7 @@
    欠損フィールドに強い作り（stats / sns が無くても崩れない）。 */
 
 import { photoSrc as buildPhotoSrc } from "./photo";
+import { displayName } from "./names";
 
 export function SnsBadge({ kind }) {
   const map = {
@@ -63,7 +64,7 @@ export default function TherapistCard({ t, base = "", href, reserveHref }) {
       <div className="tcard-photo" style={{ background: t.photoBg }}>
         {t.photo ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img className="tcard-img" src={photoSrc} alt={t.name} />
+          <img className="tcard-img" src={photoSrc} alt={displayName(t)} />
         ) : (
           <>
             <div className="silhouette" />
@@ -89,7 +90,7 @@ export default function TherapistCard({ t, base = "", href, reserveHref }) {
 
       <div className="tcard-body">
         <div className="tcard-name">
-          <span className="nm">{t.name}</span>
+          <span className="nm">{displayName(t)}</span>
           {t.age && <span className="ag">（{t.age}）</span>}
         </div>
         {stats.length > 0 && (

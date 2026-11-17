@@ -12,7 +12,7 @@ import links from "../data/links.json";
 import banners from "../data/banners.json";
 import { byRank } from "./_components/rank";
 import RelaxiTimeline from "./_components/RelaxiTimeline";
-import { HAS_TODAY, useTodayKey, keyLabel, todayList, todayCards, SCHEDULE_UPDATED, SCHEDULE_AREA } from "./_components/today";
+import { HAS_TODAY, useTodayKey, keyLabel, todayList, todayCards, SCHEDULE_UPDATED, SCHEDULE_UPDATED_AT, SCHEDULE_AREA } from "./_components/today";
 
 /* ---- data ---------------------------------------------------------- */
 
@@ -80,7 +80,12 @@ export default function HomeClient() {
       : []
     : guideData.areas;
   const GUIDE_DATE = HAS_TODAY ? keyLabel(todayKey) : guideData.date;
-  const GUIDE_UPDATED = HAS_TODAY ? SCHEDULE_UPDATED : guideData.updated;
+  // 更新は「取り込んだ日時」（暦の日付つき 例 11/18 02:48）。深夜は対象日（営業日）と日付が違うため日付も出す
+  const GUIDE_UPDATED = HAS_TODAY
+    ? SCHEDULE_UPDATED_AT
+      ? SCHEDULE_UPDATED_AT.replace(/^\d{4}\//, "")
+      : SCHEDULE_UPDATED
+    : guideData.updated;
   const [activeSlide, setActiveSlide] = useState(0);
   const slideTimer = useRef(null);
 
@@ -275,7 +280,7 @@ export default function HomeClient() {
           <div className="corner br" />
           <div className="guide-date">{GUIDE_DATE}</div>
           <h2 className="guide-title">
-            只今の案内状況<small>（更新{GUIDE_UPDATED}）</small>
+            只今の案内状況<small>（更新 {GUIDE_UPDATED}）</small>
           </h2>
           <div className="guide-scroll">
             {GUIDE.length === 0 && <p className="therapists-empty">本日の案内状況は準備中です。</p>}
