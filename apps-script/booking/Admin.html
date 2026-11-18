@@ -78,6 +78,13 @@
     table.sg th, table.sg td { border:1px solid #ece4d3; }
     table.sg thead th { position:sticky; top:0; background:#f3ece0; color:#5a4a33; padding:6px 4px; white-space:nowrap; z-index:2; }
     table.sg th.nm { position:sticky; left:0; background:#faf6ee; z-index:3; text-align:left; padding:0; min-width:84px; }
+    table.sg th.nm .nmrow { display:flex; align-items:center; }
+    table.sg th.nm .nmrow > button[data-ther] { flex:1; min-width:0; }
+    table.sg th.nm .ord { display:flex; flex-direction:column; gap:2px; padding:2px 4px 2px 0; }
+    table.sg th.nm .ord button { width:26px; height:22px; padding:0; border:1px solid var(--line); border-radius:5px; background:#fff; color:var(--wine); font-size:11px; line-height:1; text-decoration:none; text-align:center; }
+    table.sg th.nm .ord button:disabled { opacity:.3; }
+    .ord-bar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 8px; padding:8px 10px; border:1px solid #e3c98f; border-radius:8px; background:#fff8e6; font-size:12.5px; color:#6b5d44; }
+    .ord-bar span { flex:1 1 100%; }
     table.sg th.nm button { width:100%; border:none; border-radius:0; background:transparent; text-align:left; padding:8px 6px; font-size:13px; color:var(--wine); text-decoration:underline; }
     table.sg td.sc { height:44px; min-width:84px; padding:3px 4px; vertical-align:top; cursor:pointer; text-align:center; }
     table.sg td.sc:hover { background:#fff7df; }
@@ -202,6 +209,11 @@
     </div>
     <main>
       <div class="summary" id="th-summary"></div>
+      <div class="ord-bar" id="th-ordbar" style="display:none">
+        <span>並び順を変更しました（サイトのセラピスト一覧・新人情報の順番になります）</span>
+        <button class="ghost" id="th-ordcancel">元に戻す</button>
+        <button class="primary" id="th-ordsave">並び順を保存</button>
+      </div>
       <div id="th-grid"><div class="loading">読み込み中…</div></div>
       <p class="tt-hint">マスをタップで出勤の登録・変更／名前をタップで個別ページ。斜線＝休み、黄色＝申請中・希望休（サイト非表示・予約不可）。サイトへの反映は数時間おきの自動更新、または「今すぐサイトに反映」（数分）で行われます。</p>
     </main>
@@ -432,7 +444,7 @@
       { label: "延長30分", price: 6000 },
     ];
     var STAFF_EMAIL = "<?= staffEmail ?>";
-    var APP_VERSION = "2026-11-18-1"; // Code.gs の CODE_VERSION・lib.gs の LIB_VERSION と同じ値
+    var APP_VERSION = "2026-11-18-2"; // Code.gs の CODE_VERSION・lib.gs の LIB_VERSION と同じ値
 
     // 画面の不具合を「読み込み中」のまま止めず、理由を表示する
     function showVerWarn(msg){ var b=document.getElementById("ver-warn"); b.innerHTML=msg; b.style.display="block"; }
@@ -705,6 +717,7 @@
   (function(){
     var STEP_TIMES = (function(){ var a=[]; for(var m=600;m<=1740;m+=30){ var h=Math.floor(m/60), mm=m%60; a.push((h>=24?"翌"+(h-24):h)+":"+(mm<10?"0":"")+mm); } return a; })();
     var shData = null, shCur = null, tdName = "";
+    var shOrder = null; // ▲▼で並べ替えて、まだ保存していない並び（null＝変更なし）
     function slashToInput(s){ var m=String(s||"").match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/); if(!m) return ""; var p=function(n){return String(n).padStart(2,"0");}; return m[1]+"-"+p(m[2])+"-"+p(m[3]); }
     function addDaysInput(v,n){ var d=new Date(v+"T00:00:00"); d.setDate(d.getDate()+n); var p=function(x){return String(x).padStart(2,"0");}; return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate()); }
     function splitTime(t){ var m=String(t||"").match(/(.+?)\s*[〜~\-]\s*(.+)/); return m?[m[1].trim(),m[2].trim()]:[String(t||"").trim(),""]; }
@@ -741,7 +754,10 @@
     }
     function renderShifts(res){
       if(!res||!res.ok){ $("th-grid").innerHTML='<div class="err">'+esc((res&&res.reason)||"取得に失敗しました")+'</div>'; return; }
+      // 保存前に ▲▼ で並べ替えた順は、週を切り替えても保つ
+      if(shOrder){ res.names.sort(function(a,b){ var x=shOrder.indexOf(a), y=shOrder.indexOf(b); return (x<0?1e9:x)-(y<0?1e9:y); }); }
       shData=res;
+      $("th-ordbar").style.display = shOrder ? "flex" : "none";
       var map={}; res.shifts.forEach(function(s,i){ map[s.name+"|"+s.date]=i; });
       var today=dateInputToSlash(todayStr());
       var working=res.shifts.filter(function(s){return !s.absent&&!s.draft;}).length;
@@ -751,7 +767,9 @@
       res.dates.forEach(function(d){ h+='<th'+(d.date===today?' class="today"':'')+'>'+esc(d.label)+'</th>'; });
       h+='</tr></thead><tbody>';
       res.names.forEach(function(n,ni){
-        h+='<tr><th class="nm"><button data-ther="'+ni+'">'+esc(n)+'</button></th>';
+        h+='<tr><th class="nm"><div class="nmrow"><button data-ther="'+ni+'">'+esc(n)+'</button>'
+          +'<span class="ord"><button data-up="'+ni+'" aria-label="'+esc(n)+'を上へ"'+(ni===0?' disabled':'')+'>▲</button>'
+          +'<button data-dn="'+ni+'" aria-label="'+esc(n)+'を下へ"'+(ni===res.names.length-1?' disabled':'')+'>▼</button></span></div></th>';
         res.dates.forEach(function(d,di){
           var idx=map[n+"|"+d.date], cls="sc"+(d.date===today?" today":"");
           if(idx==null){ h+='<td class="'+cls+'" data-n="'+ni+'" data-d="'+di+'"><span class="plus">＋</span></td>'; return; }
@@ -767,11 +785,34 @@
       $("th-grid").innerHTML=h;
     }
     $("th-grid").addEventListener("click", function(ev){
+      var mv=ev.target.closest("[data-up],[data-dn]");
+      if(mv){
+        var i=+(mv.getAttribute("data-up")||mv.getAttribute("data-dn")), j=mv.hasAttribute("data-up")?i-1:i+1, a=shData.names;
+        if(j<0||j>=a.length) return;
+        var t=a[i]; a[i]=a[j]; a[j]=t;
+        shOrder=a.slice();
+        renderShifts(shData);
+        return;
+      }
       var b=ev.target.closest("[data-ther]"); if(b){ openTherapist(shData.names[+b.getAttribute("data-ther")]); return; }
       var td=ev.target.closest("td.sc"); if(!td||!shData) return;
       if(td.hasAttribute("data-s")) openShift(shData.shifts[+td.getAttribute("data-s")]);
       else openShift({ name: shData.names[+td.getAttribute("data-n")], date: shData.dates[+td.getAttribute("data-d")].date });
     });
+    $("th-ordcancel").onclick=function(){ shOrder=null; loadShifts(); };
+    $("th-ordsave").onclick=function(){
+      if(!shOrder) return;
+      if(!hasServer("adminTherapistOrderSave")){ alert("サーバー側のコード（Code.gs）に並び順の保存がありません。Code.gs・lib.gs・Admin.html を最新に貼り替え、「新バージョン」でデプロイしてください。"); return; }
+      var btn=$("th-ordsave"); btn.disabled=true; btn.textContent="保存中…";
+      google.script.run.withSuccessHandler(function(res){
+        btn.disabled=false; btn.textContent="並び順を保存";
+        if(!res||!res.ok){ alert("保存できませんでした："+((res&&res.reason)||"不明")); return; }
+        shOrder=null; $("th-ordbar").style.display="none";
+        toast("並び順を保存しました（サイトへの反映は数分後）");
+        if(res.note) setTimeout(function(){ alert(res.note); }, 50);
+        loadShifts();
+      }).withFailureHandler(function(e){ btn.disabled=false; btn.textContent="並び順を保存"; alert("エラー："+(e&&e.message?e.message:e)); }).adminTherapistOrderSave(shOrder);
+    };
     $("th-prev").onclick=function(){ $("th-from").value=addDaysInput($("th-from").value,-7); loadShifts(); };
     $("th-next").onclick=function(){ $("th-from").value=addDaysInput($("th-from").value,7); loadShifts(); };
     $("th-today").onclick=function(){ $("th-from").value=todayStr(); loadShifts(); };

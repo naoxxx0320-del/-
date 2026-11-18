@@ -1241,7 +1241,8 @@ function profileSheet_() {
   return null;
 }
 
-/* セラピスト名の一覧（名簿シートの順 → 出勤シートにだけいる人を後ろに追加）。 */
+/* セラピスト名の一覧。名簿シートの人を「表示順」（小さい順。空欄は後ろに名簿の順）で並べ、
+   出勤シートにだけいる人を後ろに追加。サイトのセラピスト一覧・新人情報と同じ並びになる。 */
 function therapistNames_() {
   var names = [];
   var add = function (n) {
@@ -1251,8 +1252,12 @@ function therapistNames_() {
   try {
     var P = profileSheet_();
     if (P) {
-      var ni = P.head.indexOf("名前");
-      for (var i = P.hi + 1; i < P.values.length; i++) add(P.values[i][ni]);
+      var ni = P.head.indexOf("名前"), ri = P.head.indexOf("表示順"), rows = [];
+      for (var i = P.hi + 1; i < P.values.length; i++) {
+        var r = ri >= 0 ? Number(String(P.values[i][ri]).replace(/[０-９]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0xfee0); }).trim()) : NaN;
+        rows.push({ n: P.values[i][ni], r: String(P.values[i][ri] == null ? "" : P.values[i][ri]).trim() !== "" && isFinite(r) ? r : Infinity, i: i });
+      }
+      rows.sort(function (a, b) { return a.r - b.r || a.i - b.i; }).forEach(function (x) { add(x.n); });
     }
   } catch (e) {}
   therapistDirectory_().list.forEach(function (t) {
@@ -1859,7 +1864,6 @@ var PROFILE_FIELDS_ = [
   { key: "H", label: "ヒップ（H）", group: "基本" },
   { key: "新人", type: "check", label: "新人（NEWマーク）", group: "基本" },
   { key: "在籍", hint: "「退店」「休業」と入れるとサイトに表示されません（空欄＝在籍）", group: "基本" },
-  { key: "表示順", hint: "セラピスト一覧での並び順。小さい番号ほど上に表示（例：1）。空欄の人は番号のある人の後ろに並びます", group: "基本" },
   { key: "タグ", hint: "「;」区切り　例：癒し系;スレンダー;笑顔が素敵", group: "紹介" },
   { key: "プロフィール", type: "textarea", label: "紹介文", group: "紹介" },
   { key: "SNS", hint: "「;」区切り", group: "紹介" },
@@ -2066,7 +2070,8 @@ function adminProfileGet(name) {
   var known = PROFILE_FIELDS_.map(function (f) { return f.key; });
   var fields = PROFILE_FIELDS_.slice();
   P.head.forEach(function (h) {
-    if (h && h !== "名前" && h !== "写真" && known.indexOf(h) < 0) fields.push({ key: h, group: "その他" });
+    // 表示順は出勤表の ▲▼ で変えるため、編集画面には出さない
+    if (h && h !== "名前" && h !== "写真" && h !== "表示順" && known.indexOf(h) < 0) fields.push({ key: h, group: "その他" });
   });
   return jsonSafe_({
     ok: true, name: name, exists: !!row, fields: fields, values: values, photos: photos,
@@ -2160,6 +2165,36 @@ function adminProfileSave(p) {
   }
   if (!ghToken_()) note = "シートに保存しました。サイトには次の自動更新（数時間おき）で反映されます。すぐ反映するにはGitHubの鍵の設定が必要です。";
   return { ok: true, deployed: deployed, note: note };
+}
+
+/* 表示順の保存（管理画面の出勤表の ▲▼ で並べ替えて「並び順を保存」）。
+   names = 上から順の名前の配列。名簿シートの「表示順」列に 1,2,3… を書き込む（列が無ければ作る）。
+   一覧に無い名簿の人は、並べた人の後ろに名簿の順で番号を付ける。保存後にサイトを作り直す。 */
+function adminTherapistOrderSave(names) {
+  var staff = requireStaff_();
+  var list = [].concat(names || []).map(function (x) { return String(x || "").trim(); }).filter(Boolean);
+  if (!list.length || list.length > 300) return { ok: false, reason: "並び順が読み取れませんでした。画面を更新してください。" };
+  var res = withLock_(function () {
+    var P = profileSheet_();
+    if (!P) return { ok: false, reason: "「本日の出勤」シートが見つかりません。" };
+    var head = P.head.slice(), ni = head.indexOf("名前"), ri = head.indexOf("表示順");
+    if (ni < 0) return { ok: false, reason: "名簿シートに「名前」列がありません。" };
+    if (ri < 0) {
+      ri = Math.max(head.length, P.sh.getLastColumn());
+      P.sh.getRange(P.hi + 1, ri + 1).setValue("表示順");
+    }
+    var rows = [];
+    for (var i = P.hi + 1; i < P.values.length; i++) rows.push(String(P.values[i][ni]).trim());
+    var ordered = list.filter(function (n) { return rows.indexOf(n) >= 0; });
+    rows.forEach(function (n) { if (n && ordered.indexOf(n) < 0) ordered.push(n); });
+    var out = rows.map(function (n) { var k = ordered.indexOf(n); return [n && k >= 0 ? k + 1 : ""]; });
+    if (out.length) P.sh.getRange(P.hi + 2, ri + 1, out.length, 1).setValues(out);
+    logHistory_("PROFILE", staff, "表示順を変更", null, { order: ordered.slice(0, 50) });
+    return { ok: true };
+  });
+  if (!res.ok) return res;
+  var d = autoDeploy_();
+  return { ok: true, deployed: d.deployed, note: d.note };
 }
 
 /* 写真の登録：ブラウザで縮小した画像（dataURL）をサイトのリポジトリ public/ に追加。
@@ -3413,7 +3448,7 @@ function feedbackSubmit_(b) {
    管理画面（Admin.html）は開いたときにこの版を確認し、Code.gs / lib.gs が古い・途中までしか
    貼られていない場合に警告を出す。※必ずファイルの「最後」に置く（途中で切れると無くなるので検出できる）。
    コードを変更したら Admin.html の APP_VERSION・lib.gs の LIB_VERSION と一緒に上げる。 */
-var CODE_VERSION = "2026-11-18-1";
+var CODE_VERSION = "2026-11-18-2";
 function adminVersion() {
   return { code: CODE_VERSION, lib: typeof LIB_VERSION === "undefined" ? "" : LIB_VERSION };
 }
