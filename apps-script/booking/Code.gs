@@ -2179,6 +2179,86 @@ function adminPhotoUpload(p) {
   return { ok: true, file: file };
 }
 
+/* ===================== お知らせ・ブログ（サイトの /news/） =====================
+   記事は GitHub の data/news.json に保存する（保存すると main へ push され、サイトが自動で作り直される）。
+   写真は public/news-*.jpg として登録する。下書き（status:"draft"）はサイトに出さない。
+   お客様情報は扱わない（店舗からのお知らせだけ）。 */
+var NEWS_PATH_ = "data/news.json";
+function newsRead_() {
+  var d = readRepoJson_(NEWS_PATH_);
+  var posts = d && Array.isArray(d.posts) ? d.posts : [];
+  return { meta: d || {}, posts: posts };
+}
+function newsSort_(posts) {
+  return posts.slice().sort(function (a, b) {
+    return String(b.date).localeCompare(String(a.date)) || String(b.id).localeCompare(String(a.id));
+  });
+}
+function newsClean_(v, max) {
+  return String(v == null ? "" : v).replace(/\r\n?/g, "\n").replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, "").trim().slice(0, max);
+}
+function adminNewsList() {
+  requireStaff_();
+  if (!ghToken_()) return { ok: false, reason: "お知らせの投稿には、GitHubの鍵（GITHUB_TOKEN）の設定が必要です。" };
+  return jsonSafe_({ ok: true, posts: newsSort_(newsRead_().posts) });
+}
+/* 保存（新規・修正）。p = {id?, date:"YYYY-MM-DD", title, body, image:"news-….jpg"|"", status:"public"|"draft"} */
+function adminNewsSave(p) {
+  var staff = requireStaff_();
+  if (!ghToken_()) return { ok: false, reason: "お知らせの投稿には、GitHubの鍵（GITHUB_TOKEN）の設定が必要です。" };
+  p = p || {};
+  var title = newsClean_(p.title, 60), body = newsClean_(p.body, 5000), date = newsClean_(p.date, 10);
+  var image = newsClean_(p.image, 80), status = p.status === "draft" ? "draft" : "public";
+  if (!title) return { ok: false, reason: "タイトルを入力してください。" };
+  if (!body) return { ok: false, reason: "本文を入力してください。" };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, reason: "日付を選んでください。" };
+  // サイトの public/ にある画像のファイル名だけ（フォルダ指定や記号は不可）
+  if (image && !/^[\w\-]+\.(jpe?g|png|webp)$/i.test(image)) return { ok: false, reason: "写真のファイル名が不正です。" };
+  var now = Utilities.formatDate(new Date(nowMs_()), "Asia/Tokyo", "yyyy-MM-dd'T'HH:mm:ssXXX");
+  var d = newsRead_(), posts = d.posts.slice(), id = String(p.id || "").trim();
+  var post;
+  if (id) {
+    post = posts.filter(function (x) { return x.id === id; })[0];
+    if (!post) return { ok: false, reason: "記事が見つかりません。画面を更新してください。" };
+  } else {
+    // URL に使う id：日付＋短い乱数（日本語のタイトルはURLに入れない）
+    id = date.replace(/-/g, "") + "-" + Math.random().toString(36).slice(2, 6);
+    post = { id: id, createdAt: now };
+    posts.push(post);
+  }
+  post.date = date; post.title = title; post.body = body; post.image = image; post.status = status; post.updatedAt = now;
+  var out = { _comment: "お知らせ・ブログ（管理画面の「お知らせ」から編集）。status:draft はサイトに出さない。", posts: newsSort_(posts) };
+  ghCommit_("管理画面: お知らせを保存（" + title.slice(0, 20) + "）", [
+    { path: NEWS_PATH_, content: JSON.stringify(out, null, 2) + "\n" },
+  ]);
+  logHistory_("NEWS", staff, "お知らせを保存 " + title.slice(0, 30), null, { id: id, status: status });
+  return { ok: true, id: id };
+}
+function adminNewsDelete(id) {
+  var staff = requireStaff_();
+  if (!ghToken_()) return { ok: false, reason: "お知らせの削除には、GitHubの鍵（GITHUB_TOKEN）の設定が必要です。" };
+  var d = newsRead_(), before = d.posts.length;
+  var posts = d.posts.filter(function (x) { return x.id !== String(id || ""); });
+  if (posts.length === before) return { ok: false, reason: "記事が見つかりません。画面を更新してください。" };
+  var out = { _comment: "お知らせ・ブログ（管理画面の「お知らせ」から編集）。status:draft はサイトに出さない。", posts: newsSort_(posts) };
+  ghCommit_("管理画面: お知らせを削除", [{ path: NEWS_PATH_, content: JSON.stringify(out, null, 2) + "\n" }]);
+  logHistory_("NEWS", staff, "お知らせを削除", { id: id }, null);
+  return { ok: true };
+}
+/* お知らせの写真（ブラウザで縮小済みの dataURL）を public/news-*.jpg に登録し、ファイル名を返す。 */
+function adminNewsImageUpload(p) {
+  requireStaff_();
+  p = p || {};
+  if (!ghToken_()) return { ok: false, reason: "写真の登録には、GitHubの鍵（GITHUB_TOKEN）の設定が必要です。" };
+  var m = String(p.dataUrl || "").match(/^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+\/=]+)$/);
+  if (!m) return { ok: false, reason: "画像の形式が読み取れませんでした（JPEG・PNG・WebPに対応）。" };
+  if (m[2].length > 4 * 1024 * 1024) return { ok: false, reason: "画像が大きすぎます。" };
+  var file = "news-" + Utilities.formatDate(new Date(), "Asia/Tokyo", "yyyyMMddHHmmss") + "-" +
+    Math.random().toString(36).slice(2, 6) + "." + (m[1] === "jpeg" ? "jpg" : m[1]);
+  ghCommit_("管理画面: お知らせの写真を追加", [{ path: "public/" + file, content: m[2], encoding: "base64" }]);
+  return { ok: true, file: file };
+}
+
 /* ===================== セラピストの完全削除 =====================
    管理画面の「このセラピストを削除」から実行。元に戻せない。
    消すもの：
@@ -3333,7 +3413,7 @@ function feedbackSubmit_(b) {
    管理画面（Admin.html）は開いたときにこの版を確認し、Code.gs / lib.gs が古い・途中までしか
    貼られていない場合に警告を出す。※必ずファイルの「最後」に置く（途中で切れると無くなるので検出できる）。
    コードを変更したら Admin.html の APP_VERSION・lib.gs の LIB_VERSION と一緒に上げる。 */
-var CODE_VERSION = "2026-11-17-1";
+var CODE_VERSION = "2026-11-18-1";
 function adminVersion() {
   return { code: CODE_VERSION, lib: typeof LIB_VERSION === "undefined" ? "" : LIB_VERSION };
 }
