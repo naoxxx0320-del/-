@@ -6760,3 +6760,175 @@ body:has(.rec-page) .aichat-fab {
   color: #5b4320;
   text-decoration: none;
 }
+
+/* =========================================================
+   割引・キャンペーン（/offers/）
+   ========================================================= */
+.of-sec { margin-top: 14px; }
+.of-lead {
+  margin: 0 0 14px;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 14px;
+  line-height: 1.9;
+  color: #3a2d1c;
+}
+.of-card {
+  margin: 0 0 16px;
+  padding: 16px 16px 14px;
+  border: 1px solid #cdae62;
+  border-radius: 10px;
+  background: #fffdf8;
+}
+.of-head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: "badge amount" "name amount";
+  align-items: center;
+  gap: 2px 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(177, 142, 70, 0.35);
+}
+.of-badge {
+  grid-area: badge;
+  justify-self: start;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #2a0a0d, #4a1218);
+  color: #edd39b;
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+}
+.of-name {
+  grid-area: name;
+  margin: 4px 0 0;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 19px;
+  letter-spacing: 0.08em;
+  color: #5b4320;
+}
+.of-amount {
+  grid-area: amount;
+  margin: 0;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #8a1f2b;
+  white-space: nowrap;
+}
+.of-amount small { margin-left: 2px; font-size: 13px; }
+.of-dl { margin: 10px 0 0; }
+.of-dl > div {
+  display: grid;
+  grid-template-columns: 6.2em 1fr;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+.of-dl dt { color: #8a6a2c; }
+.of-dl dd { margin: 0; color: #3a2d1c; }
+.of-dl b { color: #8a1f2b; }
+.of-note, .of-note-plain {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: #6f5b48;
+}
+.of-note-plain { margin-top: 10px; font-size: 13.5px; color: #3a2d1c; }
+.of-rules {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 13.5px;
+  line-height: 1.85;
+  color: #3a2d1c;
+}
+.of-rules li + li { margin-top: 6px; }
+.of-updated { margin: 12px 0 0; font-size: 12px; color: #7a6a52; text-align: right; }
+/* 料金ページ：総額の例・含まれるもの */
+.sys-total-parts {
+  display: block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: #7a6a52;
+}
+.sys-incl {
+  margin: 10px 0 0;
+  padding-left: 1.2em;
+  font-size: 13.5px;
+  line-height: 1.85;
+  color: #3a2d1c;
+}
+/* アクセス：錦糸町から・深夜のご来店 */
+.acc-text {
+  margin: 0;
+  padding: 4px 4px 2px;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 13.5px;
+  line-height: 1.95;
+  color: #3a2d1c;
+}
+.acc-text b { color: #5b4320; }
+
+/* =========================================================
+   お知らせ・ブログ（/news/・記事・トップの最新3件）
+   ========================================================= */
+.nw-sec { margin-top: 14px; }
+.nw-empty { margin: 0; font-size: 14px; color: #6f5b48; }
+.nw-list { list-style: none; margin: 0; padding: 0; }
+.nw-list li + li { border-top: 1px solid rgba(177, 142, 70, 0.3); }
+.nw-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 2px;
+  text-decoration: none;
+  color: inherit;
+}
+.nw-thumb {
+  flex: none;
+  width: 92px;
+  height: 69px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.nw-txt { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.nw-date { font-size: 12px; letter-spacing: 0.06em; color: #8a6a2c; }
+.nw-title {
+  font-family: var(--font-serif-jp), serif;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.55;
+  color: #5b4320;
+}
+.nw-ex { font-size: 12.5px; line-height: 1.7; color: #6f5b48; }
+.nw-article { margin-top: 14px; }
+.nw-h1 {
+  margin: 6px 0 14px;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 20px;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+  color: #5b4320;
+}
+.nw-photo { display: block; width: 100%; height: auto; margin: 0 0 14px; border-radius: 6px; }
+.nw-body p {
+  margin: 0 0 14px;
+  font-family: var(--font-serif-jp), serif;
+  font-size: 14.5px;
+  line-height: 2;
+  color: #3a2d1c;
+}
+.nw-body a { color: #8a1f2b; text-decoration: underline; }
+/* トップ：最新のお知らせ */
+.home-news {
+  position: relative;
+  z-index: 2;
+  margin: 4px 18px 8px;
+  padding: 4px 14px;
+  border: 1px solid #cdae62;
+  border-radius: 10px;
+  background: rgba(255, 253, 248, 0.92);
+}
+.home-news .nw-item { padding: 10px 0; }

@@ -2,6 +2,7 @@
 // /secret・抽選関連・会員証（noindex のページ）は載せない。
 import { abs } from "./_lib/site";
 import roster from "../data/roster.json";
+import { publicPosts } from "./_lib/news";
 
 export const dynamic = "force-static";
 
@@ -17,6 +18,8 @@ export default function sitemap() {
     ["schedule/", 0.9],
     ["therapist/", 0.9],
     ["system/", 0.8],
+    ["offers/", 0.7],
+    ["news/", 0.6],
     ["access/", 0.7],
     ["room/", 0.7],
     ["reserve/", 0.8],
@@ -49,5 +52,13 @@ export default function sitemap() {
     priority: 0.6,
   }));
 
-  return [...staticEntries, ...therapistEntries];
+  // お知らせの記事：記事ごとの実際の更新日時（管理画面で保存した日時）を lastModified に使う
+  const newsEntries = publicPosts().map((p) => ({
+    url: abs(`news/${p.id}/`),
+    lastModified: p.updatedAt || p.date,
+    changeFrequency: "monthly",
+    priority: 0.5,
+  }));
+
+  return [...staticEntries, ...therapistEntries, ...newsEntries];
 }

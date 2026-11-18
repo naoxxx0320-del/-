@@ -92,6 +92,33 @@ export default function Access() {
             </ul>
           </div>
 
+          {/* ---- 錦糸町から（オーナー確認：徒歩約15分。電車はJR総武線で1駅） ---- */}
+          <div className="acc-box" id="kinshicho">
+            <div className="acc-box-head">
+              <GoldDia />
+              錦糸町からお越しの方へ
+            </div>
+            <p className="acc-text">
+              当店は<b>錦糸町駅から徒歩約15分</b>です。
+              電車の場合は<b>JR総武線で錦糸町駅から亀戸駅まで1駅</b>。
+              {SITE.station}{SITE.stationExit}を出て亀戸十三間通りを徒歩{SITE.walkMinutes}分、
+              待ち合わせ場所の「なか卯 亀戸店」に着きましたらお電話ください。
+            </p>
+          </div>
+
+          {/* ---- 深夜・お仕事帰りのご来店 ---- */}
+          <div className="acc-box" id="late-night">
+            <div className="acc-box-head">
+              <GoldDia />
+              深夜・お仕事帰りのご来店
+            </div>
+            <p className="acc-text">
+              営業時間は{SITE.hoursBusiness}です。お電話の受付は{SITE.hoursPhone}、
+              WEB予約は24時間ご予約リクエストを受け付けています（当店から確認のご連絡をした時点で確定です）。
+              深夜のご来店は出勤情報で各セラピストの終了時刻をご確認ください。
+            </p>
+          </div>
+
           {/* ---- 店舗情報 ---- */}
           <div className="acc-box">
             <div className="acc-box-head">

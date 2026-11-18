@@ -5,6 +5,7 @@ import { SITE } from "../_lib/site";
 import Breadcrumbs from "../_components/Breadcrumbs";
 import { pageMetadata } from "../_lib/seo";
 import price from "../../data/price.json";
+import { findOffer } from "../_lib/offers";
 
 export const metadata = pageMetadata("system");
 
@@ -18,6 +19,44 @@ const FEES = price.fees;
 const FEE_NOTES = price.feeNotes;
 const OPTIONS = price.options;
 const OPTION_NOTES = price.optionNotes;
+
+// お支払い総額の例（price.json と offers.json から計算。金額を変えれば自動で変わる）
+const C = (t) => price.courses.find((c) => c.title === t);
+const F = (k) => (price.fees.find((f) => f[0] === k) || [])[1] || 0;
+function totalExamples() {
+  const rows = [];
+  const add = (label, parts) => {
+    if (parts.some((p) => p.v == null)) return;
+    rows.push({ label, parts, total: parts.reduce((n, p) => n + p.v, 0) });
+  };
+  add("90分コース（指名なし）", [{ k: "90分コース", v: C("90分コース")?.price }]);
+  add("90分コース＋写真指名", [{ k: "90分コース", v: C("90分コース")?.price }, { k: "写真指名", v: F("写真指名") }]);
+  add("120分コース＋本指名", [{ k: "120分コース", v: C("120分コース")?.price }, { k: "本指名", v: F("本指名") }]);
+  add("150分コース（本指名のみ）", [{ k: "150分コース", v: C("150分コース")?.price }, { k: "本指名", v: F("本指名") }]);
+  const shinki = findOffer("shinki");
+  if (shinki)
+    add(`はじめての方：90分コース＋写真指名（${shinki.name}）`, [
+      { k: "90分コース", v: C("90分コース")?.price },
+      { k: "写真指名", v: F("写真指名") },
+      { k: shinki.name, v: -shinki.amount },
+    ]);
+  const hei = findOffer("heijitsu");
+  if (hei)
+    add(`平日昼：120分コース（${hei.name}）`, [
+      { k: "120分コース", v: C("120分コース")?.price },
+      { k: hei.name, v: -hei.amount },
+    ]);
+  return rows;
+}
+const EXAMPLES = totalExamples();
+
+// 料金に含まれるもの／別料金のもの（料金表と同じ内容だけ。確認できていない設備・サービスは書かない）
+const INCLUDED = ["入会金（無料）", "ホットオイル・リンパトリートメント（コースに含まれます）"];
+const EXTRA = [
+  `指名料：写真指名・本指名 ${F("写真指名").toLocaleString("ja-JP")}円／姫指名 ${F("姫指名").toLocaleString("ja-JP")}円`,
+  `オプション：${price.options.map(([k, v]) => `${k} ${v.toLocaleString("ja-JP")}円`).join("／")}`,
+  `${price.extension.title}：${price.extension.price.toLocaleString("ja-JP")}円`,
+];
 
 // 特定商取引法に基づく表示（法定表示）
 const TOKUSHO = [
@@ -136,6 +175,51 @@ export default function System() {
           </ul>
           <a className="sys-reserve-link" href="../reserve/">
             料金を確認してWEB予約へ進む →
+          </a>
+        </section>
+
+        {/* ---- お支払い総額の例・含まれるもの／別料金 ---- */}
+        <section className="rec-sec sys-fees" aria-labelledby="sys-total-h">
+          <div className="rec-sec-h">
+            <span className="rec-sec-en">Total</span>
+            <h2 className="rec-sec-jp" id="sys-total-h">お支払い総額の例</h2>
+          </div>
+          <dl className="sys-fee-list sys-total-list">
+            {EXAMPLES.map((r) => (
+              <div className="sys-fee-row" key={r.label}>
+                <dt>
+                  {r.label}
+                  <small className="sys-total-parts">
+                    {r.parts.map((p) => `${p.k} ${p.v < 0 ? "−" : ""}${yen(Math.abs(p.v))}`).join("＋")}
+                  </small>
+                </dt>
+                <dd>{yen(r.total)}</dd>
+              </div>
+            ))}
+          </dl>
+          <ul className="sys-fees-notes">
+            <li>※{price.taxNote}</li>
+            <li>※割引はご予約時のお申し出が必要で、併用はできません。対象と条件は<a href="../offers/">割引・キャンペーン</a>をご覧ください。</li>
+          </ul>
+
+          <div className="sys-fee-group">
+            <div className="sys-fee-gh">料金に含まれるもの</div>
+            <ul className="sys-incl">
+              {INCLUDED.map((x) => (
+                <li key={x}>{x}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="sys-fee-group">
+            <div className="sys-fee-gh">別料金のもの</div>
+            <ul className="sys-incl">
+              {EXTRA.map((x) => (
+                <li key={x}>{x}</li>
+              ))}
+            </ul>
+          </div>
+          <a className="sys-reserve-link" href="../offers/">
+            割引・キャンペーンを見る →
           </a>
         </section>
 

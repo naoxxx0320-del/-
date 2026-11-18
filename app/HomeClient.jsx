@@ -12,6 +12,9 @@ import links from "../data/links.json";
 import banners from "../data/banners.json";
 import { byRank } from "./_components/rank";
 import RelaxiTimeline from "./_components/RelaxiTimeline";
+import { publicPosts, dateLabel } from "./_lib/news";
+import price from "../data/price.json";
+import offersData from "../data/offers.json";
 import { HAS_TODAY, useTodayKey, keyLabel, todayList, todayCards, SCHEDULE_UPDATED, SCHEDULE_UPDATED_AT, SCHEDULE_AREA } from "./_components/today";
 
 /* ---- data ---------------------------------------------------------- */
@@ -50,7 +53,15 @@ const LEGACY_THERAPISTS = rosterData.filter((t) => !t.absent);
 const NAME2FULL = Object.fromEntries(
   rosterData.filter((t) => t.nameFull).map((t) => [t.name, t.nameFull])
 );
-const NEW_FACE_MAX = 4; // トップの NEW FACE に並べる最大人数（超えたら「新人をすべて見る」）
+const NEW_FACE_MAX = 4;
+const NEWS = publicPosts().slice(0, 3); // トップに出すお知らせ（最新3件）
+// 店舗紹介に出す新規割（割引データと同じ値。終了日が入っていれば出さない）
+const SHINKI = (offersData.items || []).find((o) => o.id === "shinki" && !o.until) || null;
+// 店舗紹介に出す90分の料金（料金データと同じ値）
+const INTRO_PRICE90 = (() => {
+  const c = (price.courses || []).find((x) => x.title === "90分コース");
+  return c ? c.price.toLocaleString("ja-JP") + "円" : "";
+})(); // トップの NEW FACE に並べる最大人数（超えたら「新人をすべて見る」）
 
 // ステータス表示の色分けクラス
 const STATUS_CLASS = {
@@ -239,10 +250,17 @@ export default function HomeClient() {
             <span className="hi-main">AROMA DIAMOND</span>
             <span className="hi-ja">（アロマダイヤモンド）</span>
           </h1>
+          {/* 店舗紹介：検索した人が知りたい事実（場所・個室・営業時間・料金・割引・錦糸町から）を最初に短く。
+              数字は共通の設定・料金データから表示する */}
           <p className="home-intro-p">
-            AROMA DIAMONDは、東京都江東区亀戸に{SITE.openLabel ? "オープンする" : "ある"}メンズエステ・リラクゼーションサロンです。
-            {SITE.station}{SITE.stationExit}から徒歩{SITE.walkMinutes}分。完全個室の落ち着いた空間で、アロマオイルを使用したトリートメントをご提供します。
-            料金やセラピスト情報をご確認のうえ、WEB・LINE・お電話からお問い合わせください。
+            AROMA DIAMOND（アロマダイヤモンド）は、{SITE.station}{SITE.stationExit}から徒歩{SITE.walkMinutes}分のメンズエステです。
+            1室だけの完全個室で、アロマオイルを使ったトリートメントをご案内しています。
+            営業時間は{SITE.hoursBusiness}。錦糸町駅からも徒歩約15分（JR総武線で1駅）です。
+          </p>
+          <p className="home-intro-p">
+            料金は90分コース{INTRO_PRICE90}（税込）など。
+            {SHINKI && <>初めての方は新規割で{SHINKI.amount.toLocaleString("ja-JP")}円OFFになります。</>}
+            出勤情報をご確認のうえ、WEB・LINE・お電話からご予約ください。
           </p>
           <p className="home-intro-open">{SITE.openLabel ? `${SITE.openLabel}予定` : SITE.grandOpenLabel}</p>
           <nav className="home-intro-links" aria-label="主要ページ">
@@ -250,6 +268,8 @@ export default function HomeClient() {
             <a href="therapist/">セラピスト紹介</a>
             <a href="schedule/">出勤情報</a>
             <a href="access/">アクセス</a>
+            <a href="room/">ルーム紹介</a>
+            <a href="offers/">割引・キャンペーン</a>
             <a href="faq/">よくある質問</a>
             <a href="reserve/">WEB予約</a>
           </nav>
@@ -436,6 +456,31 @@ export default function HomeClient() {
         <a className="more" href="room/">
           ＞ ルーム紹介を見る ＜
         </a>
+
+        {/* ---------- お知らせ（最新3件。管理画面の「お知らせ」から投稿） ---------- */}
+        {NEWS.length > 0 && (
+          <>
+            <div className="section-head">
+              <div className="sh-en">News</div>
+              <h2 className="sh-jp">お知らせ</h2>
+            </div>
+            <ul className="nw-list home-news">
+              {NEWS.map((p) => (
+                <li key={p.id}>
+                  <a className="nw-item" href={`news/${encodeURIComponent(p.id)}/`}>
+                    <span className="nw-txt">
+                      <time className="nw-date" dateTime={p.date}>{dateLabel(p.date)}</time>
+                      <span className="nw-title">{p.title}</span>
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <a className="more" href="news/">
+              ＞ お知らせをすべて見る ＜
+            </a>
+          </>
+        )}
 
         {/* ---------- RESERVATION ---------- */}
         <div className="section-head">

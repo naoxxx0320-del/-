@@ -131,6 +131,40 @@ if (rc != null) {
   }
 }
 
+// ---- news.json（お知らせ・ブログ）：id の重複・日付・写真ファイル ----
+const newsData = load("news.json");
+if (newsData != null) {
+  const posts = Array.isArray(newsData.posts) ? newsData.posts : null;
+  if (!posts) err("news.json: posts が配列ではありません");
+  else {
+    const seen = new Set();
+    posts.forEach((p, i) => {
+      const nm = p && p.title ? p.title : `posts[${i}]`;
+      if (!p || !p.id || !/^[\w-]+$/.test(p.id)) err(`news.json: 「${nm}」の id が不正です（英数字とハイフンのみ）`);
+      else if (seen.has(p.id)) err(`news.json: id「${p.id}」が重複しています`);
+      else seen.add(p.id);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(p && p.date))) err(`news.json: 「${nm}」の日付が不正です`);
+      if (p && p.image && !existsSync(join(ROOT, "public", p.image))) warn(`news.json: 「${nm}」の写真 ${p.image} が public/ にありません`);
+    });
+    stats.push(["お知らせ", `${posts.filter((p) => p && p.status !== "draft").length}件（公開中）`]);
+  }
+}
+
+// ---- offers.json（割引・キャンペーン）：金額・日付・ご利用例のコースが正しいか ----
+const offersData = load("offers.json", { required: true });
+if (offersData != null) {
+  const titles = new Set(((load("price.json") || {}).courses || []).map((c) => c.title));
+  const ymd = /^\d{4}-\d{2}-\d{2}$/;
+  (offersData.items || []).forEach((o, i) => {
+    const nm = o && o.name ? o.name : `items[${i}]`;
+    if (!o || !o.id || !o.name) err(`offers.json: items[${i}] に id・name がありません`);
+    if (typeof o.amount !== "number" || !(o.amount > 0)) err(`offers.json: 「${nm}」の金額が不正です`);
+    if (o.since && !ymd.test(o.since)) err(`offers.json: 「${nm}」の since は YYYY-MM-DD で入力してください`);
+    if (o.until && !ymd.test(o.until)) err(`offers.json: 「${nm}」の until は YYYY-MM-DD で入力してください`);
+    if (o.exampleCourse && !titles.has(o.exampleCourse)) err(`offers.json: 「${nm}」のご利用例のコース「${o.exampleCourse}」が料金表にありません`);
+  });
+}
+
 // ---- price.json（料金ページ・トップの料金まとめ）と予約フォームのコース料金が一致するか ----
 // 食い違ったまま公開すると、ページによって金額が違って見えるためデプロイを止める。
 const price = load("price.json", { required: true });
