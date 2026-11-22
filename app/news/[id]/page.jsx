@@ -24,7 +24,8 @@ export function generateMetadata({ params }) {
   return buildMetadata({
     path: `news/${p.id}/`,
     title: `${p.title}｜お知らせ｜AROMA DIAMOND 亀戸`,
-    description: excerpt(p.body, 110),
+    // 記事ごとの説明文（description）があればそれを使い、無ければ本文の冒頭から作る
+    description: p.description || excerpt(p.body, 110),
     image: p.image || undefined,
   });
 }
@@ -70,7 +71,12 @@ export default function NewsPost({ params }) {
             <img className="nw-photo" src={photoSrc(p.image, "../../")} alt={p.title} decoding="async" />
           )}
           <div className="nw-body">
-            {blocks.map((lines, i) => (
+            {blocks.map((lines, i) =>
+              lines.heading ? (
+                <h2 className="nw-h2" key={i}>
+                  {lines.map((parts) => parts.map((x) => x.text).join("")).join(" ")}
+                </h2>
+              ) : (
               <p key={i}>
                 {lines.map((parts, j) => (
                   <span key={j}>
@@ -87,7 +93,8 @@ export default function NewsPost({ params }) {
                   </span>
                 ))}
               </p>
-            ))}
+              )
+            )}
           </div>
           <div className="hp-links">
             <a className="hp-link" href="../">お知らせ一覧</a>
