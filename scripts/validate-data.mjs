@@ -145,6 +145,13 @@ if (newsData != null) {
       else seen.add(p.id);
       if (!/^\d{4}-\d{2}-\d{2}$/.test(String(p && p.date))) err(`news.json: 「${nm}」の日付が不正です`);
       if (p && p.image && !existsSync(join(ROOT, "public", p.image))) warn(`news.json: 「${nm}」の写真 ${p.image} が public/ にありません`);
+      // Googleビジネスプロフィール用の文章（gbp）：GBPの上限1500字。電話番号を入れた投稿はGoogleに断られるため入れない
+      if (p && p.gbp != null) {
+        const g = String(p.gbp);
+        if (!g.trim()) warn(`news.json: 「${nm}」の gbp（Google投稿文）が空です`);
+        if (g.length > 1500) err(`news.json: 「${nm}」の gbp が1500字を超えています（${g.length}字）`);
+        if (/(^|\D)0\d{1,4}[-‐－ー]\d{1,4}[-‐－ー]\d{3,4}(\D|$)|(^|[^\d,，])0\d{9,10}(\D|$)/.test(g)) err(`news.json: 「${nm}」の gbp に電話番号のような数字があります（Google投稿では使えません）`);
+      }
     });
     stats.push(["お知らせ", `${posts.filter((p) => p && p.status !== "draft").length}件（公開中）`]);
   }
