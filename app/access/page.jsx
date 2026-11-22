@@ -22,7 +22,7 @@ const INFO = [
   ["営業時間", SITE.hoursBusiness],
   ["電話受付", SITE.hoursPhone],
   ["電話番号", SITE.telephoneDisplay],
-  ["お支払い", "現金 / クレジットカード"],
+  ["お支払い", "現金 / クレジットカード / PayPay"],
   ["定休日", "年中無休"],
 ];
 
