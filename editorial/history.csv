@@ -5,4 +5,4 @@ date_jst,article_id,title,reader_question,topic,sources,draft_path,published_url
 2026-11-18,20261118-2-first,はじめての方へ｜ご予約からご来店までの流れ,初めてでも大丈夫？,予約〜来店の流れ,/first/;/flow/,data/news.json,https://aroma-daiamond.com/news/20261118-2-first/,published,none
 2026-11-18,20261118-1-kinshicho,錦糸町からお越しのお客様へ｜アクセスのご案内,錦糸町から行ける？,アクセス,オーナー確認（徒歩約15分）;/access/,data/news.json,https://aroma-daiamond.com/news/20261118-1-kinshicho/,published,none
 2026-11-20,20261120-hinata,本日初出勤｜新人セラピスト「ひなた」さん,新しいセラピストは？,新人入店,オーナー提供の写真・情報,data/news.json,https://aroma-daiamond.com/news/20261120-hinata/,published,none
-2026-11-22,20261122-price-total,予約前に知っておきたい、料金の総額の見方,実際に払う総額はいくら？,料金,price.json;offers.json;/terms/#cancel;/flow/,editorial/drafts/2026-11-22-price-total.md;data/news.json(draft),,needs_review,draft
+2026-11-22,20261122-price-total,予約前に知っておきたい、料金の総額の見方,実際に払う総額はいくら？,料金,price.json;offers.json;/terms/#cancel;/flow/,editorial/drafts/2026-11-22-price-total.md;data/news.json,https://aroma-daiamond.com/news/20261122-price-total/,published,draft
