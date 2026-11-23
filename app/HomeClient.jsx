@@ -23,6 +23,12 @@ import { HAS_TODAY, useTodayKey, keyLabel, todayList, todayCards, SCHEDULE_UPDAT
 // すべて実バナー（3:2に正規化済み。余白は各バナーの背景色に馴染ませて切れなし）。
 const SLIDES = [
   {
+    // 順位は日々変わるため、日付を画像と alt に入れている。順位が変わったら外すこと。
+    t: "ランキング\n第1位",
+    img: "slide-ranking1.jpg",
+    alt: "全国メンズエステランキング 亀戸・小岩エリア 総合エステランキング 第1位獲得（2026年11月23日時点）｜AROMA DIAMOND アロマダイヤモンド 亀戸",
+  },
+  {
     t: "新規・新人\n特別割引",
     img: "slide-shinki.jpg",
     alt: "新規・新人特別割引 2000円OFF｜AROMA DIAMOND アロマダイヤモンド 亀戸",
