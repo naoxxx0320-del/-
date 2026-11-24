@@ -21,6 +21,8 @@
  *   BOOKING_API_URL            … 予約管理API（公開デプロイ）の /exec URL（必須）
  *   SITE_URL（任意）           … セラピスト写真の置き場所。既定 https://aroma-daiamond.com/
  *
+ * ■ 自動応答：「予約」「メニュー」「料金」「出勤」「アクセス」「電話」などの短い呼びかけにだけ反応する。
+ *   それ以外の会話文（「かしこまりました」「少し遅れます」など）には返信せず、スタッフがチャットで対応する。
  * ■ 画面：各ステップをカード（Flex Message）と大きいボタンで表示（STEP 1〜6）。
  *   日付 → セラピスト（写真カード）→ 開始時間（空いている時間だけ・30分刻み）→ コース（入るものだけ）
  *   → お名前 → お電話 → 確認 → 確定。各ステップに「戻る」「最初から」「やめる」。
@@ -163,7 +165,8 @@ function clearState(uid) {
 function handleText(uid, text, replyToken) {
   const st = getState(uid);
 
-  if (/^(キャンセル|やめる|やめます|中止)$/.test(text)) {
+  // 予約の入力中だけ「やめる」として扱う（予約済みのキャンセルの連絡はスタッフが対応）
+  if (st && /^(キャンセル|やめる|やめます|中止)$/.test(text)) {
     clearState(uid);
     return reply(replyToken, [cancelledMessage()]);
   }
@@ -197,16 +200,37 @@ function handleText(uid, text, replyToken) {
     if (t) return pickTime_(uid, st, t, replyToken);
   }
 
-  // キーワード自動応答
-  if (/予約|よやく/.test(text)) return startBooking(uid, replyToken);
-  if (/料金|コース|値段|price/i.test(text)) return reply(replyToken, [priceMessage()]);
-  if (/出勤|本日|今日|だれ|誰/.test(text)) return reply(replyToken, todayMessages());
-  if (/アクセス|場所|住所|どこ/.test(text)) return reply(replyToken, [accessMessage()]);
-  if (/電話|でんわ|tel/i.test(text)) return reply(replyToken, [telInfoMessage()]);
+  // キーワード自動応答：短い「呼びかけ」のときだけ（会話の文には反応しない）
+  const intent = textIntent_(text);
+  if (intent === "book") return startBooking(uid, replyToken);
+  if (intent === "menu") return reply(replyToken, [menuMessage()]);
+  if (intent === "price") return reply(replyToken, [priceMessage()]);
+  if (intent === "today") return reply(replyToken, todayMessages());
+  if (intent === "access") return reply(replyToken, [accessMessage()]);
+  if (intent === "tel") return reply(replyToken, [telInfoMessage()]);
 
   // 予約の途中なら、今のステップをもう一度表示
   if (st && st.step) return reply(replyToken, stepMessages_(uid, st));
-  reply(replyToken, [menuMessage()]);
+  // それ以外の文（「かしこまりました」「少し遅れます」など）には自動で返信しない。
+  // お店のスタッフが LINE公式アカウントのチャットから返信する。メニューは「メニュー」と送ると表示。
+}
+
+/* 文字のメッセージが、ボットへの「呼びかけ」かどうかを判定する。
+   ・お客様とスタッフのやり取り（「かしこまりました」「今日少し遅れます」「予約の変更をしたい」など）では
+     ボットが割り込まないよう、短い決まった言い方だけに反応する。
+   ・戻り値：book / menu / price / today / access / tel / ""（反応しない） */
+function textIntent_(text) {
+  const t = String(text || "").replace(/[\s　]+/g, "").replace(/[!！?？。、.,〜~]+$/g, "");
+  if (!t || t.length > 15) return "";
+  // 変更・キャンセル・遅刻などの連絡はスタッフが対応する
+  if (/変更|キャンセル|取り消|取消|遅れ|遅刻|間に合|到着|着きました|着いた|向かって/.test(t)) return "";
+  if (/^(メニュー|menu|使い方|ヘルプ|help)$/i.test(t)) return "menu";
+  if (/^(予約|よやく)(したい(です)?|する|します|希望|をお願いします|お願いします|お願い|できますか|可能ですか|したいのですが)?$/.test(t)) return "book";
+  if (/^(料金|料金表|料金・コース|コース|値段|価格|price)(を教えてください|は|はいくら|はいくらですか|が知りたい)?$/i.test(t)) return "price";
+  if (/^(本日の出勤|今日の出勤|出勤|出勤情報|出勤表)(を教えてください|は)?$/.test(t)) return "today";
+  if (/^(アクセス|住所|場所|行き方)(を教えてください|は|はどこですか)?$/.test(t)) return "access";
+  if (/^(電話|電話番号|tel)(を教えてください|は)?$/i.test(t)) return "tel";
+  return "";
 }
 
 /* =========================================================
@@ -707,7 +731,7 @@ function kv_(k, v) {
 }
 
 function welcomeMessage() {
-  return menuMessage("AROMA DIAMOND（亀戸）へようこそ。\nご予約・本日の出勤・料金は下のボタンからどうぞ。");
+  return menuMessage("AROMA DIAMOND（亀戸）へようこそ。\nご予約・本日の出勤・料金は下のボタンからどうぞ。\nこのメニューは「メニュー」と送るといつでも表示できます。");
 }
 function menuMessage(lead) {
   return card_("AROMA DIAMOND 亀戸", null, [
