@@ -305,4 +305,37 @@ t("速さ：次のステップではシート・予約APIを読み直さない�
   assert.equal(b.calls.avail, s0.avail + 2); // 予約後は空き状況を取り直す（その日＋翌日）
 });
 
+t("会話の文には自動で返信しない（スタッフとのやり取りに割り込まない）", () => {
+  const b = boot();
+  for (const msg of ["かしこまりました", "少し遅れるかもしれません", "今日少し遅れます", "予約ありがとうございます",
+    "予約の変更をしたいです", "キャンセルでお願いします", "キャンセル", "着きました", "電話します", "よろしくお願いします", "はい"]) {
+    const before = b.replies.length;
+    b.say(msg);
+    assert.equal(b.replies.length, before, "返信してはいけない: " + msg);
+  }
+  assert.equal(b.state(), null);
+});
+
+t("短い呼びかけには今までどおり反応する", () => {
+  const b = boot();
+  assert.match(texts(b.say("メニュー")), /\[📅 予約する\]/);
+  assert.match(texts(b.say("料金")), /料金・コース/);
+  assert.match(texts(b.say("本日の出勤")), /花恋|みお/);
+  b.say("予約したいです");
+  assert.equal(b.state() && b.state().step, "date");
+  b.say("やめる");
+  assert.equal(b.state(), null);
+  b.say("予約！");
+  assert.equal(b.state() && b.state().step, "date");
+});
+
+t("予約の入力中は、関係ない文でも今のステップを出し直す", () => {
+  const b = boot();
+  b.pb("a=start");
+  b.pb("a=date&v=2026%2F10%2F9");
+  const before = b.replies.length;
+  b.say("えーと");
+  assert.equal(b.replies.length, before + 1);
+});
+
 console.log(`\n✅ 全 ${passed} 件 パス`);
