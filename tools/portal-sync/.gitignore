@@ -1,0 +1,4 @@
+config.local.json
+out/
+node_modules/
+.profile/

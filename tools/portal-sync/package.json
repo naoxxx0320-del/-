@@ -1,0 +1,11 @@
+{
+  "name": "portal-sync",
+  "private": true,
+  "type": "module",
+  "description": "AROMA DIAMOND：今の仕組み（出勤スプレッドシート等）の内容を、掲載ポータルの店舗管理画面へ確認つきで反映するツール",
+  "scripts": {
+    "check": "node src/cli.mjs check",
+    "test": "node --test test/phase1.test.mjs"
+  },
+  "engines": { "node": ">=20" }
+}
