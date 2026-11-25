@@ -79,6 +79,16 @@ async function check() {
 /** 画面が見えるブラウザを開く（ログイン状態は利用者のフォルダに保存。Git に入れない） */
 async function withBrowser(config, fn) {
   const { chromium } = await import("playwright");
+  // すでに開いている作業用ブラウザ（node src/browser.mjs で起動。ログイン済み）があればそれを使う。
+  // ブラウザを閉じるとログインが切れるサイト（全国メンズエステランキングなど）でも、開いている間は続けて使える。
+  const cdp = config.browserCdpUrl || "http://127.0.0.1:9333";
+  let shared = null;
+  try { shared = await chromium.connectOverCDP(cdp, { timeout: 3000 }); } catch { shared = null; }
+  if (shared) {
+    const ctx = shared.contexts()[0];
+    const page = await ctx.newPage();
+    try { return await fn(page); } finally { await page.close().catch(() => {}); await shared.close().catch(() => {}); }
+  }
   const profile = resolve(config.browserProfile || join(HERE, "..", "..", "..", ".profile"));
   mkdirSync(profile, { recursive: true, mode: 0o700 });
   const ctx = await chromium.launchPersistentContext(profile, { channel: "chrome", headless: false, viewport: null });
