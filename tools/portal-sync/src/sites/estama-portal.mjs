@@ -82,6 +82,15 @@ export async function applyChanges(page, changes, log = () => {}) {
       const e = page.locator(`select[name="${base}[select][select_end]"]`);
       const off = page.locator(`input[name="${base}[work_status]"]`);
       if ((await s.count()) !== 1 || (await e.count()) !== 1) throw new Error(`入力欄が見つかりません（${c.date} ${c.name}）。保存せずに止めました`);
+      // 2週目は「次の1週間」で表示を切り替えないと隠れている（ページ移動はしない。表示の切り替えだけ）
+      if (!(await s.isVisible())) {
+        for (const sel of [".js_schedule_switch.second_week_btn", ".js_schedule_switch.first_week_btn"]) {
+          const sw = page.locator(sel).first();
+          if ((await sw.count()) && (await sw.isVisible())) { await sw.click(); await pause(page, 700); }
+          if (await s.isVisible()) break;
+        }
+        if (!(await s.isVisible())) throw new Error(`入力欄が表示されません（${c.date} ${c.name}）。保存せずに止めました`);
+      }
       if (c.want.work) {
         const sv = toValue(c.want.start), ev = toValue(c.want.end, { isEnd: true });
         const opts = await s.evaluate((el) => [...el.options].map((o) => o.value));
