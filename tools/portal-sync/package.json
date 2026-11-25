@@ -5,7 +5,14 @@
   "description": "AROMA DIAMOND：今の仕組み（出勤スプレッドシート等）の内容を、掲載ポータルの店舗管理画面へ確認つきで反映するツール",
   "scripts": {
     "check": "node src/cli.mjs check",
-    "test": "node --test test/phase1.test.mjs"
+    "diff:ekichika": "node src/cli.mjs diff ekichika",
+    "apply:ekichika": "node src/cli.mjs apply ekichika",
+    "test": "node --test test/phase1.test.mjs test/phase2.test.mjs"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "playwright": "1.49.1"
+  }
 }
