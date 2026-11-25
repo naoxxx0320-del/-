@@ -1,0 +1,12 @@
+{
+  "_説明": "このファイルを config.local.json という名前で写し、値を入れてください。config.local.json は Git に入れません（.gitignore 済み）。パスワードはここに書かないでください。",
+  "scheduleCsvUrl": "出勤情報シートの公開CSVのURL（GitHub の Variables の SCHEDULE_CSV_URL と同じもの）",
+  "therapistsCsvUrl": "本日の出勤（セラピスト）シートの公開CSVのURL（THERAPISTS_CSV_URL と同じもの）",
+  "sites": {
+    "ekichika": {
+      "_説明": "people：駅ちかに登録されているセラピストの名前（フェーズ2で管理画面から自動で読むようになるまでの仮の設定）。nameMap：サイトの表示名と駅ちかの名前が違う人だけ書く（例 {\"ひなた\": \"つばさ\"}）",
+      "people": ["さら", "つばさ", "かのん"],
+      "nameMap": { "ひなた": "つばさ" }
+    }
+  }
+}
