@@ -12,13 +12,13 @@ test("値：09:30→9:30、26:00→26:00、退勤の閉店（29:00）→99:99（
   assert.equal(fromValue(""), "");
 });
 
-test("14日分。閉店までの出勤（21:00〜翌5:00）も入る。9:30より前は見送り", () => {
+test("14日分。閉店までの出勤（21:00〜翌5:00）は退勤28:30で入る。9:30より前は見送り", () => {
   const shifts = [
     { date: "2026-12-03", name: "ひなた", start: 1260, end: 1740 },
     { date: "2026-11-26", name: "さら", start: 540, end: 1080 },
   ];
   const plan = planEstama(shifts, "2026-11-25", { people: ["ひなた", "さら"] });
   assert.equal(plan.dates.length, 14);
-  assert.deepEqual(plan.rows.find((r) => r.name === "ひなた").cells.find((c) => c.date === "2026-12-03"), { date: "2026-12-03", work: true, start: "21:00", end: "29:00" });
+  assert.deepEqual(plan.rows.find((r) => r.name === "ひなた").cells.find((c) => c.date === "2026-12-03"), { date: "2026-12-03", work: true, start: "21:00", end: "28:30" }); // エステ魂の最後の選択肢にそろえる
   assert.ok(plan.skipped.some((s) => s.name === "さら"));
 });

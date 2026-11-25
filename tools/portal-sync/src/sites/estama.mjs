@@ -5,12 +5,18 @@
 //  ・保存はページの保存ボタン（#SendWorkSchedule）で、まとめて送られる。
 import { planForSite } from "../plan.mjs";
 
-// 閉店（翌5:00＝29:00）までの出勤は、退勤を「未定(LASTまで)」にする（エステ魂の退勤の選択肢は 28:30 まで）
+// 閉店（翌5:00＝29:00）までの出勤は、退勤を 28:30（エステ魂で選べる最後の時刻）で入れる
 export const SITE = { id: "estama", name: "エステ魂", days: 14, startMin: 9 * 60 + 30, startMax: 28 * 60 + 30, endMin: 9 * 60 + 30, endMax: 29 * 60 };
 export const LAST = "29:00";
 
+// エステ魂の退勤の最後の選択肢。「未定(LASTまで)」を選んでも、保存後はこの時刻（翌4:30）として表示される。
+export const END_CAP = "28:30";
+
 export function planEstama(shifts, today, opts = {}) {
-  return planForSite(SITE, shifts, today, opts);
+  const plan = planForSite(SITE, shifts, today, opts);
+  // 翌4:30より遅い退勤（閉店の翌5:00まで）は、エステ魂で表せる最後の時刻（28:30）にそろえる
+  for (const r of plan.rows) for (const c of r.cells) if (c.work && c.end > END_CAP) c.end = END_CAP;
+  return plan;
 }
 
 /** "09:30" "26:00" → 選択肢の値 "9:30" "26:00"。退勤の 29:00 は "99:99"（LASTまで） */
