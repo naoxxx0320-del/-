@@ -7,7 +7,7 @@
     "check": "node src/cli.mjs check",
     "diff:ekichika": "node src/cli.mjs diff ekichika",
     "apply:ekichika": "node src/cli.mjs apply ekichika",
-    "test": "node --test test/phase1.test.mjs test/phase2.test.mjs test/esthe-ranking.test.mjs test/esban.test.mjs"
+    "test": "node --test test/phase1.test.mjs test/phase2.test.mjs test/esthe-ranking.test.mjs test/esban.test.mjs test/estama.test.mjs"
   },
   "engines": {
     "node": ">=20"
