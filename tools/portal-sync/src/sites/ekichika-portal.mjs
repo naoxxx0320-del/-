@@ -90,7 +90,8 @@ export async function applyChanges(page, changes, todayIso, log = () => {}) {
     log(`入力：${c.date} ${c.name} ${c.after}`);
     await pause(page, 500);
   }
-  const btn = page.locator("form[action*='girlswork/'] input.js-one_submit").first();
+  // 保存ボタンは上下に2つ。出勤にチェックを入れると上のボタンが大きさ0になるため、見えている方を押す
+  const btn = page.locator("form[action*='girlswork/'] input.js-one_submit:visible").first();
   if ((await btn.count()) !== 1) throw new Error("保存ボタンが見つかりません。保存せずに止めました");
   log("保存ボタンを押します");
   await Promise.all([page.waitForLoadState("domcontentloaded"), btn.click()]);
