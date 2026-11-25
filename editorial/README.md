@@ -64,6 +64,10 @@
 5. Googleビジネスプロフィールへの投稿は、別の仕組み（apps-script/gbp-autopost.gs）が17時以降に記事のページが開けることを確かめてから行う。Claude の作業環境からは投稿の結果が見えないため、posted とは書かない。下の「自動投稿の状態」が「設定済み」なら google_post_status を queued（自動投稿へ引き渡し済み）、「未設定」なら draft（投稿文のみ・手作業で投稿）とする。結果は、オーナー宛てのメールと、そのスクリプトの記録（GBP_POSTED）で確認する。
 6. 管理画面の「お知らせ」から、公開後の記事の修正・非公開（下書きに戻す）・削除ができる。
 
+## 作業用の道具（editorial/tools/）
+- `h2t.py`：保存したページ（HTML）から本文の文字を取り出す。`curl -sL ページのURL -o 作業用フォルダ/p1.html` → `python3 -I editorial/tools/h2t.py 作業用フォルダ/p1.html`。取得したページは作業用フォルダ（リポジトリの外）に置く
+- `sample-data.cjs`：確認用ビルドのための見本の名簿・出勤。`node editorial/tools/sample-data.cjs` → `npx next build` → `out/news/<id>/` を確認 → `git checkout data/roster.json data/schedule.json` で必ず戻す
+
 ## 自動投稿の状態
 - Googleビジネスプロフィール自動投稿：**未設定**（GoogleのAPI利用承認と apps-script/gbp-autopost.md の設定が済み、オーナーから連絡があったら「設定済み」に変える）
 
