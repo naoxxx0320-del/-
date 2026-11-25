@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // ポータル一括更新ツール
 //   node src/cli.mjs check               … 読み込み・点検・駅ちかに入れる予定の一覧（ポータルに接続しない）
-//   node src/cli.mjs diff ekichika       … 駅ちかの今の出勤を読み、変更点の一覧を作る（読むだけ・書き込まない）
-//   node src/cli.mjs apply ekichika      … diff の一覧のうち、承認したものを書き込む（確認あり）
+//   node src/cli.mjs diff <サイト>        … そのサイトの今の出勤を読み、変更点の一覧を作る（読むだけ・書き込まない）
+//   node src/cli.mjs apply <サイト>       … diff の一覧のうち、承認したものを書き込む（確認あり）
+//        サイト：ekichika（駅ちか）/ esthe-ranking（全国メンズエステランキング）
 //        --only 1,2     その番号だけ実行
 //        --remove 3,4   出勤の取り消し（削除系）は、番号で個別に指定したものだけ実行
 //        --yes          確認の質問を省く（Claude が利用者の承認を得て実行するとき用）
@@ -14,6 +15,7 @@ import { createInterface } from "node:readline/promises";
 import { loadSource, displayNameMap } from "./source.mjs";
 import { collectShifts, bizToday, siteTime } from "./shifts.mjs";
 import { planEkichika } from "./sites/ekichika.mjs";
+import { planEstheRanking as planEstheRankingSync } from "./sites/esthe-ranking.mjs";
 import { diffShifts, formatChanges, selectChanges } from "./diff.mjs";
 
 const HERE = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -88,73 +90,112 @@ async function withBrowser(config, fn) {
   }
 }
 
-async function ekichikaState(config, page) {
-  const ek = await import("./sites/ekichika-portal.mjs");
+// サイトごとの読み取り・予定表・書き込み（同じ流れで扱えるようにそろえる）
+const SITES = {
+  ekichika: {
+    name: "駅ちか",
+    async read(page, today) {
+      const ek = await import("./sites/ekichika-portal.mjs");
+      await ek.openSchedule(page);
+      return ek.readCurrent(page, today);
+    },
+    plan(shifts, today, current, conf) {
+      return planEkichika(shifts, today, { nameMap: conf.nameMap || {}, people: current.people.map((p) => p.name) });
+    },
+    async apply(page, changes, today, log) {
+      const ek = await import("./sites/ekichika-portal.mjs");
+      await ek.openSchedule(page);
+      return ek.applyChanges(page, changes, today, log);
+    },
+  },
+  "esthe-ranking": {
+    name: "全国メンズエステランキング",
+    async read(page, today, conf) {
+      const er = await import("./sites/esthe-ranking-portal.mjs");
+      const { planEstheRanking } = await import("./sites/esthe-ranking.mjs");
+      const dates = planEstheRanking([], today, { days: conf.days }).dates;
+      return er.readCurrent(page, dates);
+    },
+    plan(shifts, today, current, conf) {
+      return planEstheRankingSync(shifts, today, { days: conf.days, nameMap: conf.nameMap || {}, people: current.people.map((p) => p.name) });
+    },
+    async apply(page, changes, today, log) {
+      const er = await import("./sites/esthe-ranking-portal.mjs");
+      return er.applyChanges(page, changes, log);
+    },
+  },
+};
+const siteOf = (id) => {
+  const s = SITES[id];
+  if (!s) throw new Error(`使えるサイト：${Object.keys(SITES).join(" / ")}`);
+  return s;
+};
+
+async function siteState(config, page, id) {
+  const site = siteOf(id);
   const { shifts, problems, today } = await prepare(config);
   if (problems.some((p) => p.level === "error")) {
     throw new Error("入力に誤り（✖）があります。check で内容を確かめ、スプレッドシートを直してから実行してください");
   }
-  await ek.openSchedule(page);
-  const current = await ek.readCurrent(page, today);
-  const conf = (config.sites && config.sites.ekichika) || {};
-  const plan = planEkichika(shifts, today, { nameMap: conf.nameMap || {}, people: current.people.map((p) => p.name) });
+  const conf = (config.sites && config.sites[id]) || {};
+  const current = await site.read(page, today, conf);
+  const plan = site.plan(shifts, today, current, conf);
   const changes = diffShifts(current, plan);
-  return { ek, today, current, plan, changes };
+  return { site, today, current, plan, changes };
 }
 
-async function diff(site) {
-  if (site !== "ekichika") throw new Error("今使えるサイトは ekichika（駅ちか）だけです");
+async function diff(id) {
   const config = loadConfig();
   await withBrowser(config, async (page) => {
-    const { today, current, plan, changes } = await ekichikaState(config, page);
+    const { site, today, current, plan, changes } = await siteState(config, page, id);
     const text = [
-      `駅ちかの今の登録：${current.people.map((p) => p.name).join("・")}（${current.dates[0]}〜${current.dates[current.dates.length - 1]}）`,
-      formatChanges("駅ちか", changes, plan.skipped),
+      `${site.name}の今の登録：${current.people.map((p) => p.name).join("・")}（${current.dates[0]}〜${current.dates[current.dates.length - 1]}）`,
+      formatChanges(site.name, changes, plan.skipped),
       "",
       "※ まだ何も書き込んでいません。反映するには apply を実行します（出勤の取り消しは番号を個別に指定）。",
     ].join("\n");
     console.log(text);
-    save("pending-ekichika.json", JSON.stringify({ createdAt: new Date().toISOString(), today, changes, skipped: plan.skipped }, null, 1));
-    console.log(`\n（${save(`diff-ekichika-${stamp()}.txt`, text + "\n")} に保存しました）`);
+    save(`pending-${id}.json`, JSON.stringify({ createdAt: new Date().toISOString(), today, changes, skipped: plan.skipped }, null, 1));
+    console.log(`\n（${save(`diff-${id}-${stamp()}.txt`, text + "\n")} に保存しました）`);
   });
 }
 
-async function apply(site) {
-  if (site !== "ekichika") throw new Error("今使えるサイトは ekichika（駅ちか）だけです");
+async function apply(id) {
+  const site = siteOf(id);
   const config = loadConfig();
-  const pendingFile = join(OUT, "pending-ekichika.json");
+  const pendingFile = join(OUT, `pending-${id}.json`);
   if (!existsSync(pendingFile)) throw new Error("先に diff を実行して、変更点を確認してください");
   const pending = JSON.parse(readFileSync(pendingFile, "utf8"));
   if (Date.now() - Date.parse(pending.createdAt) > 30 * 60e3) throw new Error("diff から30分以上たっています。もう一度 diff を実行して、最新の変更点を確認してください");
   const only = argList("--only"), removeNos = argList("--remove") || [];
   const chosen = selectChanges(pending.changes, { only, removeNos });
   if (!chosen.length) { console.log("実行する変更がありません"); return; }
-  console.log(formatChanges("駅ちか（これから実行するもの）", chosen));
+  console.log(formatChanges(`${site.name}（これから実行するもの）`, chosen));
   if (!process.argv.includes("--yes")) {
     const rl = createInterface({ input: process.stdin, output: process.stdout });
-    const a = await rl.question("\nこの内容で駅ちかに書き込みますか？ 書き込む場合は yes と入力してください：");
+    const a = await rl.question(`\nこの内容で${site.name}に書き込みますか？ 書き込む場合は yes と入力してください：`);
     rl.close();
     if (a.trim().toLowerCase() !== "yes") { console.log("やめました（何も書き込んでいません）"); return; }
   }
   const lines = [];
   const log = (s) => { console.log(s); lines.push(s); };
   await withBrowser(config, async (page) => {
-    const { ek, today, changes } = await ekichikaState(config, page);
+    const { today, changes } = await siteState(config, page, id);
     // diff のあとにポータルやシートが変わっていないか（同じ変更点がそのまま残っているか）
     const key = (c) => `${c.date}|${c.name}|${c.before}|${c.after}`;
     const nowKeys = new Set(changes.map(key));
     const stale = chosen.filter((c) => !nowKeys.has(key(c)));
     if (stale.length) throw new Error(`diff のあとで内容が変わっています（${stale.map((c) => c.no).join(",")}番）。もう一度 diff を実行してください。何も書き込んでいません`);
     const fresh = changes.filter((c) => chosen.some((x) => key(x) === key(c)));
-    const { results } = await ek.applyChanges(page, fresh, today, log);
+    const { results } = await site.apply(page, fresh, today, log);
     for (const r of results) log(`${r.ok ? "成功" : "失敗"}：${r.date} ${r.name} → ${r.after}（今の表示：${r.now}）`);
     const bad = results.filter((r) => !r.ok);
-    log(bad.length ? `一致しなかったものが ${bad.length}件あります。駅ちかの画面で確認してください` : `すべて反映され、読み直して一致を確認しました（${results.length}件）`);
+    log(bad.length ? `一致しなかったものが ${bad.length}件あります。${site.name}の画面で確認してください` : `すべて反映され、読み直して一致を確認しました（${results.length}件）`);
   });
-  console.log(`\n（記録：${save(`apply-ekichika-${stamp()}.txt`, lines.join("\n") + "\n")}）`);
+  console.log(`\n（記録：${save(`apply-${id}-${stamp()}.txt`, lines.join("\n") + "\n")}）`);
 }
 
 const [cmd = "check", site] = process.argv.slice(2);
 const run = { check, diff: () => diff(site), apply: () => apply(site) }[cmd];
-if (!run) { console.error("使い方：node src/cli.mjs check | diff ekichika | apply ekichika"); process.exitCode = 1; }
+if (!run) { console.error("使い方：node src/cli.mjs check | diff <サイト> | apply <サイト>（サイト：ekichika / esthe-ranking）"); process.exitCode = 1; }
 else run().catch((e) => { console.error("止まりました：" + e.message); process.exitCode = 1; });
