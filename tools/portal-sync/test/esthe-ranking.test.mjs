@@ -42,3 +42,12 @@ test("ダミーの出勤（サイトに無い出勤）は取り消し候補に�
   const ch = diffShifts(current, plan);
   assert.deepEqual(ch.map((c) => `${c.type}:${c.name}`), ["remove:かのん"]);
 });
+
+test("画面の選択肢の値：深夜は 03:00＝27:00（6時より前は翌日）", async () => {
+  const { toValue, fromValue } = await import("../src/sites/esthe-ranking-portal.mjs");
+  assert.equal(toValue("27:00"), "03:00");
+  assert.equal(toValue("12:30"), "12:30");
+  assert.equal(fromValue("03:00"), "27:00");
+  assert.equal(fromValue("06:00"), "06:00");
+  assert.equal(fromValue("0"), "");
+});
