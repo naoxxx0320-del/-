@@ -27,7 +27,8 @@ async function openWeek(page, todayIso) {
 async function readTable(page) {
   return page.evaluate(() =>
     [...document.querySelectorAll("#indexForm table tbody tr")].map((tr) => ({
-      name: (tr.querySelector("th .nameWrap a, th a, th") || {}).textContent?.replace(/\s+/g, " ").trim() || "",
+      // 名前は .nameWrap のリンクだけ（出勤があると同じ欄に「LINEで送る」などのリンクが増える）
+      name: (tr.querySelector("th .nameWrap a") || tr.querySelector("th .nameWrap") || {}).textContent?.replace(/\s+/g, " ").trim() || "",
       cells: [...tr.querySelectorAll("td.js-popupOpen")].map((td) => ({
         id: td.getAttribute("data-id") || "",
         ymd: td.getAttribute("data-date") || "",
@@ -83,7 +84,10 @@ export async function applyChanges(page, changes, todayIso, log = () => {}) {
       if (await cell.getAttribute("data-deleteurl")) throw new Error(`すでに出勤が登録されています（${c.date} ${c.name}）。保存せずに止めました`);
       await cell.click();
       const pop = page.locator(".sch-popup");
-      const s = pop.locator("select[name=start_time]"), e = pop.locator("select[name=end_time]");
+      // 小窓の中身は後から読み込まれる。前の小窓の欄に入力しないよう、この人・この日の中身になるまで待つ
+      const body = pop.locator(`.sch-popup__content:has(input[name=therapist_id][value="${c.id}"]):has(input[name=day][value="${compact(c.date)}"])`);
+      await body.waitFor({ state: "attached", timeout: 15000 });
+      const s = body.locator("select[name=start_time]"), e = body.locator("select[name=end_time]");
       await s.waitFor({ state: "visible", timeout: 15000 });
       await pause(page, 600);
       const who = ((await pop.locator(".sch-popup__name").textContent()) || "").trim();
