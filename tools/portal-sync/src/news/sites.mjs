@@ -61,7 +61,11 @@ async function postEstama(page, post) {
 }
 
 // ---- 駅ちか：「駅ちかを見た」の記事（カテゴリごとに1件）を書き換える＝上位表示（残り回数を消費） ----
-const EK_CAT = { shift: 5, offer: 3, coupon: 3, appeal: 1, forward: 4 };
+// 駅ちかは記事がカテゴリごとに1件（書き換え）。オーナーが作った記事（速報NEWS・新人速報・激アツ割引情報）は上書きしないよう、
+// ツールは空いていた2つ（緊急出勤速報＝出勤案内、イベント速報＝それ以外）だけを使う
+const EK_CAT = { shift: 5, offer: 4, coupon: 4, appeal: 4, forward: 4 };
+const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const toHtml = (text) => text.split("\n\n").map((p) => `<p>${esc(p).replace(/\n/g, "<br />")}</p>`).join("\n");
 export async function ekichikaRemaining(page) {
   await page.goto("https://ranking-deli.jp/admin/articles/", { waitUntil: "domcontentloaded" }); await pause(page, 1500);
   if (/login/.test(page.url())) throw new Error("駅ちかにログインしていません");
@@ -69,14 +73,24 @@ export async function ekichikaRemaining(page) {
   return Number.isFinite(n) ? n : null;
 }
 async function postEkichika(page, post, meta = {}) {
-  const cat = post.type === "appeal" && post.isNew ? 2 : EK_CAT[post.type] || 1;
+  const cat = EK_CAT[post.type] || 4;
   const url = `https://ranking-deli.jp/admin/articles/category${cat}/`;
   await page.goto(url, { waitUntil: "domcontentloaded" }); await pause(page, 2000);
   if (/login/.test(page.url())) throw new Error("駅ちかにログインしていません");
   const form = page.locator("form#article_form");
   await one(form, "記事の入力欄");
   await (await one(form.locator("input[name=title]"), "記事タイトルの欄")).fill(post.title); await pause(page, 300);
-  await (await one(form.locator("textarea[name=body]"), "記事本文の欄")).fill(post.body); await pause(page, 300);
+  // 本文は文字装飾の入力欄（CKEditor）。エディタ経由で入れ、元の欄にも反映させる
+  await one(form.locator("textarea[name=body]"), "記事本文の欄");
+  const set = await page.evaluate((html) => {
+    const C = window.CKEDITOR;
+    const inst = C && Object.values(C.instances).find((i) => i.element && i.element.$ && i.element.$.name === "body");
+    if (!inst) return false;
+    inst.setData(html); inst.updateElement();
+    return true;
+  }, toHtml(post.body));
+  if (!set) throw new Error("記事本文の入力欄（エディタ）が見つかりません。投稿せずに止めました");
+  await pause(page, 800);
   // 画像：今の写真から選ぶ（紹介のときは本人の写真）
   const sel = form.locator("select[name=girl_id]");
   if (post.type === "appeal" && post.displayName && (await sel.count())) {
