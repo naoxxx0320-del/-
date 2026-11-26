@@ -9,19 +9,28 @@
 //    （解除は受付（予約）と結びつくことがあるため。必要になったら、確かめてから追加する）。
 //  ・確認画面は「出勤情報を保存します」だけ承認し、それ以外は断って止める。
 //  ・入力欄が見つからないときは推測で書かず止める／出勤以外は触らない（同じ画面の受付・顧客の登録には触らない）。
-import { toValue, fromValue, jstDate, dayOffset } from "./eslove.mjs";
+import { toValue, fromValue, dayOffset } from "./eslove.mjs";
 
 export const BASE = "https://eslove.jp/admin/shop/therapist_schedule/weekly";
 const pause = (page, ms) => page.waitForTimeout(ms + Math.floor(Math.random() * 400));
 const compact = (iso) => iso.replace(/-/g, "");
 const iso = (ymd) => `${ymd.slice(0, 4)}-${ymd.slice(4, 6)}-${ymd.slice(6, 8)}`;
 
+async function firstDate(page) {
+  const ymd = await page.locator("#indexForm table tbody td.js-popupOpen").first().getAttribute("data-date").catch(() => null);
+  return ymd && /^\d{8}$/.test(ymd) ? iso(ymd) : null;
+}
 async function openWeek(page, todayIso) {
-  const off = dayOffset(todayIso, jstDate());
-  await page.goto(`${BASE}?day=${off}&week=0`, { waitUntil: "load" });
-  await pause(page, 2000);
-  if (/\/admin\/login/.test(page.url())) throw new Error("エステラブにログインしていません。作業用ブラウザでログインしてから、もう一度実行してください");
-  if (!(await page.locator("#indexForm table tbody td.js-popupOpen").count())) throw new Error("エステラブの出勤表の形が想定と違います。書き込まずに止めました");
+  // エステラブの「本日」は深夜0時ちょうどには切り替わらない（営業日で切り替わる）ため、
+  // まず ?day=0 で開いて表の始まりを読み、営業日の今日とのずれだけ ?day= でずらす
+  for (const off of [0, null]) {
+    const d = off === 0 ? 0 : dayOffset(todayIso, await firstDate(page));
+    await page.goto(`${BASE}?day=${d}&week=0`, { waitUntil: "load" });
+    await pause(page, 2000);
+    if (/\/admin\/login/.test(page.url())) throw new Error("エステラブにログインしていません。作業用ブラウザでログインしてから、もう一度実行してください");
+    if (!(await page.locator("#indexForm table tbody td.js-popupOpen").count())) throw new Error("エステラブの出勤表の形が想定と違います。書き込まずに止めました");
+    if ((await firstDate(page)) === todayIso) return;
+  }
 }
 
 async function readTable(page) {
