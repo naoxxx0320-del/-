@@ -3,7 +3,7 @@
 //   node src/cli.mjs check               … 読み込み・点検・駅ちかに入れる予定の一覧（ポータルに接続しない）
 //   node src/cli.mjs diff <サイト>        … そのサイトの今の出勤を読み、変更点の一覧を作る（読むだけ・書き込まない）
 //   node src/cli.mjs apply <サイト>       … diff の一覧のうち、承認したものを書き込む（確認あり）
-//        サイト：ekichika（駅ちか）/ esthe-ranking（全国メンズエステランキング）/ esban（エステ番長）/ estama（エステ魂）
+//        サイト：ekichika（駅ちか）/ esthe-ranking（全国メンズエステランキング）/ esban（エステ番長）/ estama（エステ魂）/ eslove（エステラブ）
 //        --only 1,2     その番号だけ実行
 //        --remove 3,4   出勤の取り消し（削除系）は、番号で個別に指定したものだけ実行
 //        --yes          確認の質問を省く（Claude が利用者の承認を得て実行するとき用）
@@ -18,6 +18,7 @@ import { planEkichika } from "./sites/ekichika.mjs";
 import { planEstheRanking as planEstheRankingSync } from "./sites/esthe-ranking.mjs";
 import { planEsban as planEsbanSync } from "./sites/esban.mjs";
 import { planEstama as planEstamaSync } from "./sites/estama.mjs";
+import { planEslove as planEsloveSync } from "./sites/eslove.mjs";
 import { diffShifts, formatChanges, selectChanges } from "./diff.mjs";
 
 const HERE = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -165,6 +166,20 @@ SITES.estama = {
     return es.applyChanges(page, changes, log);
   },
 };
+SITES.eslove = {
+  name: "エステラブ",
+  async read(page, today) {
+    const el = await import("./sites/eslove-portal.mjs");
+    return el.readCurrent(page, today);
+  },
+  plan(shifts, today, current, conf) {
+    return planEsloveSync(shifts, today, { nameMap: conf.nameMap || {}, people: current.people.map((p) => p.name) });
+  },
+  async apply(page, changes, today, log) {
+    const el = await import("./sites/eslove-portal.mjs");
+    return el.applyChanges(page, changes, today, log);
+  },
+};
 const siteOf = (id) => {
   const s = SITES[id];
   if (!s) throw new Error(`使えるサイト：${Object.keys(SITES).join(" / ")}`);
@@ -237,5 +252,5 @@ async function apply(id) {
 
 const [cmd = "check", site] = process.argv.slice(2);
 const run = { check, diff: () => diff(site), apply: () => apply(site) }[cmd];
-if (!run) { console.error("使い方：node src/cli.mjs check | diff <サイト> | apply <サイト>（サイト：ekichika / esthe-ranking / esban / estama）"); process.exitCode = 1; }
+if (!run) { console.error("使い方：node src/cli.mjs check | diff <サイト> | apply <サイト>（サイト：ekichika / esthe-ranking / esban / estama / eslove）"); process.exitCode = 1; }
 else run().catch((e) => { console.error("止まりました：" + e.message); process.exitCode = 1; });
