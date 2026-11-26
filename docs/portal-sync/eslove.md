@@ -26,7 +26,7 @@
 ## 項目ごとの入力ページ
 | 反映する内容 | ページ | 入力の形 | 注意 |
 |---|---|---|---|
-| 出勤 | 出勤情報（日別）/admin/shop/therapist_schedule/daily 、（週別）/admin/shop/therapist_schedule/weekly | 週別は7日分の表で「保存する」、日別は「一括保存する」。表の中身は画面を開いたあとで読み込まれる作り | セラピストが未登録のため、表は空だった。入力欄の細かい形は、セラピストを登録したあとで調べる |
+| 出勤 | 出勤情報（日別）/admin/shop/therapist_schedule/daily 、（週別）/admin/shop/therapist_schedule/weekly | 週別は7日分の表で「保存する」、日別は「一括保存する」。表の中身は画面を開いたあとで読み込まれる作り | 2026-11-26 に調べてツールに追加（README の「エステラブの出勤」）。セル→小窓→「決定する」→「保存する」 |
 | セラピスト | セラピスト /admin/shop/therapist → 追加 /admin/shop/therapist/edit | 表示・非表示、名前（必須）、年齢、指名料（ページに出すか）、入店日、経験、身長、体型、タイプ、特徴（17個から選ぶ）、得意な施術、趣味、お店からのひとこと、X・Bluesky・Instagram | 最大500名。上の掲載内容の決まりを守る |
 | コース料金 | コース料金 /admin/shop/fee_system_course → 編集 /admin/shop/fee_system_course/edit/<番号> | コース名、「時間・料金・単位（円／円～）」の組、自由項目（名前・料金） | 最大10件。今は1件登録あり |
 | 基本料金 | /admin/shop/fee_system/edit | 未調査 | — |
