@@ -107,7 +107,8 @@ async function main() {
     const forward = [];
     if (est) {
       const first = !state.estama.initialized;
-      for (const it of est) if (!state.estama.firstSeen[it.id]) state.estama.firstSeen[it.id] = first ? 0 : Date.now();
+      // 0 は「最初からあった（転載しない）」の印。0 を未登録と取り違えないよう、キーの有無で判定する
+      for (const it of est) if (!Object.prototype.hasOwnProperty.call(state.estama.firstSeen, it.id)) state.estama.firstSeen[it.id] = first ? 0 : Date.now();
       state.estama.initialized = true;
       const fresh = est.filter((it) => state.estama.firstSeen[it.id] > Date.now() - FORWARD_HOURS * 3600e3 && !state.estama.ours.includes(it.title));
       if (fresh.length) for (const it of await S.readEstamaNews(page, { withBody: fresh.map((x) => x.id) })) if (fresh.some((f) => f.id === it.id)) forward.push(forwardPost(it));
