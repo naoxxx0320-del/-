@@ -1,6 +1,7 @@
 // エステ番長 店舗管理画面の出勤を操作する部分（Playwright）
 // 表：https://es-ban.com/admin/content_manage/therapist_schedule （table。1列目が名前、続く7列が日付。未登録のセルは「未登録」と登録リンク）
 // 登録：/admin/therapist_schedule/add?date=YYYY-MM-DD&t=ID の select[name=work_start] / [name=work_end]（値 "t1000" など）、[保存]。
+// 時間の変更：表のセルの「編集」リンク /admin/therapist_schedule/<番号>（題名「YYYY-MM-DD:<ID> を編集」）で同じ欄を選び直して[保存]。
 //   30分ごとの受付状況（◯✕）は、サイトに空き状況の情報がないため触らない（初期値のまま）。
 // 守ること：隠し項目の値は読まない／入力欄が見つからないときは推測で書かず止める／出勤以外は触らない
 import { toValue, fromShown } from "./esban.mjs";
@@ -53,14 +54,29 @@ export async function readCurrent(page, todayIso) {
   return { dates, people };
 }
 
-/** 変更を1件ずつ登録し、表を読み直して確かめる（いまは「出勤を入れる」だけに対応） */
+/** 変更を1件ずつ登録し、表を読み直して確かめる（「出勤を入れる」「時間を変える」に対応。取り消しは未対応） */
 export async function applyChanges(page, changes, todayIso, log = () => {}) {
   for (const c of changes) {
-    if (c.type !== "add") throw new Error(`エステ番長の「時間の変更・取り消し」はまだ対応していません（${c.date} ${c.name}）。何も書き込まずに止めました`);
+    if (c.type !== "add" && c.type !== "change") throw new Error(`エステ番長の「出勤の取り消し」はまだ対応していません（${c.date} ${c.name}）。何も書き込まずに止めました`);
+  }
+  // 時間を変えるときは、表のセルの「編集」リンク（/admin/therapist_schedule/<番号>）を開く
+  const edit = new Map();
+  if (changes.some((c) => c.type === "change")) {
+    const now = await readCurrent(page, todayIso);
+    for (const p of now.people) for (const cell of p.cells) if (cell.editLink) edit.set(`${p.name}|${cell.date}`, cell.editLink);
   }
   for (const c of changes) {
-    await page.goto(`https://es-ban.com/admin/therapist_schedule/add?date=${c.date}&t=${c.id}`, { waitUntil: "domcontentloaded" });
-    await pause(page, 1500);
+    if (c.type === "change") {
+      const link = edit.get(`${c.name}|${c.date}`);
+      if (!link || !/^\/admin\/therapist_schedule\/\d+$/.test(link)) throw new Error(`編集のリンクが見つかりません（${c.date} ${c.name}）。保存せずに止めました`);
+      await page.goto(`https://es-ban.com${link}`, { waitUntil: "domcontentloaded" });
+      await pause(page, 1500);
+      const title = await page.title();
+      if (!title.includes(`${c.date}:${c.id}`)) throw new Error(`編集画面が ${c.date} ${c.name} のものではありません（${title}）。保存せずに止めました`);
+    } else {
+      await page.goto(`https://es-ban.com/admin/therapist_schedule/add?date=${c.date}&t=${c.id}`, { waitUntil: "domcontentloaded" });
+      await pause(page, 1500);
+    }
     const s = page.locator("select[name=work_start]"), e = page.locator("select[name=work_end]");
     if ((await s.count()) !== 1 || (await e.count()) !== 1) throw new Error(`入力欄が見つかりません（${c.date} ${c.name}）。保存せずに止めました`);
     const sv = toValue(c.want.start), ev = toValue(c.want.end);
@@ -71,7 +87,7 @@ export async function applyChanges(page, changes, todayIso, log = () => {}) {
     await e.selectOption(ev); await pause(page, 300);
     const btn = page.locator("input[type=submit][value='保存']").first();
     if ((await btn.count()) !== 1) throw new Error(`保存ボタンが見つかりません（${c.date} ${c.name}）。保存せずに止めました`);
-    log(`入力・保存：${c.date} ${c.name} ${c.after}`);
+    log(`入力・保存：${c.date} ${c.name} ${c.before} → ${c.after}`);
     await Promise.all([page.waitForLoadState("domcontentloaded"), btn.click()]);
     await pause(page, 2000);
   }
