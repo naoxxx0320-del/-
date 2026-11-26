@@ -45,16 +45,23 @@ async function fetchDiary(roster) {
   return list.sort((a, b) => (a.at < b.at ? -1 : 1)); // 古い順に転載
 }
 
-/** 02 の画像を作業用ブラウザで読み、JPEG のバイト列にする */
+/** 02 の画像を作業用ブラウザの別のタブで直接開き（同じ配信元のページとして扱われる）、JPEG のバイト列にする */
 async function imageAsJpeg(page, url) {
-  const b64 = await page.evaluate(async (u) => {
-    const img = new Image(); img.crossOrigin = "anonymous"; img.referrerPolicy = "no-referrer";
-    await new Promise((ok, ng) => { img.onload = ok; img.onerror = () => ng(new Error("画像を読めません")); img.src = u; });
-    const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight;
-    c.getContext("2d").drawImage(img, 0, 0);
-    return c.toDataURL("image/jpeg", 0.9).split(",")[1];
-  }, url).catch(() => null);
-  return b64 ? Buffer.from(b64, "base64") : null;
+  const tab = await page.context().newPage();
+  try {
+    const res = await tab.goto(url, { waitUntil: "load", timeout: 30000 });
+    if (!res || !res.ok()) return null;
+    const b64 = await tab.evaluate(async () => {
+      const img = document.querySelector("img");
+      if (!img) return null;
+      if (!img.complete) await new Promise((ok) => { img.onload = ok; img.onerror = ok; });
+      if (!img.naturalWidth) return null;
+      const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight;
+      c.getContext("2d").drawImage(img, 0, 0);
+      return c.toDataURL("image/jpeg", 0.9).split(",")[1];
+    });
+    return b64 ? Buffer.from(b64, "base64") : null;
+  } catch { return null; } finally { await tab.close().catch(() => {}); }
 }
 
 async function postEkichika(page, d) {
