@@ -49,6 +49,12 @@ jobs:
           THERAPISTS_CSV_URL: ${{ vars.THERAPISTS_CSV_URL }}
         run: node scripts/fetch-sheets.mjs
 
+      # セラピストの写メ日記を 02（ゼロツー）の公開の一覧から取り込み、data/diary.json を更新。
+      # 在籍表（roster.json）で照合するため、シートの取り込みのあとに行う。失敗しても直前のデータで公開を続ける。
+      - name: Refresh therapist diary from 02 (non-blocking)
+        continue-on-error: true
+        run: node scripts/fetch-diary.mjs
+
       # 公開前にデータの健全性を検証。壊れたデータ（JSON構文エラー／必須配列が空
       # など）の場合はここで停止し、直前の公開を維持する。警告は止めずに
       # ジョブサマリーへ出力する（Actionsの実行画面で一目で確認できる）。
@@ -61,7 +67,7 @@ jobs:
           node scripts/build-lottery-url.mjs
 
       - name: Check lottery behavior and public link configuration
-        run: node --test scripts/lottery-server.test.cjs scripts/lottery-setup.test.cjs scripts/lottery-url.test.cjs scripts/lottery-public.test.mjs scripts/fetch-sheets.test.mjs scripts/names.test.mjs scripts/gbp-autopost.test.mjs tools/portal-sync/test/phase1.test.mjs tools/portal-sync/test/phase2.test.mjs tools/portal-sync/test/esthe-ranking.test.mjs tools/portal-sync/test/esban.test.mjs tools/portal-sync/test/estama.test.mjs tools/portal-sync/test/eslove.test.mjs
+        run: node --test scripts/lottery-server.test.cjs scripts/lottery-setup.test.cjs scripts/lottery-url.test.cjs scripts/lottery-public.test.mjs scripts/fetch-sheets.test.mjs scripts/names.test.mjs scripts/gbp-autopost.test.mjs scripts/fetch-diary.test.mjs tools/portal-sync/test/phase1.test.mjs tools/portal-sync/test/phase2.test.mjs tools/portal-sync/test/esthe-ranking.test.mjs tools/portal-sync/test/esban.test.mjs tools/portal-sync/test/estama.test.mjs tools/portal-sync/test/eslove.test.mjs
 
       - name: Build static export
         run: npm run build

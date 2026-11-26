@@ -5,6 +5,7 @@ import { photoSrc } from "../../_components/photo";
 import roster from "../../../data/roster.json";
 import TherapistGallery from "./TherapistGallery";
 import TherapistSchedule from "./TherapistSchedule";
+import TherapistDiary from "./TherapistDiary";
 import { buildMetadata } from "../../_lib/seo";
 import Breadcrumbs from "../../_components/Breadcrumbs";
 
@@ -149,6 +150,9 @@ export default function TherapistDetail({ params }) {
 
           {/* 出勤情報（今日以降の予定） */}
           <TherapistSchedule name={t.name} base={BASE} />
+
+          {/* 写メ日記（02 の本人の投稿） */}
+          <TherapistDiary name={t.name} displayName={t.nameFull || t.name} />
 
           {/* プロフィール（質問と回答。空欄の項目は出さない） */}
           {Array.isArray(t.qa) && t.qa.length > 0 && (
