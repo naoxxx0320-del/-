@@ -46,6 +46,12 @@ function totalExamples() {
       { k: "120分コース", v: C("120分コース")?.price },
       { k: hei.name, v: -hei.amount },
     ]);
+  const haya = findOffer("hayawari");
+  if (haya)
+    add(`10:00〜17:00開始：120分コース（${haya.name}）`, [
+      { k: "120分コース", v: C("120分コース")?.price },
+      { k: haya.name, v: -haya.amount },
+    ]);
   return rows;
 }
 const EXAMPLES = totalExamples();
