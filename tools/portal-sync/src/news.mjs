@@ -139,11 +139,12 @@ async function main() {
       if (!chk.ok) { log(`${head} … 出しません（${chk.reason}）`); continue; }
       try {
         const ok = await S.POSTERS[site](page, p, {});
+        if (!ok) { log(`${head} … 投稿の操作はしましたが、一覧で題名を確認できません（数えずに次の回で確かめます）：${p.title}`); continue; }
         day.count++; day.keys.push(post.key); day.rotation = rotation;
         if (post.type === "forward") (state.forwarded[site] ||= []).push(post.key.slice("forward:".length));
         if (site === "estama") state.estama.ours.push(p.title);
         saveState(state);
-        log(`${head.replace(/今日 \d+/, `今日 ${day.count}`)} … ${ok ? "投稿し、一覧で確認しました" : "投稿しましたが、一覧で題名を確認できませんでした（画面で確認してください）"}：${p.title}`);
+        log(`${head.replace(/今日 \d+/, `今日 ${day.count}`)} … 投稿し、一覧で確認しました：${p.title}`);
       } catch (e) {
         saveState(state);
         log(`${NAMES[site]}：止まりました（${e.message}）`);

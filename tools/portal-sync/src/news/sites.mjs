@@ -153,12 +153,23 @@ async function postRanking(page, post) {
   if (await now.count()) await now.check();
   await (await one(form.locator("input[name=title]"), "題名の欄")).fill(post.title); await pause(page, 300);
   await (await one(form.locator("textarea[name=content]"), "本文の欄")).fill(post.body); await pause(page, 300);
-  await (await one(form.locator("button.button-confirm-submit"), "「送信」")).click();
-  await pause(page, 1500);
-  // 確認の小窓が出たら、その中の送信を押す（小窓が出ずに送信される場合もある）
-  const confirm = page.locator(".modal.show button, .modal.in button, .modal[style*='display: block'] button").filter({ hasText: /送信|投稿|はい|OK/ });
-  if (await confirm.count()) { await Promise.all([page.waitForLoadState("domcontentloaded"), confirm.first().click()]); await pause(page, 2500); }
-  else await pause(page, 2500);
+  const before = await page.evaluate(() => location.href);
+  // 「送信」を押すと確認画面（confirm）が出る。送信・投稿の確認だけ承認する
+  const dlg = withDialogs(page, /送信|投稿|公開|よろしい/);
+  try {
+    await (await one(form.locator("button.button-confirm-submit"), "「送信」")).click();
+    await pause(page, 1500);
+    // 確認が小窓（ページ内）で出る場合は、その中の送信を押す
+    const confirm = page.locator(".modal.show button, .modal.in button, .modal[style*='display: block'] button").filter({ hasText: /送信|投稿|はい|OK/ });
+    if (await confirm.count()) await confirm.first().click();
+    await page.waitForLoadState("domcontentloaded").catch(() => {});
+    await pause(page, 3000);
+  } finally { dlg.done(); }
+  if (dlg.unexpected().length) throw new Error(`想定外の確認画面：${dlg.unexpected().join(" / ")}`);
+  if (!dlg.seen.length && page.url() === before) {
+    const err = await page.evaluate(() => [...document.querySelectorAll(".alert-danger, .error, .errorlist, .invalid-feedback, .text-danger")].map((e) => e.textContent.trim()).filter(Boolean).join(" / "));
+    if (err) throw new Error(`全国メンズエステランキングが受け付けませんでした：${err}`);
+  }
   return listHas(page, "https://www.esthe-ranking.jp/shop/news/", post.title);
 }
 
