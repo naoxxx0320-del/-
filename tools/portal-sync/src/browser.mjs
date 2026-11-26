@@ -16,6 +16,11 @@ const ctx = await chromium.launchPersistentContext(profile, {
   channel: "chrome", headless: false, viewport: null,
   args: [`--remote-debugging-port=${port}`, "--remote-debugging-address=127.0.0.1"],
 });
+// このブラウザに別のツール（diff / apply）がつないだページでも、確認画面（confirm など）を勝手に閉じないようにする。
+// Playwright は受け手のいない確認画面を自動で閉じるため、何もしない受け手を付けて、判断をツール（または利用者）に任せる。
+const keepDialogs = (pg) => pg.on("dialog", () => {});
+ctx.pages().forEach(keepDialogs);
+ctx.on("page", keepDialogs);
 const page = ctx.pages()[0] || (await ctx.newPage());
 await page.goto(process.argv[2] || "about:blank");
 console.log("作業用ブラウザを開きました。各サイトにログインしてから diff / apply を実行してください。終わったらウィンドウを閉じます。");
