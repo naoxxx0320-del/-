@@ -17,6 +17,20 @@ async function one(loc, what) {
   if ((await loc.count()) !== 1) throw new Error(`${what}が見つかりません。投稿せずに止めました`);
   return loc;
 }
+/** 見た目を変えたラジオボタン：ラベルを押す。ラベルがなければ値を入れて change を送る。選ばれたことを確かめる */
+async function choose(loc, what) {
+  if ((await loc.count()) !== 1) throw new Error(`${what}が見つかりません。投稿せずに止めました`);
+  if (await loc.isChecked()) return;
+  const lbl = loc.locator("xpath=ancestor::label[1]");
+  if (await lbl.count()) await lbl.click();
+  else {
+    const id = await loc.getAttribute("id");
+    const forLbl = id ? loc.page().locator(`label[for="${id}"]`) : null;
+    if (forLbl && (await forLbl.count())) await forLbl.first().click();
+    else await loc.evaluate((el) => { el.checked = true; el.dispatchEvent(new Event("change", { bubbles: true })); el.dispatchEvent(new Event("click", { bubbles: true })); });
+  }
+  if (!(await loc.isChecked())) throw new Error(`${what}を選べません。投稿せずに止めました`);
+}
 const titleKey = (t) => String(t).replace(/\s+/g, "").slice(0, 20);
 async function listHas(page, url, title) {
   await page.goto(url, { waitUntil: "domcontentloaded" }); await pause(page, 1800);
@@ -114,10 +128,8 @@ async function postEslove(page, post) {
   if (/\/admin\/login/.test(page.url())) throw new Error("エステラブにログインしていません");
   const form = page.locator("form").filter({ has: page.locator("input[name=title]") }).filter({ has: page.locator("textarea[name=body]") });
   await one(form, "新着情報の入力欄");
-  const show = form.locator("input[type=radio][name=status][value='1']");
-  if (await show.count()) await show.check({ force: true });
-  const cat = form.locator(`input[type=radio][name=category][value='${EL_CAT[post.type] || "1"}']`);
-  if (await cat.count()) await cat.check({ force: true });
+  await choose(form.locator("input[type=radio][name=status][value='1']"), "「表示」");
+  await choose(form.locator(`input[type=radio][name=category][value='${EL_CAT[post.type] || "1"}']`), "カテゴリ");
   await (await one(form.locator("input[name=title]"), "タイトルの欄")).fill(post.title); await pause(page, 300);
   await (await one(form.locator("textarea[name=body]"), "内容の欄")).fill(post.body); await pause(page, 300);
   const dlg = withDialogs(page, /更新回数を消費します/);
