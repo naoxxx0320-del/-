@@ -72,7 +72,8 @@ export async function applyChanges(page, changes, todayIso, log = () => {}) {
   const dialogs = [];
   const onDialog = async (d) => {
     dialogs.push(d.message());
-    if (/出勤情報を保存します/.test(d.message())) await d.accept(); else await d.dismiss();
+    try { if (/出勤情報を保存します/.test(d.message())) await d.accept(); else await d.dismiss(); }
+    catch { dialogs.push("（確認画面に答えられませんでした）"); }
   };
   page.on("dialog", onDialog);
   try {
@@ -109,6 +110,7 @@ export async function applyChanges(page, changes, todayIso, log = () => {}) {
     await btn.click();
     const res = await posted;
     await pause(page, 2500);
+    if (dialogs.includes("（確認画面に答えられませんでした）")) throw new Error("保存の確認画面に答えられませんでした（別のところで閉じられた可能性）。保存されていない可能性があります。もう一度 diff で確かめてください");
     const bad = dialogs.filter((m) => !/出勤情報を保存します/.test(m));
     if (bad.length) throw new Error(`想定外の確認が出たため断りました：${bad.join(" / ")}`);
     if (!res) throw new Error("保存の応答がありませんでした。エステラブの画面で確認してください");
