@@ -138,9 +138,10 @@ async function main() {
       if (remain === 0) { log(`${head} … サイトの残り回数が0のため出しません`); continue; }
       if (!chk.ok) { log(`${head} … 出しません（${chk.reason}）`); continue; }
       try {
-        const ok = await S.POSTERS[site](page, p, {});
+        const ok = await S.POSTERS[site](page, p, { ownTitles: (state.titles && state.titles[site]) || [] });
         if (!ok) { log(`${head} … 投稿の操作はしましたが、一覧で題名を確認できません（数えずに次の回で確かめます）：${p.title}`); continue; }
         day.count++; day.keys.push(post.key); day.rotation = rotation;
+        ((state.titles ||= {})[site] ||= []).push(p.title); state.titles[site] = state.titles[site].slice(-50);
         if (post.type === "forward") (state.forwarded[site] ||= []).push(post.key.slice("forward:".length));
         if (site === "estama") state.estama.ours.push(p.title);
         saveState(state);
