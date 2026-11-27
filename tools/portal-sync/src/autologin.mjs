@@ -27,14 +27,19 @@ export const LOGIN = {
   },
 };
 
-/** キーチェーンから ID とパスワードを読む（なければ null） */
+/** キーチェーン（「ログイン」）から ID とパスワードを読む。読めないときは理由（why）を返す（ID・パスワードは含めない） */
 function fromKeychain(site) {
   const svc = `portal-sync-${site}`;
   const meta = spawnSync("/usr/bin/security", ["find-generic-password", "-s", svc], { encoding: "utf8" });
-  if (meta.status !== 0) return null;
+  if (meta.status !== 0) {
+    return { why: meta.status === 44
+      ? `キーチェーン「ログイン」に「${svc}」という項目が見つかりません（名前の違い、または「iCloud」に保存された可能性）`
+      : `キーチェーンを開けませんでした（${meta.status}：${(meta.stderr || "").trim().slice(0, 80)}）` };
+  }
   const acct = (meta.stdout.match(/"acct"<blob>="([^"]*)"/) || [])[1];
+  if (!acct) return { why: `「${svc}」にアカウント名（ログインID）が入っていません` };
   const pw = spawnSync("/usr/bin/security", ["find-generic-password", "-s", svc, "-w"], { encoding: "utf8" });
-  if (pw.status !== 0 || !acct) return null;
+  if (pw.status !== 0) return { why: `「${svc}」のパスワードを読めませんでした（アクセスが許可されていない可能性：${pw.status}）` };
   return { id: acct, pw: pw.stdout.replace(/\n$/, "") };
 }
 
@@ -44,7 +49,7 @@ export async function ensureLogin(page, site) {
   await page.goto(s.check, { waitUntil: "domcontentloaded" }); await page.waitForTimeout(2000);
   if (!s.isOut(page.url())) return { ok: true, msg: `${s.name}：ログイン中` };
   const cred = fromKeychain(site);
-  if (!cred) return { ok: false, msg: `${s.name}：ログインが切れています（キーチェーンにID・パスワードが保存されていないため、自動ではログインできません）` };
+  if (cred.why) return { ok: false, msg: `${s.name}：ログインが切れています。自動でログインできません：${cred.why}` };
   await page.goto(s.login, { waitUntil: "domcontentloaded" }); await page.waitForTimeout(1500);
   const id = page.locator(s.id).first(), pw = page.locator(s.pw).first();
   if (!(await id.count()) || !(await pw.count())) return { ok: false, msg: `${s.name}：ログイン画面の形が想定と違います` };
