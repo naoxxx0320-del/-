@@ -137,10 +137,39 @@ export async function esloveRemaining(page) {
   const m = t.match(/新着情報\s*残\s*(\d+)\s*回/);
   return m ? Number(m[1]) : null;
 }
-async function postEslove(page, post) {
+// ツールが作った投稿の題名（この形の題名か、ツールが記録した題名だけを書き換える。オーナーの投稿は書き換えない）
+const OURS = /^【(本日の出勤|本日出勤|新規割|新人割|早割|平日昼割|クーポン)】/;
+/** 新着情報は最大5件。新規の画面が開けない（一覧に戻される）ときは、ツールが作った投稿のうち最も古いものを書き換える */
+async function esloveEditTarget(page, ownTitles = []) {
+  await page.goto("https://eslove.jp/admin/shop/shopfeed", { waitUntil: "load" }); await pause(page, 2000);
+  const rows = await page.evaluate(() => {
+    const m = new Map();
+    for (const a of document.querySelectorAll("a[href*='/admin/shop/shopfeed/edit/']")) {
+      const id = (a.getAttribute("href").match(/edit\/(\d+)/) || [])[1];
+      if (!id || m.has(id)) continue;
+      const row = a.closest("tr, li, .card, .item, article") || a.parentElement;
+      const text = row.textContent.replace(/\s+/g, " ").trim();
+      const at = (text.match(/更新日時：(\d{4}\/\d{2}\/\d{2} \d{2}:\d{2})/) || [])[1] || "";
+      const title = text.replace(/^edit\s*/, "").split(" カテゴリ：")[0].trim();
+      m.set(id, { id, title, at });
+    }
+    return [...m.values()];
+  });
+  const mine = rows.filter((r) => OURS.test(r.title) || ownTitles.includes(r.title)).sort((a, b) => (a.at < b.at ? -1 : 1));
+  if (!mine.length) throw new Error("エステラブの新着情報が上限（5件）で、ツールが書き換えてよい投稿がありません。投稿せずに止めました");
+  return mine[0];
+}
+async function postEslove(page, post, meta = {}) {
   await page.goto("https://eslove.jp/admin/shop/shopfeed/edit", { waitUntil: "load" }); await pause(page, 2500);
   if (/\/admin\/login/.test(page.url())) throw new Error("エステラブにログインしていません");
-  const form = page.locator("form").filter({ has: page.locator("input[name=title]") }).filter({ has: page.locator("textarea[name=body]") });
+  let form = page.locator("form").filter({ has: page.locator("input[name=title]") }).filter({ has: page.locator("textarea[name=body]") });
+  if (!(await form.count()) && /\/admin\/shop\/shopfeed\/?$/.test(new URL(page.url()).pathname)) {
+    const t = await esloveEditTarget(page, meta.ownTitles || []);
+    await page.goto(`https://eslove.jp/admin/shop/shopfeed/edit/${t.id}`, { waitUntil: "load" }); await pause(page, 2500);
+    form = page.locator("form").filter({ has: page.locator("input[name=title]") }).filter({ has: page.locator("textarea[name=body]") });
+    const cur = await form.locator("input[name=title]").inputValue().catch(() => "");
+    if (cur !== t.title) throw new Error(`書き換える投稿の題名が一覧と違います（${cur}）。投稿せずに止めました`);
+  }
   await one(form, "新着情報の入力欄");
   await choose(form.locator("input[type=radio][name=status][value='1']"), "「表示」");
   await choose(form.locator(`input[type=radio][name=category][value='${EL_CAT[post.type] || "1"}']`), "カテゴリ");
