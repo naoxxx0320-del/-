@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 自動実行（Mac の launchd から1時間ごとに呼ばれる）。作業用ブラウザ（src/browser.mjs）が開いている前提。
-// 順番：①出勤の反映（出勤を入れる・時間を変えるだけ。取り消しはしない）②写メ日記の転載（駅ちか）③ニュース ④上位表示
+// 順番：⓪ログインの確認（切れていればキーチェーンの ID・パスワードで入り直す）①出勤の反映（出勤を入れる・時間を変えるだけ。取り消しはしない）②写メ日記の転載（駅ちか）③ニュース ④上位表示
 // どれかで止まっても次へ進む。ログインが切れているなど、オーナーの対応が必要なときは Mac の通知で知らせる。
 // エステ魂のニュース・アピールは、オーナーの判断が出るまで自動では行わない（config.local.json の auto.estamaNews を true にすると行う）。
 //   node src/auto.mjs          … すべて
@@ -35,6 +35,12 @@ const needsLogin = (s) => /ログインしていません|作業用ブラウザ�
 async function main() {
   log(`---- 自動実行${DRY ? "（予定の表示だけ）" : ""} ----`);
   const problems = [];
+  // ⓪ ログインの確認（駅ちか・全国メンズエステランキング。切れていればキーチェーンの ID・パスワードでログインし直す）
+  if (!DRY) {
+    const al = run(["src/autologin.mjs"], { timeoutMs: 5 * 60e3 });
+    for (const l of al.out.split("\n").filter((x) => /：/.test(x))) log(`ログイン ${l}`);
+    if (!al.ok) problems.push("ログインが切れているサイトがあります（自動でログインし直せませんでした）");
+  }
   // ① 出勤の反映
   for (const site of SHIFT_SITES) {
     const d = run(["src/cli.mjs", "diff", site]);
