@@ -2,6 +2,8 @@
 // ニュースの自動投稿（各サイトの上限まで、10:00〜翌5:00 に均等に配る）
 //   node src/news.mjs plan [--site s]        … 次に出す内容を表示するだけ（書き込まない）
 //   node src/news.mjs run  [--site s] [--now] … 時間が来ているサイトに1件ずつ投稿する（--now は配分を無視して今すぐ1件）
+//   node src/news.mjs post --file <文章.json> [--site s] … 臨時のお知らせを今すぐ出す（配分は無視。サイトの残り回数が0なら出さない）
+//     文章.json：{ "type": "shift", "title": "…", "body": "…", "therapist": "ななお" }（therapist の写真を添える。type は種類・カテゴリの選び方）
 //   サイト：estama / ekichika / esban / eslove / esthe-ranking
 // 内容：エステ魂にお店が書いた新しいニュースの転載（他4サイト）／本日の出勤（写メ日記の更新を書き添える）／
 //       割引（data/offers.json）／本日出勤のセラピストの紹介／そのサイトのクーポン（読めるサイトだけ）
@@ -103,6 +105,45 @@ async function main() {
   const nowMin = bizMinutes();
   const S = await import("./news/sites.mjs");
 
+  if (cmd === "post") {
+    const file = arg("--file");
+    if (!file) throw new Error("使い方：node src/news.mjs post --file <文章.json> [--site s]");
+    const c = JSON.parse(readFileSync(resolve(file), "utf8"));
+    if (!c.title || !c.body) throw new Error("文章.json に title と body が必要です");
+    const post = { type: c.type || "shift", key: `custom:${today}:${c.title}`, title: c.title, body: c.body, displayName: c.therapist || null };
+    await withPage(config, async (page) => {
+      for (const site of sites) {
+        const day = ((state.days[site] ||= {})[today] ||= { count: 0, keys: [], rotation: 0 });
+        if (day.keys.includes(post.key)) { log(`${NAMES[site]}：臨時のお知らせ … 同じ題名を今日すでに出しています：${post.title}`); continue; }
+        let remain = null;
+        if (site === "ekichika") remain = await S.ekichikaRemaining(page).catch(() => null);
+        if (site === "eslove") remain = await S.esloveRemaining(page).catch(() => null);
+        if (site === "esthe-ranking") remain = await S.rankingRemaining(page).catch(() => null);
+        const head = `${NAMES[site]}：臨時のお知らせ${remain != null ? `（サイトの残り ${remain}回）` : ""}`;
+        if (remain === 0) { log(`${head} … サイトの残り回数が0のため出しません`); continue; }
+        const p = fitPost(post, S.LIMITS[site]);
+        const chk = allowedFor(site, p);
+        if (!chk.ok) { log(`${head} … 出しません（${chk.reason}）`); continue; }
+        const photoName = post.displayName || pickPhotoName(post, base.todays, day.count);
+        const pf = photoName ? photoFile(photoName, config.photoDir || join(REPO, "..", "photos")) : null;
+        const imgDir = join(OUT, "news-img");
+        const meta = { ownTitles: (state.titles && state.titles[site]) || [], photo: photoName && (pf || site === "ekichika") ? { name: photoName, file: pf || "(駅ちかの登録写真)", square: site === "estama" && pf ? padded(pf, "square", imgDir) : null, wide: site === "eslove" && pf ? padded(pf, "4:3", imgDir) : null } : null };
+        try {
+          const ok = await S.POSTERS[site](page, p, meta);
+          const img = meta.image || "写真なし";
+          if (!ok) { log(`${head} … 投稿の操作はしましたが、一覧で題名を確認できません：${p.title}［${img}］`); continue; }
+          day.count++; day.keys.push(post.key);
+          ((state.titles ||= {})[site] ||= []).push(p.title); state.titles[site] = state.titles[site].slice(-50);
+          if (site === "estama") state.estama.ours.push(p.title);
+          saveState(state);
+          log(`${head} … 投稿し、一覧で確認しました：${p.title}［${img}］`);
+        } catch (e) { saveState(state); log(`${NAMES[site]}：臨時のお知らせ … 止まりました（${e.message}）`); }
+      }
+    });
+    saveState(state);
+    return;
+  }
+
   await withPage(config, async (page) => {
     // エステ魂のニュース：最初の実行では今あるものを「転載しない」印にする（古い・時間限定の内容を流さないため）
     const est = await S.readEstamaNews(page).catch((e) => { log(`エステ魂のニュースを読めませんでした：${e.message}`); return null; });
@@ -135,7 +176,7 @@ async function main() {
         console.log(`\n■ ${head}${day.count >= want ? "（今は時間外・上限。次の時間を待つ）" : "（今出せる）"}\n  種類：${p.type}\n  写真：${pickPhotoName(post, base.todays, day.count) || "なし"}\n  題名：${p.title}\n  本文：\n${p.body.split("\n").map((l) => "    " + l).join("\n")}${chk.ok ? "" : `\n  ※出さない：${chk.reason}`}`);
         continue;
       }
-      if (cmd !== "run") throw new Error("使い方：node src/news.mjs plan | run [--site s] [--now]");
+      if (cmd !== "run") throw new Error("使い方：node src/news.mjs plan | run [--site s] [--now] | post --file <文章.json> [--site s]");
       if (day.count >= want) { log(`${head} … まだ次の時間ではありません`); continue; }
       if (remain === 0) { log(`${head} … サイトの残り回数が0のため出しません`); continue; }
       if (!chk.ok) { log(`${head} … 出しません（${chk.reason}）`); continue; }
