@@ -7,6 +7,7 @@
 //   セラピストの日記 → 店舗の「所属一覧」の「このセラピストとしてログイン」で本人のタブを開き、そのタブで投稿して閉じる
 //   （本人のログインはタブごと。店舗のログインは切れない）。お店の日記 → 店舗アカウントのまま投稿。
 //   公開範囲が限られた日記（フォロワー限定など）・動画の日記は転載しない。本文は330字まで（超えるときは文の切れ目で切る）。
+//   6時間より前の日記は、先頭に「11/24の日記より」と元の日付を入れる（その日だけの内容が今日の情報に見えないように）。
 //   投稿の前に本人のページを読み、同じ本文がすでにあれば投稿しない（二重投稿を防ぐ）。
 // 記録：out/rx-post-state.json（転載した 02 の投稿番号）、out/rx-post-log.txt
 import { readFileSync, writeFileSync, mkdirSync, appendFileSync } from "node:fs";
@@ -37,6 +38,13 @@ export function fitText(text, max = MAX_TEXT) {
   const head = [...s].slice(0, max - 1).join("");
   const cut = Math.max(head.lastIndexOf("。"), head.lastIndexOf("！"), head.lastIndexOf("？"), head.lastIndexOf("\n"));
   return (cut > max * 0.6 ? head.slice(0, cut + 1) : head).trimEnd() + "…";
+}
+/** 投稿する本文。6時間より前の日記は、元の日付を先頭に入れる（「本日出勤」などが今日の情報に見えないように） */
+export function composeText(d, nowMs = Date.now()) {
+  const ms = atMs(d.at);
+  const old = Number.isFinite(ms) && nowMs - ms > 6 * 3600e3;
+  const m = String(d.at).match(/^\d{4}-(\d{2})-(\d{2})/);
+  return fitText(old && m ? `${+m[1]}/${+m[2]}の日記より\n\n${String(d.text || "").trim()}` : d.text);
 }
 /** 本人のページで同じ日記があるかを見るための目印（先頭の20字・空白なし） */
 export const mark = (text) => [...norm(fitText(text))].slice(0, 20).join("");
@@ -95,7 +103,7 @@ async function postOne(ctx, page, d) {
   try {
     const me = await whoAmI(tab);
     if (me !== d.handle) throw new Error(`@${d.handle} としてログインできませんでした（今は @${me || "?"}）。店舗アカウントでログインしているか確かめてください`);
-    if (await profileHas(tab, d.handle, d.text)) return { ok: true, already: true };
+    if (await profileHas(tab, d.handle, d.post)) return { ok: true, already: true };
     await tab.goto("https://rx-sns.jp/", { waitUntil: "load" }); await tab.waitForTimeout(2500);
     const open = tab.locator("button", { hasText: /^投稿する$/ }).first();
     if (!(await open.count())) throw new Error("「投稿する」が見つかりません");
@@ -103,7 +111,7 @@ async function postOne(ctx, page, d) {
     const dlg = tab.locator("[role=dialog]").filter({ has: tab.locator("textarea") }).last();
     const box = dlg.locator("textarea");
     if ((await box.count()) !== 1) throw new Error("投稿の入力欄が見つかりません");
-    await box.fill(fitText(d.text)); await tab.waitForTimeout(500);
+    await box.fill(d.post); await tab.waitForTimeout(500);
     if (d.images.length) {
       const bufs = [];
       for (const [i, u] of d.images.entries()) { const b = await imageAsJpeg(page, u); if (!b) throw new Error("02 の写真を読めませんでした"); bufs.push({ name: `diary-${d.id}-${i + 1}.jpg`, mimeType: "image/jpeg", buffer: b }); }
@@ -117,7 +125,7 @@ async function postOne(ctx, page, d) {
     if (await send.isDisabled()) throw new Error("「投稿」ボタンが押せない状態です（写真の読み込み中など）");
     await send.click();
     await tab.waitForTimeout(5000);
-    return { ok: await profileHas(tab, d.handle, d.text), already: false };
+    return { ok: await profileHas(tab, d.handle, d.post), already: false };
   } finally { await tab.close().catch(() => {}); }
 }
 
@@ -134,11 +142,11 @@ async function main() {
   const cut = Date.now() - BACKLOG_DAYS * 86400e3;
   const all = [...cast, ...shop].filter((d) => atMs(d.at) >= cut).sort((a, b) => (a.at < b.at ? -1 : 1));
   const posted = new Set(state.posted);
-  const todo = all.filter((d) => !posted.has(d.id) && d.handle);
+  const todo = all.filter((d) => !posted.has(d.id) && d.handle).map((d) => ({ ...d, post: composeText(d) }));
   const noAcc = [...new Set(all.filter((d) => !d.handle).map((d) => d.disp))];
   if (cmd === "plan") {
     console.log(`リラクシィ 写メ日記：転載予定 ${todo.length}件${noAcc.length ? `（アカウントがないため転載しない人：${noAcc.join("・")}）` : ""}`);
-    for (const d of todo) console.log(`  ${d.at} ${d.disp} → @${d.handle}：${[...d.text.replace(/\s+/g, " ")].slice(0, 30).join("")}（写真 ${d.images.length}枚・${[...d.text].length}字）`);
+    for (const d of todo) console.log(`  ${d.at} ${d.disp} → @${d.handle}：${[...d.post.replace(/\s+/g, " ")].slice(0, 34).join("")}（写真 ${d.images.length}枚・${[...d.post].length}字）`);
     return;
   }
   if (cmd !== "run") throw new Error("使い方：node src/rx-post.mjs plan | run [--max n]");
