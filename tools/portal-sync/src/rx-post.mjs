@@ -20,9 +20,9 @@ const HERE = join(dirname(fileURLToPath(import.meta.url)), "..");
 const REPO = join(HERE, "..", "..");
 const OUT = join(HERE, "out");
 const STATE = join(OUT, "rx-post-state.json");
-const SHOP = "aromadiamond";
+export const SHOP = "aromadiamond";
 // 在籍表の表示名 → リラクシィのアカウント（店舗が発行したもの）。config.local.json の rx.accounts で足せる
-const ACCOUNTS = { さら: "sara00", かのん: "kanon00", ななお: "nanao00" };
+export const ACCOUNTS = { さら: "sara00", かのん: "kanon00", ななお: "nanao00" };
 export const MAX_TEXT = 330;
 const BACKLOG_DAYS = 30;
 
@@ -89,7 +89,7 @@ async function openAs(ctx, handle) {
   } finally { await page.close().catch(() => {}); }
 }
 /** そのタブが誰としてログインしているか（左のメニューの「プロフィール」） */
-const whoAmI = (tab) => tab.evaluate(() => {
+export const whoAmI = (tab) => tab.evaluate(() => {
   const a = [...document.querySelectorAll("a[href^='/u/']")].find((x) => /プロフィール/.test(x.textContent));
   return a ? a.getAttribute("href").replace(/^\/u\//, "") : null;
 });
@@ -107,6 +107,8 @@ async function profileHas(tab, handle, text) {
   return norm(await tab.evaluate(() => document.body.innerText)).includes(mark(text));
 }
 
+/** 本人（または店舗）として1件投稿する。d = { handle, post（本文）, images（02 の画像URL）?, files（手元の写真のパス）?, id? } */
+export async function postAsRelaxi(ctx, page, d) { return postOne(ctx, page, { images: [], ...d }); }
 async function postOne(ctx, page, d) {
   const tab = await openAs(ctx, d.handle);
   try {
@@ -122,7 +124,12 @@ async function postOne(ctx, page, d) {
     const box = dlg.locator("textarea");
     if ((await box.count()) !== 1) throw new Error("投稿の入力欄が見つかりません");
     await box.fill(d.post); await tab.waitForTimeout(500);
-    if (d.images.length) {
+    if (d.files && d.files.length) {
+      const inp = tab.locator("input[type=file][data-testid=image-file-input]");
+      if ((await inp.count()) < 1) throw new Error("写真の添付欄が見つかりません");
+      await inp.first().setInputFiles(d.files);
+      await tab.waitForTimeout(3000 + 1500 * d.files.length);
+    } else if (d.images.length) {
       const bufs = [];
       for (const [i, u] of d.images.entries()) { const b = await imageAsJpeg(page, u); if (!b) throw new Error("02 の写真を読めませんでした"); bufs.push({ name: `diary-${d.id}-${i + 1}.jpg`, mimeType: "image/jpeg", buffer: b }); }
       const inp = tab.locator("input[type=file][data-testid=image-file-input]");
