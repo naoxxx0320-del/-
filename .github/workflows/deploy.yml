@@ -67,7 +67,7 @@ jobs:
           node scripts/build-lottery-url.mjs
 
       - name: Check lottery behavior and public link configuration
-        run: node --test scripts/lottery-server.test.cjs scripts/lottery-setup.test.cjs scripts/lottery-url.test.cjs scripts/lottery-public.test.mjs scripts/fetch-sheets.test.mjs scripts/names.test.mjs scripts/gbp-autopost.test.mjs scripts/fetch-diary.test.mjs tools/portal-sync/test/phase1.test.mjs tools/portal-sync/test/phase2.test.mjs tools/portal-sync/test/esthe-ranking.test.mjs tools/portal-sync/test/esban.test.mjs tools/portal-sync/test/estama.test.mjs tools/portal-sync/test/eslove.test.mjs tools/portal-sync/test/news.test.mjs tools/portal-sync/test/boost.test.mjs tools/portal-sync/test/photos.test.mjs
+        run: node --test scripts/lottery-server.test.cjs scripts/lottery-setup.test.cjs scripts/lottery-url.test.cjs scripts/lottery-public.test.mjs scripts/fetch-sheets.test.mjs scripts/names.test.mjs scripts/gbp-autopost.test.mjs scripts/fetch-diary.test.mjs tools/portal-sync/test/phase1.test.mjs tools/portal-sync/test/phase2.test.mjs tools/portal-sync/test/esthe-ranking.test.mjs tools/portal-sync/test/esban.test.mjs tools/portal-sync/test/estama.test.mjs tools/portal-sync/test/eslove.test.mjs tools/portal-sync/test/news.test.mjs tools/portal-sync/test/boost.test.mjs tools/portal-sync/test/photos.test.mjs tools/portal-sync/test/rx.test.mjs
 
       - name: Build static export
         run: npm run build

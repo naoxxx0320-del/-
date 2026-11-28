@@ -30,7 +30,7 @@ export function diaryTitle(text) {
   return [...first].length > 50 ? [...first].slice(0, 49).join("") + "…" : first;
 }
 
-async function fetchDiary(roster) {
+export async function fetchDiary(roster) {
   const { buildDiary } = await import(join(REPO, "scripts", "fetch-diary.mjs"));
   const conf = readJSON(join(REPO, "data", "diary-config.json"), {});
   if (!conf.shopId) throw new Error("data/diary-config.json の shopId が未設定です");
@@ -46,7 +46,7 @@ async function fetchDiary(roster) {
 }
 
 /** 02 の画像を作業用ブラウザの別のタブで直接開き（同じ配信元のページとして扱われる）、JPEG のバイト列にする */
-async function imageAsJpeg(page, url) {
+export async function imageAsJpeg(page, url) {
   const tab = await page.context().newPage();
   try {
     const res = await tab.goto(url, { waitUntil: "load", timeout: 30000 });
@@ -150,4 +150,4 @@ async function main() {
     await page.close().catch(() => {}); await b.close().catch(() => {});
   }
 }
-main().catch((e) => { log("写メ日記の転載：止まりました：" + e.message); process.exitCode = 1; });
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) main().catch((e) => { log("写メ日記の転載：止まりました：" + e.message); process.exitCode = 1; });
