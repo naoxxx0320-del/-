@@ -25,7 +25,7 @@ export function diffShifts(current, plan) {
   return changes;
 }
 
-const LABEL = { add: "出勤を入れる", change: "時間を変える", remove: "出勤を取り消す（要確認）" };
+const LABEL = { add: "出勤を入れる", change: "時間を変える", remove: "出勤を取り消す（要確認）", rest: "休みにする" };
 
 export function formatChanges(siteName, changes, skipped = []) {
   const L = [`■ ${siteName}：変更点 ${changes.length}件`];

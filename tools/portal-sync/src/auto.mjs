@@ -18,7 +18,7 @@ const NODE = process.execPath;
 const DRY = process.argv.includes("--dry");
 const config = JSON.parse(readFileSync(join(HERE, "config.local.json"), "utf8"));
 const auto = config.auto || {};
-const SHIFT_SITES = auto.shiftSites || ["ekichika", "esthe-ranking", "esban", "estama", "eslove"];
+const SHIFT_SITES = auto.shiftSites || ["ekichika", "esthe-ranking", "esban", "estama", "eslove", "rx"];
 const NEWS_SITES = auto.newsSites || ["ekichika", "esban", "eslove", "esthe-ranking", ...(auto.estamaNews === false ? [] : ["estama"])];
 
 const log = (s) => { console.log(s); mkdirSync(OUT, { recursive: true, mode: 0o700 }); appendFileSync(join(OUT, "auto-log.txt"), `${new Date().toISOString()} ${s}\n`); };
