@@ -31,6 +31,12 @@ async function choose(loc, what) {
   }
   if (!(await loc.isChecked())) throw new Error(`${what}を選べません。投稿せずに止めました`);
 }
+/** 写真の添付：失敗しても投稿は続ける（理由を meta.image に記録し、ログに出す） */
+async function attach(meta, fn) {
+  if (!meta || !meta.photo || !meta.photo.file) return;
+  try { const why = await fn(meta.photo); meta.image = why ? `写真なし（${why}）` : `写真：${meta.photo.name}`; }
+  catch (e) { meta.image = `写真なし（${e.message.split("\n")[0].slice(0, 80)}）`; }
+}
 const titleKey = (t) => String(t).replace(/\s+/g, "").slice(0, 20);
 async function listHas(page, url, title) {
   await page.goto(url, { waitUntil: "domcontentloaded" }); await pause(page, 1800);
@@ -40,11 +46,27 @@ async function listHas(page, url, title) {
 
 // ---- エステ魂：/admin/news_edit/ → 「投稿する」（.send-post、画面の外で reCAPTCHA v3） ----
 const ESTAMA_TYPE = { shift: "4", offer: "2", coupon: "2", appeal: "0", forward: "0" };
-async function postEstama(page, post) {
+async function estamaImage(page, file) {
+  const inp = page.locator("#news_icon_1-imgupload_imgUploadField");
+  if ((await inp.count()) !== 1) return "画像欄が見つかりません";
+  const up = page.waitForResponse((r) => r.url().includes("/post/uptemp/"), { timeout: 30000 }).catch(() => null);
+  await inp.setInputFiles(file);
+  if (!(await up)) return "画像のアップロードの応答がありません";
+  await pause(page, 1500);
+  const crop = page.locator(".cropControlCrop:visible");
+  if (!(await crop.count())) return "切り抜きのボタンが見つかりません";
+  const cr = page.waitForResponse((r) => r.url().includes("/post/cropping/"), { timeout: 30000 }).catch(() => null);
+  await crop.first().click();
+  if (!(await cr)) return "切り抜きの応答がありません";
+  await pause(page, 1500);
+  return (await page.locator("img[src*='cropped_img']").count()) ? null : "切り抜いた画像がフォームに入りません";
+}
+async function postEstama(page, post, meta = {}) {
   await page.goto("https://estama.jp/admin/news_edit/", { waitUntil: "load" }); await pause(page, 2500);
   if (/login/.test(page.url())) throw new Error("エステ魂にログインしていません");
   await (await one(page.locator("input[name='main[title]']"), "題名の欄")).fill(post.title); await pause(page, 300);
   await (await one(page.locator("textarea[name='main[content]']"), "本文の欄")).fill(post.body); await pause(page, 300);
+  await attach(meta, (ph) => estamaImage(page, ph.square || ph.file));
   const type = page.locator(`input[type=radio][name='main[news_type]'][value='${ESTAMA_TYPE[post.type] || "0"}']`);
   if (await type.count()) await type.check({ force: true });
   const now = page.locator("input[type=radio][name='future[post]'][value='0']");
@@ -91,12 +113,18 @@ async function postEkichika(page, post, meta = {}) {
   }, toHtml(post.body));
   if (!set) throw new Error("記事本文の入力欄（エディタ）が見つかりません。投稿せずに止めました");
   await pause(page, 800);
-  // 画像：今の写真から選ぶ（紹介のときは本人の写真）
-  const sel = form.locator("select[name=girl_id]");
-  if (post.type === "appeal" && post.displayName && (await sel.count())) {
+  // 画像：「○○さんの画像を使用する」（駅ちかに登録済みの1枚目）で、本日出勤の人を選ぶ（紹介のときは本人）
+  await attach(meta, async (ph) => {
+    const sel = form.locator("select[name=girl_id]");
+    if ((await sel.count()) !== 1) return "女の子の画像を選ぶ欄が見つかりません";
     const labels = await sel.evaluate((el) => [...el.options].map((o) => o.textContent.trim()));
-    if (labels.includes(post.displayName)) await sel.selectOption({ label: post.displayName });
-  }
+    const label = labels.find((l) => l === ph.name);
+    if (!label) return `${ph.name}さんが一覧にいません`;
+    const flg = form.locator("input[type=radio][name=img_flg][value='1']");
+    if (await flg.count()) await flg.check();
+    await sel.selectOption({ label });
+    return null;
+  });
   const show = form.locator("input[type=radio][name=display_flg][value='1']");
   if (await show.count()) await show.check();
   const dlg = withDialogs(page, /登録|更新|よろしい/);
@@ -110,7 +138,7 @@ async function postEkichika(page, post, meta = {}) {
 
 // ---- エステ番長：新着情報 /node/add/shop_news ----
 const EB_CAT = { shift: "4", offer: "3", coupon: "3", appeal: "2", forward: "2" };
-async function postEsban(page, post) {
+async function postEsban(page, post, meta = {}) {
   await page.goto("https://es-ban.com/node/add/shop_news", { waitUntil: "load" }); await pause(page, 2000);
   if (/\/user\/login/.test(page.url())) throw new Error("エステ番長にログインしていません");
   const form = page.locator("form").filter({ has: page.locator("input[name='title[0][value]']") });
@@ -119,6 +147,14 @@ async function postEsban(page, post) {
   const cat = post.type === "appeal" && post.isNew ? "1" : EB_CAT[post.type] || "2";
   await (await one(form.locator("select[name=field_shop_news_category]"), "カテゴリの欄")).selectOption(cat);
   await (await one(form.locator("textarea[name='field_shop_news_body[0][value]']"), "内容の欄")).fill(post.body); await pause(page, 300);
+  await attach(meta, async (ph) => {
+    const inp = form.locator("input[name='files[field_shop_news_img_0]']");
+    if ((await inp.count()) !== 1) return "画像欄が見つかりません";
+    await inp.setInputFiles(ph.file);
+    const fid = page.locator("input[type=hidden][name='field_shop_news_img[0][fids]']");
+    for (let i = 0; i < 20; i++) { await pause(page, 1000); if ((await fid.count()) && (await fid.inputValue())) return null; }
+    return "画像のアップロードが終わりません";
+  });
   const st = form.locator("input[name='status[value]']");
   if ((await st.count()) && !(await st.isChecked())) await st.check();
   await Promise.all([page.waitForLoadState("domcontentloaded"), (await one(form.locator("input[type=submit][name=op][value='保存']"), "保存ボタン")).click()]);
@@ -175,6 +211,13 @@ async function postEslove(page, post, meta = {}) {
   await choose(form.locator(`input[type=radio][name=category][value='${EL_CAT[post.type] || "1"}']`), "カテゴリ");
   await (await one(form.locator("input[name=title]"), "タイトルの欄")).fill(post.title); await pause(page, 300);
   await (await one(form.locator("textarea[name=body]"), "内容の欄")).fill(post.body); await pause(page, 300);
+  await attach(meta, async (ph) => {
+    const inp = page.locator("input.fileUpload__fileHandler");
+    if ((await inp.count()) !== 1) return "画像欄が見つかりません";
+    await inp.setInputFiles(ph.wide || ph.file);
+    for (let i = 0; i < 15; i++) { await pause(page, 1000); if (await page.locator(".fileUpload img[src^='data:image'], img.img-responsive[src^='data:image']").count()) return null; }
+    return "画像の読み込みが終わりません";
+  });
   const dlg = withDialogs(page, /更新回数を消費します/);
   try {
     const btn = page.locator("button.js-update", { hasText: "更新または上位化する" }).first();
@@ -197,7 +240,7 @@ export async function rankingRemaining(page) {
   const m = (await page.evaluate(() => document.body.innerText)).match(/あと\s*(\d+)\s*回投稿できます/);
   return m ? Number(m[1]) : 0;
 }
-async function postRanking(page, post) {
+async function postRanking(page, post, meta = {}) {
   await page.goto("https://www.esthe-ranking.jp/shop/news/add/", { waitUntil: "load" }); await pause(page, 2000);
   if (/\/login/.test(page.url())) throw new Error("全国メンズエステランキングにログインしていません");
   const form = page.locator("form[action='/shop/news/add/']");
@@ -208,6 +251,12 @@ async function postRanking(page, post) {
   if (await now.count()) await now.check();
   await (await one(form.locator("input[name=title]"), "題名の欄")).fill(post.title); await pause(page, 300);
   await (await one(form.locator("textarea[name=content]"), "本文の欄")).fill(post.body); await pause(page, 300);
+  await attach(meta, async (ph) => {
+    const inp = form.locator("input[type=file][name=image]");
+    if ((await inp.count()) !== 1) return "画像欄が見つかりません";
+    await inp.setInputFiles(ph.file);
+    return (await inp.evaluate((e) => e.files.length)) === 1 ? null : "画像を選べません";
+  });
   const before = await page.evaluate(() => location.href);
   // 「送信」を押すと確認画面（confirm）が出る。送信・投稿の確認だけ承認する
   const dlg = withDialogs(page, /送信|投稿|公開|よろしい/);
@@ -229,7 +278,7 @@ async function postRanking(page, post) {
 }
 
 export const POSTERS = { estama: postEstama, ekichika: postEkichika, esban: postEsban, eslove: postEslove, "esthe-ranking": postRanking };
-export const LIMITS = { estama: { title: 40, body: 900 }, ekichika: { title: 50, body: 900 }, esban: { title: 60, body: 900 }, eslove: { title: 40, body: 900 }, "esthe-ranking": { title: 50, body: 1000 } };
+export const LIMITS = { estama: { title: 30, body: 900 }, ekichika: { title: 50, body: 900 }, esban: { title: 60, body: 900 }, eslove: { title: 40, body: 900 }, "esthe-ranking": { title: 50, body: 1000 } };
 
 // ---- 読み取り（書き込まない） ----
 /** エステ魂のニュース一覧（id・題名）。本文は編集画面の欄から読む（保存はしない） */

@@ -11,6 +11,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadSource, displayNameMap } from "./source.mjs";
 import { collectShifts, bizToday } from "./shifts.mjs";
+import { pickPhotoName, photoFile, padded } from "./news/photos.mjs";
 import { shiftPost, offerPost, appealPost, couponPost, forwardPost, pickNext, fitPost, allowedFor, allowedSoFar } from "./news/compose.mjs";
 
 const HERE = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -66,6 +67,7 @@ async function buildCandidates(config) {
   const byDisp = (n) => roster.find((r) => (r.nameFull || r.name) === n || r.name === n);
   return {
     today,
+    todays,
     shift: shiftPost({ today, shifts: todays, diaryNames: diary }),
     offer: activeOffers().map((o) => offerPost(o)).filter(Boolean),
     appeal: todays.map((s) => appealPost({ today, therapist: byDisp(s.name), shift: s })).filter(Boolean),
@@ -130,22 +132,29 @@ async function main() {
       const p = fitPost(post, S.LIMITS[site]);
       const chk = allowedFor(site, p);
       if (cmd === "plan") {
-        console.log(`\n■ ${head}${day.count >= want ? "（今は時間外・上限。次の時間を待つ）" : "（今出せる）"}\n  種類：${p.type}\n  題名：${p.title}\n  本文：\n${p.body.split("\n").map((l) => "    " + l).join("\n")}${chk.ok ? "" : `\n  ※出さない：${chk.reason}`}`);
+        console.log(`\n■ ${head}${day.count >= want ? "（今は時間外・上限。次の時間を待つ）" : "（今出せる）"}\n  種類：${p.type}\n  写真：${pickPhotoName(post, base.todays, day.count) || "なし"}\n  題名：${p.title}\n  本文：\n${p.body.split("\n").map((l) => "    " + l).join("\n")}${chk.ok ? "" : `\n  ※出さない：${chk.reason}`}`);
         continue;
       }
       if (cmd !== "run") throw new Error("使い方：node src/news.mjs plan | run [--site s] [--now]");
       if (day.count >= want) { log(`${head} … まだ次の時間ではありません`); continue; }
       if (remain === 0) { log(`${head} … サイトの残り回数が0のため出しません`); continue; }
       if (!chk.ok) { log(`${head} … 出しません（${chk.reason}）`); continue; }
+      // 写真：本日出勤のセラピスト（紹介は本人）。投稿ごとに出勤の早い順で入れ替える
+      const photoName = pickPhotoName(post, base.todays, day.count);
+      const photoDir = config.photoDir || join(REPO, "..", "photos");
+      const file = photoName ? photoFile(photoName, photoDir) : null;
+      const imgDir = join(OUT, "news-img");
+      const meta = { ownTitles: (state.titles && state.titles[site]) || [], photo: photoName && (file || site === "ekichika") ? { name: photoName, file: file || "(駅ちかの登録写真)", square: site === "estama" && file ? padded(file, "square", imgDir) : null, wide: site === "eslove" && file ? padded(file, "4:3", imgDir) : null } : null };
+      const imgNote = () => meta.image || (photoName ? `写真なし（${photoName}さんの写真ファイルがありません）` : "写真なし（本日出勤で写真のある人がいません）");
       try {
-        const ok = await S.POSTERS[site](page, p, { ownTitles: (state.titles && state.titles[site]) || [] });
-        if (!ok) { log(`${head} … 投稿の操作はしましたが、一覧で題名を確認できません（数えずに次の回で確かめます）：${p.title}`); continue; }
+        const ok = await S.POSTERS[site](page, p, meta);
+        if (!ok) { log(`${head} … 投稿の操作はしましたが、一覧で題名を確認できません（数えずに次の回で確かめます）：${p.title}［${imgNote()}］`); continue; }
         day.count++; day.keys.push(post.key); day.rotation = rotation;
         ((state.titles ||= {})[site] ||= []).push(p.title); state.titles[site] = state.titles[site].slice(-50);
         if (post.type === "forward") (state.forwarded[site] ||= []).push(post.key.slice("forward:".length));
         if (site === "estama") state.estama.ours.push(p.title);
         saveState(state);
-        log(`${head.replace(/今日 \d+/, `今日 ${day.count}`)} … 投稿し、一覧で確認しました：${p.title}`);
+        log(`${head.replace(/今日 \d+/, `今日 ${day.count}`)} … 投稿し、一覧で確認しました：${p.title}［${imgNote()}］`);
       } catch (e) {
         saveState(state);
         log(`${NAMES[site]}：止まりました（${e.message}）`);
