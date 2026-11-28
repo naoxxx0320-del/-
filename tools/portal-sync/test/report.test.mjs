@@ -35,3 +35,16 @@ test("先週の月〜日", () => {
   const w = lastWeek(Date.parse("2026-11-30T09:10:00+09:00")); // 月曜
   assert.equal(w[0], "2026-11-23"); assert.equal(w[6], "2026-11-29");
 });
+
+test("エステ魂の順位：画面上のお店の名前（順位の外）は数えない", () => {
+  const t = "アロマダイヤモンド\n(店舗番号:52057)\nポイント\n0\n…\n17\nOREKANO\n錦糸町・亀戸\n18\nアロマダイヤモンド\n錦糸町・亀戸";
+  assert.equal(estamaRank(t), 18);
+});
+
+test("駅ちかのアクセス（画面の文字から）", async () => {
+  const { ekichikaAccessText } = await import("../src/report/parse.mjs");
+  const vals = [...Array(30)].map((_, i) => (i < 27 ? String(i + 1) : "-"));
+  const t = ["今月", "アクセス", "総数", "日平均", "4.2", "2.1", "2.1", "114", ...vals, "プロフィール"].join("\n");
+  const r = ekichikaAccessText(t, "2026-11");
+  assert.equal(r["2026-11-01"], 1); assert.equal(r["2026-11-27"], 27); assert.equal(r["2026-11-28"], undefined);
+});
