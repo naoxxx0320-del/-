@@ -2,7 +2,8 @@
 // 自動実行（Mac の launchd から1時間ごとに呼ばれる）。作業用ブラウザ（src/browser.mjs）が開いている前提。
 // 順番：⓪ログインの確認（切れていればキーチェーンの ID・パスワードで入り直す）①出勤の反映（出勤を入れる・時間を変えるだけ。取り消しはしない）②写メ日記の転載（駅ちか）③ニュース ④上位表示
 // どれかで止まっても次へ進む。ログインが切れているなど、オーナーの対応が必要なときは Mac の通知で知らせる。
-// エステ魂のニュース・アピールは、オーナーの判断が出るまで自動では行わない（config.local.json の auto.estamaNews を true にすると行う）。
+// エステ魂：オーナーがエステ魂に電話で確認（2026-11-28）。ニュース・セラピストアピールの自動化は可、お店のランキングを上げる操作は不可。
+//   → ニュースとセラピストアピールは自動で行う（止めるときは config.local.json の auto.estamaNews を false に）。集客ワンクリックアピールは押さない。
 //   node src/auto.mjs          … すべて
 //   node src/auto.mjs --dry    … 何も書き込まず、各段階の予定だけ表示
 import { spawnSync } from "node:child_process";
@@ -17,7 +18,7 @@ const DRY = process.argv.includes("--dry");
 const config = JSON.parse(readFileSync(join(HERE, "config.local.json"), "utf8"));
 const auto = config.auto || {};
 const SHIFT_SITES = auto.shiftSites || ["ekichika", "esthe-ranking", "esban", "estama", "eslove"];
-const NEWS_SITES = auto.newsSites || ["ekichika", "esban", "eslove", "esthe-ranking", ...(auto.estamaNews ? ["estama"] : [])];
+const NEWS_SITES = auto.newsSites || ["ekichika", "esban", "eslove", "esthe-ranking", ...(auto.estamaNews === false ? [] : ["estama"])];
 
 const log = (s) => { console.log(s); mkdirSync(OUT, { recursive: true, mode: 0o700 }); appendFileSync(join(OUT, "auto-log.txt"), `${new Date().toISOString()} ${s}\n`); };
 function notify(msg) {
