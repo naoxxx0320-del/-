@@ -2,11 +2,12 @@
 
 /** エステ魂「ランキングデータ」の画面の文字から、お店の順位（見つからなければ null） */
 export function estamaRank(text, shopName = "アロマダイヤモンド") {
+  // 画面の上のお店の名前（順位の前）は飛ばし、順位の一覧の中（番号のあと・次の行がエリア名）だけを見る
+  const lines = String(text || "").split("\n").map((l) => l.trim()).filter(Boolean);
   let last = null;
-  for (const raw of String(text || "").split("\n")) {
-    const l = raw.trim();
-    if (/^\d{1,3}$/.test(l)) last = Number(l);
-    else if (l === shopName) return last;
+  for (let i = 0; i < lines.length; i++) {
+    if (/^\d{1,3}$/.test(lines[i])) last = Number(lines[i]);
+    else if (lines[i] === shopName && last != null && /・|駅|エリア/.test(lines[i + 1] || "")) return last;
   }
   return null;
 }
@@ -31,6 +32,21 @@ export function ekichikaAccess(rows, ym) {
   const vals = row.slice(-days);
   const out = {};
   vals.forEach((v, i) => { const n = Number(String(v).trim()); if (String(v).trim() !== "-" && Number.isFinite(n)) out[`${ym}-${String(i + 1).padStart(2, "0")}`] = n; });
+  return out;
+}
+
+/** 駅ちか「アクセス数」の画面の文字から：「アクセス」「総数」「日平均」のあとに 今月・前月・増減・合計、続いて1日〜月末の値 */
+export function ekichikaAccessText(text, ym) {
+  const [y, m] = ym.split("-").map(Number);
+  const days = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const L = String(text || "").split("\n").map((l) => l.trim()).filter(Boolean);
+  const i = L.findIndex((l, k) => l === "アクセス" && L[k + 1] === "総数");
+  if (i < 0) return {};
+  let j = i + 2;
+  if (L[j] === "日平均") j++;
+  const vals = L.slice(j + 4, j + 4 + days);
+  const out = {};
+  vals.forEach((v, k) => { const n = Number(v); if (v !== "-" && Number.isFinite(n)) out[`${ym}-${String(k + 1).padStart(2, "0")}`] = n; });
   return out;
 }
 

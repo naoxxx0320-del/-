@@ -11,7 +11,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadSource, displayNameMap } from "./source.mjs";
 import { collectShifts } from "./shifts.mjs";
-import { estamaRank, estamaAccess, ekichikaAccess, rxFollowers, countLog, lastWeek } from "./report/parse.mjs";
+import { estamaRank, estamaAccess, ekichikaAccess, ekichikaAccessText, rxFollowers, countLog, lastWeek } from "./report/parse.mjs";
 import { dayLabel } from "./news/compose.mjs";
 
 const HERE = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -34,6 +34,7 @@ async function collectWeb(page, days) {
     await go("https://ranking-deli.jp/admin/access/shop/");
     const ym = days[days.length - 1].slice(0, 7);
     r.ekichika = ekichikaAccess(await rows(), ym);
+    if (!Object.keys(r.ekichika).length) r.ekichika = ekichikaAccessText(await page.evaluate(() => document.body.innerText), ym);
   } catch (e) { r.errors.push(`駅ちかのアクセス：${e.message}`); }
   try {
     await go("https://eslove.jp/admin/taphistory");
@@ -57,11 +58,10 @@ async function collectBookings(config, days) {
       out[d] = { count: j.busy.length, minutes: j.busy.reduce((a, b) => a + Math.max(0, (Number(b.e) - Number(b.s)) / 60000), 0) };
     } catch { out[d] = null; }
   }
-  let shiftMin = {};
-  try {
-    const { schedule, roster } = await loadSource(config);
-    for (const s of collectShifts(schedule, displayNameMap(roster)).shifts) if (days.includes(s.date) && s.start != null && s.end != null) shiftMin[s.date] = (shiftMin[s.date] || 0) + (s.end - s.start);
-  } catch { shiftMin = {}; }
+  // 出勤時間：シートには過去の日が残らないため、毎時記録しておいたもの（out/report-state.json の shiftMin）を使う
+  const hist = (readJSON(STATE, {}).shiftMin) || {};
+  const shiftMin = {};
+  for (const d of days) if (Number.isFinite(hist[d])) shiftMin[d] = hist[d];
   return { book: out, shiftMin };
 }
 
@@ -97,7 +97,7 @@ function render({ days, web, bk, acts, prev }) {
     ["予約", bookKnown ? `${bookCount}件` : "—", delta(bookKnown ? bookCount : null, prev && prev.bookCount)],
     ["予約で埋まった割合", occAll == null ? "—" : `${occAll}%`, delta(occAll, prev && prev.occAll)],
     ["エステ魂 アクセス", es == null ? "—" : `${es.toLocaleString("ja-JP")}`, delta(es, prev && prev.estama)],
-    ["エステ魂 エリア順位", web.estamaRank == null ? "30位より下" : `${web.estamaRank}位`, prev && prev.estamaRank != null && web.estamaRank != null ? (web.estamaRank === prev.estamaRank ? "（先週と同じ）" : `（先週 ${prev.estamaRank}位）`) : ""],
+    ["エステ魂 エリア順位（今）", web.estamaRank == null ? "30位より下" : `${web.estamaRank}位`, prev && prev.estamaRank != null && web.estamaRank != null ? (web.estamaRank === prev.estamaRank ? "（先週と同じ）" : `（先週 ${prev.estamaRank}位）`) : ""],
     ["駅ちか 女の子ページ", ek == null ? "—" : `${ek}`, delta(ek, prev && prev.ekichika)],
     ["エステラブ 電話・LINE", web.esloveTaps == null ? "—" : `${web.esloveTaps}回`, "（前月1日〜今日）"],
   ];
@@ -146,7 +146,20 @@ td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 async function main() {
   const cmd = process.argv[2] || "now";
   const state = readJSON(STATE, { weeks: {} });
+  state.weeks ||= {};
   const days = lastWeek();
+  // 毎時：今日以降の出勤時間（分）を記録しておく（過去の週の「予約で埋まった割合」に使う）
+  try {
+    const config0 = JSON.parse(readFileSync(join(HERE, "config.local.json"), "utf8"));
+    const { schedule, roster } = await loadSource(config0);
+    const today = new Date(Date.now() + 9 * 3600e3 - 6 * 3600e3).toISOString().slice(0, 10);
+    const m = {};
+    for (const s of collectShifts(schedule, displayNameMap(roster)).shifts) if (s.date >= today && s.start != null && s.end != null) m[s.date] = (m[s.date] || 0) + (s.end - s.start);
+    state.shiftMin ||= {};
+    for (const [d, v] of Object.entries(m)) state.shiftMin[d] = v;
+    for (const d of Object.keys(state.shiftMin)) if (d < lastWeek(Date.now() - 21 * 86400e3)[0]) delete state.shiftMin[d];
+    mkdirSync(OUT, { recursive: true, mode: 0o700 }); writeFileSync(STATE, JSON.stringify(state, null, 1));
+  } catch {}
   if (cmd === "auto") {
     const j = new Date(Date.now() + 9 * 3600e3);
     if (j.getUTCDay() !== 1 || j.getUTCHours() < 9 || state.last === days[0]) { console.log("週のレポート：作る日時ではありません（月曜9時以降に1回）"); return; }
