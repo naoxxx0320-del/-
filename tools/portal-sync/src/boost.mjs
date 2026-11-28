@@ -6,8 +6,9 @@
 //   ・駅ちか：管理画面トップの「一括上位表示」（.all_disp_button、確認「一括上位表示します。よろしいですか？」）。1日の残り回数はページに出る（深夜0時にリセット）
 //   ・エステラブ：新着情報の「更新または上位化する」＝ニュースの投稿（src/news.mjs）で行う
 //   ・エステ魂：セラピストアピール（本日出勤の人だけ。1人1日1回、出勤の1時間前から退勤まで、開始の早い順。1日3回・朝6時リセット）。
-//     オーナーがエステ魂に電話で確認（2026-11-28）：セラピストアピール・ニュースの自動化は可、お店のランキングを上げる操作は不可。
-//     → 集客ワンクリックアピール（お店の表示順を上げる）は押さない
+//   ・エステ魂：集客ワンクリックアピール（店舗情報・クーポン情報・お店体験談。各1日3回・朝6時リセット）。1日3回を 10:00〜翌5:00 に均等に配り、時間が来たら3つを1回ずつ押す
+//     オーナーがエステ魂に電話で確認（2026-11-28）：セラピストアピール・集客ワンクリックアピール・ニュースの自動化は問題ない。
+//     禁止されているのは、IP を変えて自分のお店に何度もアクセスし表示順位を上げること（このツールはそうした操作はしない）
 //   ・全国メンズエステランキング・エステ番長：上位表示のボタンはない
 import { readFileSync, writeFileSync, mkdirSync, appendFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -95,6 +96,31 @@ async function estamaAppeal(page, row) {
   return estamaRead(page);
 }
 
+/** 集客ワンクリックアピール：各コンテンツの残り回数と最終アピール */
+const GUEST = [["shop", "店舗情報"], ["shop_coupon", "クーポン情報"], ["shop_exp", "お店体験談"]];
+async function estamaGuestRead(page) {
+  await page.goto("https://estama.jp/admin/guest/appeal/", { waitUntil: "load" });
+  await page.waitForTimeout(2000 + Math.random() * 500);
+  if (/login/.test(page.url())) throw new Error("エステ魂にログインしていません");
+  const rows = await page.evaluate((keys) => keys.map(([key, label]) => {
+    const a = document.querySelector(`a.send-easy_post2[data-post='single_appeal_exec'][data-row='${key},guest_appeal']`);
+    const row = a && (a.closest("tr") || a.parentElement.parentElement);
+    const text = row ? row.innerText : "";
+    return { key, label, found: !!a, remain: Number((text.match(/残り\s*(\d+)\s*回/) || [])[1]), last: ((text.match(/最終アピール\s*([^\n]+)/) || [])[1] || "").trim() };
+  }), GUEST);
+  for (const r of rows) if (!r.found || !Number.isFinite(r.remain)) throw new Error(`エステ魂の集客ワンクリックアピール「${r.label}」を読めません。押さずに止めました`);
+  return rows;
+}
+async function estamaGuestPress(page, key) {
+  const link = page.locator(`a.send-easy_post2[data-post='single_appeal_exec'][data-row='${key},guest_appeal']`);
+  if ((await link.count()) !== 1) throw new Error("「アピールする」が見つかりません");
+  const res = page.waitForResponse((r) => r.url().includes("/admin_post/single_appeal_exec"), { timeout: 20000 }).catch(() => null);
+  await link.click();
+  const r = await res;
+  await page.waitForTimeout(2000 + Math.random() * 500);
+  if (!r) throw new Error("アピールの応答がありませんでした");
+}
+
 async function main() {
   const cmd = process.argv[2] || "plan";
   const config = JSON.parse(readFileSync(join(HERE, "config.local.json"), "utf8"));
@@ -129,14 +155,40 @@ async function main() {
     const working = cur.rows.filter((r) => parseShift(r.shiftText));
     const next = pickAppeal(cur.rows, { nowMin: now, done: es.done, remain: cur.remain });
     const head = `エステ魂 セラピストアピール：残り ${cur.remain}回／本日出勤 ${working.map((r) => `${r.name} ${r.shiftText}`).join("・") || "なし"}／今日アピール済み ${es.done.length}人`;
-    if (cmd === "plan") { console.log(`${head}${next ? ` … 今 ${next.name} をアピールできます` : " … 今はなし"}`); return; }
-    if (!next) { log(`${head} … 今はなし`); return; }
+    if (cmd === "plan") console.log(`${head}${next ? ` … 今 ${next.name} をアピールできます` : " … 今はなし"}`);
+    else if (!next) log(`${head} … 今はなし`);
+    else {
     const after = await estamaAppeal(page, next);
     const row = after.rows.find((r) => r.id === next.id);
     const ok = after.remain < cur.remain;
     if (ok) es.done.push(next.id);
     log(`エステ魂 セラピストアピール：${next.name}（${next.shiftText}）${ok ? "をアピールしました" : "を押しましたが残り回数が減っていません（画面で確認してください）"}（残り ${cur.remain} → ${after.remain}、最終アピール ${row ? row.last : "?"}）`);
+    }
   } catch (e) { log("エステ魂 セラピストアピール：止まりました：" + e.message); process.exitCode = 1; }
+  // エステ魂 集客ワンクリックアピール（朝6時リセット＝営業日で数える。1日3回を均等に配る）
+  try {
+    const biz = jst(Date.now() - 6 * 3600e3).toISOString().slice(0, 10);
+    const g = ((state.estamaGuest ||= {})[biz] ||= { count: 0, quota: null });
+    const cur = await estamaGuestRead(page);
+    const maxRemain = Math.max(...cur.map((r) => r.remain));
+    if (g.quota == null) g.quota = g.count + maxRemain;
+    const want = process.argv.includes("--now") ? g.count + 1 : allowedSoFar(g.quota, bizMinutes());
+    const head = `エステ魂 集客ワンクリックアピール：今日 ${g.count}回／残り ${cur.map((r) => `${r.label} ${r.remain}`).join("・")}`;
+    if (cmd === "plan") console.log(`${head}${g.count < want && maxRemain > 0 ? " … 今押せます" : " … 次の時間を待ちます"}`);
+    else if (g.count >= want || maxRemain <= 0) log(`${head} … 今は押しません`);
+    else {
+      const results = [];
+      for (const r of cur.filter((x) => x.remain > 0)) {
+        await page.goto("https://estama.jp/admin/guest/appeal/", { waitUntil: "load" }).catch(() => {});
+        await page.waitForTimeout(1500);
+        try { await estamaGuestPress(page, r.key); results.push(r); } catch (e) { log(`エステ魂 集客ワンクリックアピール「${r.label}」：止まりました：${e.message}`); }
+      }
+      const after = await estamaGuestRead(page);
+      const ok = results.filter((r) => (after.find((a) => a.key === r.key) || {}).remain < r.remain);
+      if (ok.length) g.count++;
+      log(`エステ魂 集客ワンクリックアピール：${ok.length ? `押しました（${ok.map((r) => r.label).join("・")}）` : "押しましたが残り回数が減っていません（画面で確認してください）"}（残り ${after.map((r) => `${r.label} ${r.remain}`).join("・")}、最終 ${after[0].last}）`);
+    }
+  } catch (e) { log("エステ魂 集客ワンクリックアピール：止まりました：" + e.message); process.exitCode = 1; }
   } finally {
     mkdirSync(OUT, { recursive: true, mode: 0o700 }); writeFileSync(STATE, JSON.stringify(state, null, 1));
     await page.close().catch(() => {}); await b.close().catch(() => {});
