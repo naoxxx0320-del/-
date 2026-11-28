@@ -10,7 +10,7 @@
 //   6時間より前の日記は、先頭に「11/24の日記より」と元の日付を入れる（その日だけの内容が今日の情報に見えないように）。
 //   投稿の前に本人のページを読み、同じ本文がすでにあれば投稿しない（二重投稿を防ぐ）。
 // 記録：out/rx-post-state.json（転載した 02 の投稿番号）、out/rx-post-log.txt
-import { readFileSync, writeFileSync, mkdirSync, appendFileSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, appendFileSync, existsSync, statSync, unlinkSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadSource } from "./source.mjs";
@@ -162,9 +162,13 @@ async function main() {
   if (cmd !== "run") throw new Error("使い方：node src/rx-post.mjs plan | run [--max n]");
   for (const n of noAcc) if (!state.noAccount.includes(n)) { state.noAccount.push(n); log(`リラクシィ 写メ日記：${n}さんはリラクシィのアカウントがないため転載しません（店舗の「アカウント発行」で作り、src/rx-post.mjs か config.local.json の rx.accounts に足してください）`); }
   if (!todo.length) { console.log("リラクシィ 写メ日記：新しい日記はありません"); return; }
+  // 同時に2つ動かない（二重投稿を防ぐ）。40分より古い印は、止まったものとして消す
+  const LOCK = join(OUT, "rx-post.lock");
+  if (existsSync(LOCK) && Date.now() - statSync(LOCK).mtimeMs < 40 * 60e3) { console.log("リラクシィ 写メ日記：ほかの転載が動いているため、次の回にします"); return; }
+  mkdirSync(OUT, { recursive: true, mode: 0o700 }); writeFileSync(LOCK, String(process.pid));
   const { chromium } = await import("playwright");
   const b = await chromium.connectOverCDP(config.browserCdpUrl || "http://127.0.0.1:9333", { timeout: 5000 }).catch(() => null);
-  if (!b) throw new Error("作業用ブラウザが開いていません（node src/browser.mjs で開いてください）");
+  if (!b) { try { unlinkSync(LOCK); } catch {} throw new Error("作業用ブラウザが開いていません（node src/browser.mjs で開いてください）"); }
   const ctx = b.contexts()[0];
   const page = await ctx.newPage();
   const save = () => { mkdirSync(OUT, { recursive: true, mode: 0o700 }); writeFileSync(STATE, JSON.stringify(state, null, 1)); };
@@ -181,6 +185,6 @@ async function main() {
         else log(`リラクシィ 写メ日記：投稿の操作はしましたが、本人のページで確認できません（次の回で確かめます）：${label}`);
       } catch (e) { log(`リラクシィ 写メ日記：止まりました（${label}：${e.message}）`); process.exitCode = 1; break; }
     }
-  } finally { save(); await page.close().catch(() => {}); await b.close().catch(() => {}); }
+  } finally { save(); try { unlinkSync(LOCK); } catch {} await page.close().catch(() => {}); await b.close().catch(() => {}); }
 }
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) main().catch((e) => { log("リラクシィ 写メ日記：止まりました：" + e.message); process.exitCode = 1; });
