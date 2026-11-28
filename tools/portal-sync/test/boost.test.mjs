@@ -9,15 +9,25 @@ test("出勤の表示を分に直す（退勤が日をまたぐときは翌日�
   assert.equal(parseShift(""), null);
 });
 
-test("本日出勤の人だけ、出勤の1時間前から退勤まで、開始の早い順、今日まだの人", () => {
+test("1人の日：出勤1時間前〜退勤に3回を均等に配り、使い切る", () => {
+  const rows = [{ id: "1", name: "ななお", shiftText: "16:00～24:00" }, { id: "3", name: "れいこ", shiftText: "" }];
+  // 15:00〜24:00 を3つに分ける → 15:00・18:00・21:00
+  assert.equal(pickAppeal(rows, { nowMin: 14 * 60, remain: 3 }), null);
+  assert.equal(pickAppeal(rows, { nowMin: 15 * 60 + 7, remain: 3 }).name, "ななお");
+  assert.equal(pickAppeal(rows, { nowMin: 16 * 60 + 7, remain: 2, done: ["1"] }), null); // 次は18時
+  assert.equal(pickAppeal(rows, { nowMin: 18 * 60 + 7, remain: 2, done: ["1"] }).name, "ななお");
+  assert.equal(pickAppeal(rows, { nowMin: 21 * 60 + 7, remain: 1, done: ["1", "1"] }).name, "ななお");
+  assert.equal(pickAppeal(rows, { nowMin: 23 * 60, remain: 0, done: ["1", "1", "1"] }), null); // 残り0
+});
+
+test("複数の日：今日のアピールが少ない人から（同じなら出勤の早い人）", () => {
   const rows = [
     { id: "1", name: "ななお", shiftText: "16:00～24:00" },
     { id: "2", name: "さら", shiftText: "12:00～18:00" },
-    { id: "3", name: "れいこ", shiftText: "" },
   ];
-  assert.equal(pickAppeal(rows, { nowMin: 10 * 60, remain: 3 }), null); // まだ誰の1時間前でもない
-  assert.equal(pickAppeal(rows, { nowMin: 11 * 60, remain: 3 }).name, "さら");
-  assert.equal(pickAppeal(rows, { nowMin: 15 * 60 + 30, remain: 3, done: ["2"] }).name, "ななお");
-  assert.equal(pickAppeal(rows, { nowMin: 15 * 60 + 30, remain: 0 }), null); // 残り0
-  assert.equal(pickAppeal(rows, { nowMin: 24 * 60 + 10, remain: 3 }), null); // 全員退勤後
+  // 11:00〜24:00 を3つに分ける → 11:00・約15:20・約19:40
+  assert.equal(pickAppeal(rows, { nowMin: 11 * 60 + 7, remain: 3 }).name, "さら");
+  assert.equal(pickAppeal(rows, { nowMin: 15 * 60 + 30, remain: 2, done: ["2"] }).name, "ななお");
+  assert.equal(pickAppeal(rows, { nowMin: 20 * 60, remain: 1, done: ["2", "1"] }).name, "ななお"); // さらは退勤後
+  assert.equal(pickAppeal(rows, { nowMin: 25 * 60, remain: 3 }), null); // 全員退勤後
 });
