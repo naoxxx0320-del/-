@@ -3,7 +3,7 @@
 //   node src/cli.mjs check               … 読み込み・点検・駅ちかに入れる予定の一覧（ポータルに接続しない）
 //   node src/cli.mjs diff <サイト>        … そのサイトの今の出勤を読み、変更点の一覧を作る（読むだけ・書き込まない）
 //   node src/cli.mjs apply <サイト>       … diff の一覧のうち、承認したものを書き込む（確認あり）
-//        サイト：ekichika（駅ちか）/ esthe-ranking（全国メンズエステランキング）/ esban（エステ番長）/ estama（エステ魂）/ eslove（エステラブ）
+//        サイト：ekichika（駅ちか）/ esthe-ranking（全国メンズエステランキング）/ esban（エステ番長）/ estama（エステ魂）/ eslove（エステラブ）/ rx（リラクシィ）
 //        --only 1,2     その番号だけ実行
 //        --remove 3,4   出勤の取り消し（削除系）は、番号で個別に指定したものだけ実行
 //        --yes          確認の質問を省く（Claude が利用者の承認を得て実行するとき用）
@@ -19,6 +19,7 @@ import { planEstheRanking as planEstheRankingSync } from "./sites/esthe-ranking.
 import { planEsban as planEsbanSync } from "./sites/esban.mjs";
 import { planEstama as planEstamaSync } from "./sites/estama.mjs";
 import { planEslove as planEsloveSync } from "./sites/eslove.mjs";
+import { planRx, restChanges } from "./sites/rx.mjs";
 import { diffShifts, formatChanges, selectChanges } from "./diff.mjs";
 
 const HERE = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -180,6 +181,22 @@ SITES.eslove = {
     return el.applyChanges(page, changes, today, log);
   },
 };
+SITES.rx = {
+  name: "リラクシィ",
+  async read(page) {
+    const rx = await import("./sites/rx-portal.mjs");
+    return rx.readCurrent(page);
+  },
+  plan(shifts, today, current, conf) {
+    return planRx(shifts, today, { nameMap: conf.nameMap || {}, people: current.people.map((p) => p.name) });
+  },
+  // 出勤表に出勤のない「未設定」の日は「休み」にする（オーナーの選択）
+  extra: (current, plan, from) => restChanges(current, plan, from),
+  async apply(page, changes, today, log) {
+    const rx = await import("./sites/rx-portal.mjs");
+    return rx.applyChanges(page, changes, today, log);
+  },
+};
 const siteOf = (id) => {
   const s = SITES[id];
   if (!s) throw new Error(`使えるサイト：${Object.keys(SITES).join(" / ")}`);
@@ -196,6 +213,7 @@ async function siteState(config, page, id) {
   const current = await site.read(page, today, conf);
   const plan = site.plan(shifts, today, current, conf);
   const changes = diffShifts(current, plan);
+  if (site.extra) changes.push(...site.extra(current, plan, changes.length));
   return { site, today, current, plan, changes };
 }
 
@@ -252,5 +270,5 @@ async function apply(id) {
 
 const [cmd = "check", site] = process.argv.slice(2);
 const run = { check, diff: () => diff(site), apply: () => apply(site) }[cmd];
-if (!run) { console.error("使い方：node src/cli.mjs check | diff <サイト> | apply <サイト>（サイト：ekichika / esthe-ranking / esban / estama / eslove）"); process.exitCode = 1; }
+if (!run) { console.error("使い方：node src/cli.mjs check | diff <サイト> | apply <サイト>（サイト：ekichika / esthe-ranking / esban / estama / eslove / rx）"); process.exitCode = 1; }
 else run().catch((e) => { console.error("止まりました：" + e.message); process.exitCode = 1; });
