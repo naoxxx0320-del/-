@@ -77,6 +77,12 @@ async function main() {
   const bo = run(["src/boost.mjs", DRY ? "plan" : "run"]);
   log(`上位表示：${bo.out.split("\n").filter(Boolean).pop() || ""}`);
   if (!bo.ok) problems.push("上位表示で止まりました");
+  // ⑤ 週の集客レポート（月曜9時以降に1回。Mac の中にページを作って通知する）
+  if (!DRY) {
+    const rp = run(["src/report.mjs", "auto"], { timeoutMs: 10 * 60e3 });
+    if (/作りました|止まりました/.test(rp.out)) log(rp.out.split("\n").filter(Boolean).pop());
+    if (!rp.ok) problems.push("週のレポートで止まりました");
+  }
 
   if (problems.length) {
     const uniq = [...new Set(problems)];
