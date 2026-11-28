@@ -5,7 +5,8 @@
 // 対象：
 //   ・駅ちか：管理画面トップの「一括上位表示」（.all_disp_button、確認「一括上位表示します。よろしいですか？」）。1日の残り回数はページに出る（深夜0時にリセット）
 //   ・エステラブ：新着情報の「更新または上位化する」＝ニュースの投稿（src/news.mjs）で行う
-//   ・エステ魂：セラピストアピール（本日出勤の人だけ。1人1日1回、出勤の1時間前から退勤まで、開始の早い順。1日3回・朝6時リセット）。
+//   ・エステ魂：セラピストアピール（本日出勤の人だけ。1日3回・朝6時リセットを使い切る）。出勤のある時間帯（最初の人の出勤1時間前〜最後の人の退勤）に
+//     残り回数を均等に配り、そのとき出勤の1時間前〜退勤の人のうち、今日のアピールが少ない人（同じなら出勤の早い人）を押す。
 //   ・エステ魂：集客ワンクリックアピール（店舗情報・クーポン情報・お店体験談。各1日3回・朝6時リセット）。1日3回を 10:00〜翌5:00 に均等に配り、時間が来たら3つを1回ずつ押す
 //     オーナーがエステ魂に電話で確認（2026-11-28）：セラピストアピール・集客ワンクリックアピール・ニュースの自動化は問題ない。
 //     禁止されているのは、IP を変えて自分のお店に何度もアクセスし表示順位を上げること（このツールはそうした操作はしない）
@@ -61,13 +62,24 @@ export function parseShift(t) {
   if (end <= start) end += 24 * 60;
   return { start, end };
 }
-/** 次にアピールする1人：本日出勤（エステ魂の表示）・今日まだ・出勤の1時間前から退勤まで・開始の早い順 */
+/** 今アピールする1人（なければ null）。
+ *  回数（今日押した数＋残り）を、出勤のある時間帯（最初の人の出勤 leadMin 分前〜最後の人の退勤）に均等に配る。
+ *  時間が来ていれば、出勤 leadMin 分前〜退勤の人のうち、今日のアピールが少ない人（同じなら出勤の早い人）を選ぶ。
+ *  done は今日アピールした人の id の並び（同じ人が何回入ってもよい） */
 export function pickAppeal(rows, { nowMin, done = [], remain = 0, leadMin = 60 }) {
   if (!(remain > 0)) return null;
-  return rows
-    .map((r) => ({ ...r, shift: parseShift(r.shiftText) }))
-    .filter((r) => r.shift && !done.includes(r.id) && nowMin >= r.shift.start - leadMin && nowMin < r.shift.end)
-    .sort((a, b) => a.shift.start - b.shift.start)[0] || null;
+  const working = rows.map((r) => ({ ...r, shift: parseShift(r.shiftText) })).filter((r) => r.shift);
+  if (!working.length) return null;
+  const from = Math.min(...working.map((r) => r.shift.start)) - leadMin;
+  const to = Math.max(...working.map((r) => r.shift.end));
+  const quota = done.length + remain;
+  const step = (to - from) / quota;
+  const allowed = nowMin < from ? 0 : Math.min(quota, Math.floor((nowMin - from) / step) + 1);
+  if (done.length >= allowed) return null;
+  const times = (id) => done.filter((x) => x === id).length;
+  return working
+    .filter((r) => nowMin >= r.shift.start - leadMin && nowMin < r.shift.end)
+    .sort((a, b) => times(a.id) - times(b.id) || a.shift.start - b.shift.start)[0] || null;
 }
 
 async function estamaRead(page) {
@@ -154,7 +166,7 @@ async function main() {
     const cur = await estamaRead(page);
     const working = cur.rows.filter((r) => parseShift(r.shiftText));
     const next = pickAppeal(cur.rows, { nowMin: now, done: es.done, remain: cur.remain });
-    const head = `エステ魂 セラピストアピール：残り ${cur.remain}回／本日出勤 ${working.map((r) => `${r.name} ${r.shiftText}`).join("・") || "なし"}／今日アピール済み ${es.done.length}人`;
+    const head = `エステ魂 セラピストアピール：残り ${cur.remain}回／本日出勤 ${working.map((r) => `${r.name} ${r.shiftText}`).join("・") || "なし"}／今日アピール ${es.done.length}回`;
     if (cmd === "plan") console.log(`${head}${next ? ` … 今 ${next.name} をアピールできます` : " … 今はなし"}`);
     else if (!next) log(`${head} … 今はなし`);
     else {
