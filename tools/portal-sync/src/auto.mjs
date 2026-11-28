@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 自動実行（Mac の launchd から1時間ごとに呼ばれる）。作業用ブラウザ（src/browser.mjs）が開いている前提。
-// 順番：⓪ログインの確認（切れていればキーチェーンの ID・パスワードで入り直す）①出勤の反映（出勤を入れる・時間を変えるだけ。取り消しはしない）②写メ日記の転載（駅ちか・リラクシィ）③ニュース ④上位表示
+// 順番：⓪ログインの確認（切れていればキーチェーンの ID・パスワードで入り直す）①出勤の反映（出勤を入れる・時間を変えるだけ。取り消しはしない）②写メ日記の転載（駅ちか・リラクシィ）③空き時間の告知・ニュース ④上位表示
 // どれかで止まっても次へ進む。ログインが切れているなど、オーナーの対応が必要なときは Mac の通知で知らせる。
 // エステ魂：オーナーがエステ魂に電話で確認（2026-11-28）。ニュース・セラピストアピール・集客ワンクリックアピールの自動化は問題ない。
 //   禁止されているのは、IP を変えて自分のお店に何度もアクセスし表示順位を上げること（このツールはしない）。
@@ -63,7 +63,11 @@ async function main() {
   const rx = run(["src/rx-post.mjs", DRY ? "plan" : "run"]);
   log(`リラクシィ：${rx.out.split("\n").filter(Boolean).slice(-2).join(" / ")}`);
   if (!rx.ok) { problems.push("リラクシィへの転載で止まりました"); if (/ログインしていません/.test(rx.out)) problems.push("リラクシィに店舗アカウントでログインしてください"); }
-  // ③ ニュース
+  // ③ 空き時間の告知（11時・15時・19時の回だけ。ニュースの件数に数える）
+  const va = run(["src/vacancy.mjs", DRY ? "plan" : "run"]);
+  log(`空き時間の告知：${va.out.split("\n").filter(Boolean).slice(-1)[0] || ""}`);
+  if (!va.ok) problems.push("空き時間の告知で止まりました");
+  // ③' ニュース
   for (const site of NEWS_SITES) {
     const n = run(["src/news.mjs", DRY ? "plan" : "run", "--site", site]);
     log(`ニュース ${site}：${n.out.split("\n").filter((l) => /：今日|止まりました/.test(l)).slice(-1)[0] || n.out.split("\n").pop()}`);

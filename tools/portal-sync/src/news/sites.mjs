@@ -45,7 +45,7 @@ async function listHas(page, url, title) {
 }
 
 // ---- エステ魂：/admin/news_edit/ → 「投稿する」（.send-post、画面の外で reCAPTCHA v3） ----
-const ESTAMA_TYPE = { shift: "4", offer: "2", coupon: "2", appeal: "0", forward: "0" };
+const ESTAMA_TYPE = { vacancy: "4", shift: "4", offer: "2", coupon: "2", appeal: "0", forward: "0" };
 async function estamaImage(page, file) {
   const inp = page.locator("#news_icon_1-imgupload_imgUploadField");
   if ((await inp.count()) !== 1) return "画像欄が見つかりません";
@@ -85,7 +85,7 @@ async function postEstama(page, post, meta = {}) {
 // ---- 駅ちか：「駅ちかを見た」の記事（カテゴリごとに1件）を書き換える＝上位表示（残り回数を消費） ----
 // 駅ちかは記事がカテゴリごとに1件（書き換え）。オーナーが作った記事（速報NEWS・新人速報・激アツ割引情報）は上書きしないよう、
 // ツールは空いていた2つ（緊急出勤速報＝出勤案内、イベント速報＝それ以外）だけを使う
-const EK_CAT = { shift: 5, offer: 4, coupon: 4, appeal: 4, forward: 4 };
+const EK_CAT = { vacancy: 5, shift: 5, offer: 4, coupon: 4, appeal: 4, forward: 4 };
 const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const toHtml = (text) => text.split("\n\n").map((p) => `<p>${esc(p).replace(/\n/g, "<br />")}</p>`).join("\n");
 export async function ekichikaRemaining(page) {
@@ -137,7 +137,7 @@ async function postEkichika(page, post, meta = {}) {
 }
 
 // ---- エステ番長：新着情報 /node/add/shop_news ----
-const EB_CAT = { shift: "4", offer: "3", coupon: "3", appeal: "2", forward: "2" };
+const EB_CAT = { vacancy: "4", shift: "4", offer: "3", coupon: "3", appeal: "2", forward: "2" };
 async function postEsban(page, post, meta = {}) {
   await page.goto("https://es-ban.com/node/add/shop_news", { waitUntil: "load" }); await pause(page, 2000);
   if (/\/user\/login/.test(page.url())) throw new Error("エステ番長にログインしていません");
@@ -165,7 +165,7 @@ async function postEsban(page, post, meta = {}) {
 }
 
 // ---- エステラブ：新着情報 /admin/shop/shopfeed/edit（「更新または上位化する」＝更新回数を消費） ----
-const EL_CAT = { shift: "3", offer: "2", coupon: "2", appeal: "4", forward: "4" };
+const EL_CAT = { vacancy: "3", shift: "3", offer: "2", coupon: "2", appeal: "4", forward: "4" };
 export async function esloveRemaining(page) {
   await page.goto("https://eslove.jp/admin/shop/shopfeed", { waitUntil: "domcontentloaded" }); await pause(page, 1500);
   if (/\/admin\/login/.test(page.url())) throw new Error("エステラブにログインしていません");
@@ -174,7 +174,7 @@ export async function esloveRemaining(page) {
   return m ? Number(m[1]) : null;
 }
 // ツールが作った投稿の題名（この形の題名か、ツールが記録した題名だけを書き換える。オーナーの投稿は書き換えない）
-const OURS = /^【(本日の出勤|本日出勤|新規割|新人割|早割|平日昼割|クーポン)】/;
+const OURS = /^【(本日の出勤|本日出勤|本日の空き|本日|新規割|新人割|早割|平日昼割|クーポン)】/;
 /** 新着情報は最大5件。新規の画面が開けない（一覧に戻される）ときは、ツールが作った投稿のうち最も古いものを書き換える */
 async function esloveEditTarget(page, ownTitles = []) {
   await page.goto("https://eslove.jp/admin/shop/shopfeed", { waitUntil: "load" }); await pause(page, 2000);
@@ -233,7 +233,7 @@ async function postEslove(page, post, meta = {}) {
 }
 
 // ---- 全国メンズエステランキング：/shop/news/add/（1日5回、6時にリセット） ----
-const ER_TYPE = { shift: "3", offer: "1", coupon: "1", appeal: "9", forward: "9" };
+const ER_TYPE = { vacancy: "3", shift: "3", offer: "1", coupon: "1", appeal: "9", forward: "9" };
 export async function rankingRemaining(page) {
   await page.goto("https://www.esthe-ranking.jp/shop/news/", { waitUntil: "domcontentloaded" }); await pause(page, 1500);
   if (/\/login/.test(page.url())) throw new Error("全国メンズエステランキングにログインしていません");
