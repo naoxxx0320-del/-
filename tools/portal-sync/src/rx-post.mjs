@@ -93,6 +93,15 @@ const whoAmI = (tab) => tab.evaluate(() => {
   const a = [...document.querySelectorAll("a[href^='/u/']")].find((x) => /プロフィール/.test(x.textContent));
   return a ? a.getAttribute("href").replace(/^\/u\//, "") : null;
 });
+/** 運営からのお知らせの小窓が出ていたら「閉じる」を押す（中のリンク・申請は押さない） */
+async function closePopups(tab) {
+  for (let i = 0; i < 5; i++) {
+    const close = tab.locator("[data-testid=announcement-popup-close], [data-testid=announcement-popup-dismiss]").filter({ visible: true });
+    if (!(await close.count())) return;
+    await close.first().click().catch(() => {});
+    await tab.waitForTimeout(1200);
+  }
+}
 async function profileHas(tab, handle, text) {
   await tab.goto(`https://rx-sns.jp/u/${handle}`, { waitUntil: "load" }); await tab.waitForTimeout(3000);
   return norm(await tab.evaluate(() => document.body.innerText)).includes(mark(text));
@@ -105,6 +114,7 @@ async function postOne(ctx, page, d) {
     if (me !== d.handle) throw new Error(`@${d.handle} としてログインできませんでした（今は @${me || "?"}）。店舗アカウントでログインしているか確かめてください`);
     if (await profileHas(tab, d.handle, d.post)) return { ok: true, already: true };
     await tab.goto("https://rx-sns.jp/", { waitUntil: "load" }); await tab.waitForTimeout(2500);
+    await closePopups(tab);
     const open = tab.locator("button", { hasText: /^投稿する$/ }).first();
     if (!(await open.count())) throw new Error("「投稿する」が見つかりません");
     await open.click(); await tab.waitForTimeout(1500);
